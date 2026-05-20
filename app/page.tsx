@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useSession } from "next-auth/react";
 import { SignOutButton } from "../components/AuthControls";
 
@@ -377,7 +384,7 @@ export default function Home() {
   const todayKey = formatDateKey(new Date());
   const ageInfo = getAgeInfo(planner.birthday);
 
-  async function loadPlannerFromDatabase() {
+  const loadPlannerFromDatabase = useCallback(async () => {
     try {
       const response = await fetch("/api/planner", { cache: "no-store" });
       const data = (await response.json()) as {
@@ -410,17 +417,19 @@ export default function Home() {
         setPlanner(initialState);
       }
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadPlannerFromDatabase().finally(() => setIsReady(true));
+  }, [loadPlannerFromDatabase]);
+
+  useEffect(() => {
+    if (!isReady) return;
     window.addEventListener("focus", loadPlannerFromDatabase);
-    window.addEventListener("pageshow", loadPlannerFromDatabase);
     return () => {
       window.removeEventListener("focus", loadPlannerFromDatabase);
-      window.removeEventListener("pageshow", loadPlannerFromDatabase);
     };
-  }, []);
+  }, [isReady, loadPlannerFromDatabase]);
 
   useEffect(() => {
     if (isReady) {
