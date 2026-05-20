@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { SignOutButton } from "../components/AuthControls";
 
 type GoalKey = "year" | "month" | "week";
@@ -355,6 +356,7 @@ function normalizeTimetables(value: unknown, legacyValue?: unknown): Timetable[]
 }
 
 export default function Home() {
+  const { data: session } = useSession();
   const [planner, setPlanner] = useState<PlannerState>(initialState);
   const [isReady, setIsReady] = useState(false);
   const [priorityTitle, setPriorityTitle] = useState("");
@@ -650,6 +652,11 @@ export default function Home() {
           )}
         </div>
         <nav className="topbarNav" aria-label="ナビゲーション">
+          {session?.user && (
+            <span className="userBadge">
+              {session.user.name || session.user.email || "ログイン中"}
+            </span>
+          )}
           <a className="navLink" href="/inbox">
             inbox
           </a>
