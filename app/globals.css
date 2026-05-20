@@ -1,0 +1,2846 @@
+:root {
+  --background: #f7f4ee;
+  --surface: #ffffff;
+  --surface-strong: #f0f7f4;
+  --ink: #17201c;
+  --muted: #62706a;
+  --line: #dbe2dc;
+  --accent: #176b55;
+  --accent-strong: #0e4f3e;
+  --gold: #b77422;
+  --danger: #a83d34;
+  --shadow: 0 18px 60px rgba(37, 48, 43, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(135deg, rgba(23, 107, 85, 0.1), transparent 34%),
+    var(--background);
+  color: var(--ink);
+  font-family:
+    Arial,
+    "Hiragino Sans",
+    "Yu Gothic",
+    Meiryo,
+    sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.shell > .topbar,
+.shell > .workspaceGrid {
+  transition:
+    width 180ms ease,
+    margin-right 180ms ease;
+}
+
+.scheduleOpenShell > .topbar,
+.scheduleOpenShell > .workspaceGrid {
+  width: calc(100% - min(480px, calc(100vw - 32px)) - 18px);
+  margin-right: auto;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  min-height: 58px;
+  margin-bottom: 14px;
+}
+
+.appTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.todayLabel {
+  color: var(--muted);
+  font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.headerDateBlock {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.ageLabel {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.topbarNav {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.scheduleToggle {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  padding: 0 12px;
+  font-weight: 900;
+}
+
+.navLink,
+.settingsLink {
+  display: inline-grid;
+  place-items: center;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--accent-strong);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.navLink {
+  padding: 0 12px;
+}
+
+.settingsLink {
+  width: 38px;
+  padding: 0;
+  font-size: 1.05rem;
+}
+
+.authNavButton {
+  min-height: 38px;
+}
+
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.loginCard {
+  width: min(420px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  text-align: center;
+}
+
+.loginCard p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.loginCard h1 {
+  max-width: none;
+  margin: 0 0 22px;
+  font-size: 1.45rem;
+  line-height: 1.3;
+}
+
+.loginButton {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 900;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  max-width: 760px;
+  font-size: clamp(2rem, 6vw, 4.6rem);
+  line-height: 0.98;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+.ghostButton,
+.taskForm button,
+.iconButton,
+.checkButton {
+  border: 0;
+}
+
+.ghostButton {
+  min-height: 42px;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.goalNest {
+  display: grid;
+  width: 100%;
+  justify-self: center;
+  margin-bottom: 18px;
+}
+
+.goalPanel,
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.goalPanel {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.goalYearPanel {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  border-color: rgba(183, 116, 34, 0.32);
+  background: #fffdf8;
+  padding: 8px 10px;
+}
+
+.goalMonthPanel {
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  margin-left: clamp(10px, 2vw, 22px);
+  border-color: rgba(23, 107, 85, 0.26);
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+  background: #f8fcf9;
+  gap: 6px;
+  padding: 8px 10px;
+  box-shadow: none;
+}
+
+.goalWeekPanel {
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr;
+  margin-left: clamp(10px, 2vw, 22px);
+  border-color: rgba(23, 107, 85, 0.48);
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+  background: linear-gradient(180deg, #ffffff, var(--surface-strong));
+  padding: 16px;
+  box-shadow: none;
+}
+
+.goalWeekPanel input {
+  min-height: 64px;
+  font-size: 1.18rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.goalPanel input {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.goalPanel input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.goalYearPanel > input,
+.goalMonthPanel > input {
+  min-height: 34px;
+}
+
+.goalLineInput {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.goalYearPanel > input {
+  font-size: 0.9rem;
+}
+
+.goalMonthPanel > input {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.goalHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goalYearPanel > .goalHeading,
+.goalMonthPanel > .goalHeading {
+  display: contents;
+}
+
+.goalYearPanel > .goalHeading > span:first-child,
+.goalMonthPanel > .goalHeading > span:first-child {
+  white-space: nowrap;
+}
+
+.goalYearPanel > .goalHeading > .periodSwitcher,
+.goalMonthPanel > .goalHeading > .periodSwitcher {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.goalHeading span {
+  color: var(--gold);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.goalYearPanel > .goalHeading span:first-child {
+  font-size: 0.78rem;
+}
+
+.goalMonthPanel > .goalHeading span:first-child {
+  font-size: 0.86rem;
+}
+
+.goalWeekPanel > .goalHeading span:first-child {
+  font-size: 0.98rem;
+}
+
+.goalHeading time {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.periodSwitcher {
+  display: inline-grid;
+  grid-template-columns: 28px auto 28px;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.periodSwitcher button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.periodMeta {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-width: 88px;
+}
+
+.periodMeta span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--ink);
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(23, 107, 85, 0.14);
+}
+
+input,
+select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.taskArea {
+  display: grid;
+  gap: 12px;
+  width: min(760px, 100%);
+  justify-self: center;
+  margin-top: 10px;
+}
+
+.dailyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+  align-items: start;
+  gap: 18px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.dailyGrid .taskArea,
+.dailyGrid .timetableSummary {
+  width: 100%;
+  justify-self: stretch;
+  margin: 0;
+}
+
+.timetableSummary {
+  display: grid;
+  gap: 10px;
+  width: min(760px, 100%);
+  justify-self: center;
+  margin-bottom: 8px;
+}
+
+.timetableSummaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timetableSummaryHeader span {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.timetableSummaryHeader a {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.timetableSummaryList {
+  display: grid;
+  gap: 8px;
+}
+
+.timetableSummaryItem {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 7px 10px;
+}
+
+.timetableSummaryItem.hasNumber {
+  grid-template-columns: 76px 30px minmax(0, 1fr);
+}
+
+.timetableSummaryItem.current {
+  border-color: rgba(183, 116, 34, 0.55);
+  background: #fff8e8;
+  box-shadow: 0 0 0 3px rgba(183, 116, 34, 0.12);
+}
+
+.timetableSummaryItem time {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.timetableSummaryItem strong {
+  overflow-wrap: anywhere;
+}
+
+.timetableActionInput {
+  min-height: 34px;
+  border-color: rgba(43, 111, 82, 0.3);
+  background: white;
+}
+
+.timetableActionInput::placeholder,
+.currentTimetableInput::placeholder {
+  color: rgba(86, 104, 93, 0.38);
+}
+
+.currentTimetablePanel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 18px;
+  border: 1px solid rgba(183, 116, 34, 0.45);
+  border-radius: 8px;
+  background: #fff8e8;
+  padding: 16px;
+  box-shadow: 0 14px 40px rgba(183, 116, 34, 0.16);
+}
+
+.currentTimetableMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.currentTimetableMeta span:first-child {
+  border-radius: 999px;
+  background: var(--gold);
+  color: white;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+}
+
+.currentTimetablePanel strong,
+.currentHabitLabel,
+.currentTimetableInput {
+  min-width: 0;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  font-weight: 900;
+}
+
+.currentTimetableInput {
+  min-height: 52px;
+  border-color: rgba(183, 116, 34, 0.32);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.currentHabitLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.currentHabitLabel input {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.currentHabitLabel span {
+  overflow-wrap: anywhere;
+}
+
+.currentHabitLabel span.completed {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.habitSummaryLabel {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+}
+
+.habitSummaryLabel input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.habitSummaryLabel span {
+  overflow-wrap: anywhere;
+}
+
+.habitSummaryLabel span.completed {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.habitModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 18, 15, 0.72);
+}
+
+.habitModalCard {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(520px, 100%);
+  border: 1px solid rgba(23, 107, 85, 0.18);
+  border-radius: 8px;
+  background: white;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+}
+
+.habitModalCard time {
+  color: var(--accent-strong);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.habitModalCard strong {
+  font-size: clamp(1.7rem, 4vw, 3rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.habitModalCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  padding: 0 18px;
+  font-weight: 900;
+}
+
+.habitModalCheck input {
+  width: 18px;
+  height: 18px;
+  accent-color: white;
+}
+
+.periodBadge {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.tabList {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.tabButton {
+  min-width: 88px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.tabButton.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.panel {
+  padding: 16px;
+}
+
+.priorityPanel {
+  background: linear-gradient(180deg, #ffffff, var(--surface-strong));
+}
+
+.priorityDashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.priorityPrimaryColumn,
+.todayTaskColumn {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.todayTaskColumn {
+  border-left: 1px solid var(--line);
+  padding-left: 14px;
+}
+
+.todayTaskList {
+  display: grid;
+  gap: 10px;
+}
+
+.todayDashboardTask {
+  grid-template-columns: 38px minmax(0, 1fr) 76px;
+}
+
+.taskSourceLabel {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.priorityList,
+.taskList {
+  display: grid;
+  gap: 10px;
+}
+
+.priority,
+.taskItem {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.priority {
+  grid-template-columns: 42px minmax(0, 1fr) 76px 42px;
+  min-height: 66px;
+}
+
+.focusButton {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.priority:hover .focusButton,
+.priority:focus-within .focusButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.taskItem:hover .focusButton,
+.taskItem:focus-within .focusButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.priority:hover .iconButton,
+.priority:focus-within .iconButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.priorityFirst {
+  border-color: rgba(190, 45, 45, 0.38);
+  background: linear-gradient(180deg, #fff8f7, #ffffff);
+}
+
+.priorityFirst .checkButton {
+  background: #c63232;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(198, 50, 50, 0.13);
+}
+
+.priorityFirst .editableTitle {
+  color: #9f2323;
+  font-size: 1.02rem;
+}
+
+.priorityFields {
+  display: grid;
+  gap: 8px;
+}
+
+.priorityProjectName {
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid rgba(23, 107, 85, 0.22);
+  border-radius: 6px;
+  background: #e7f2ec;
+  color: var(--accent-strong);
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.priority input {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 800;
+}
+
+.priority .mutedInput {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.checkButton {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #e8eee9;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.done {
+  opacity: 0.68;
+}
+
+.done strong,
+.done input {
+  text-decoration: line-through;
+}
+
+.done .checkButton {
+  background: var(--accent);
+  color: white;
+}
+
+.taskForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.priorityForm {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.taskForm input:disabled,
+.taskForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.choreForm {
+  grid-template-columns: minmax(0, 1fr) 150px 116px 144px 42px;
+}
+
+.choreItem {
+  grid-template-columns: 38px minmax(0, 1fr) 154px 76px auto;
+}
+
+.achievementToggle {
+  position: relative;
+  min-height: 42px;
+  border: 1px solid rgba(47, 113, 74, 0.28);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfffc 0%, #eef7f1 100%);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.achievementToggle.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 8px 18px rgba(47, 113, 74, 0.18);
+  color: white;
+}
+
+.achievementCadenceTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #eef4ef;
+  padding: 3px;
+}
+
+.achievementCadenceTabs button {
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.achievementCadenceTabs button.active {
+  background: white;
+  box-shadow: 0 2px 8px rgba(35, 53, 43, 0.08);
+}
+
+.choreTitleWrap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.choreTitleWrap .editableTitle {
+  min-width: 0;
+}
+
+.achievementBadge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eaf4ee;
+  color: var(--accent-strong);
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.achievementChoreItem {
+  border-color: rgba(47, 113, 74, 0.35);
+  background: #fbfffc;
+}
+
+.doneChoreItem .editableTitle {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.doneChoreItem .checkButton {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.inboxStack {
+  display: grid;
+  gap: 18px;
+}
+
+.inboxYearList,
+.inboxMonthList {
+  display: grid;
+  gap: 16px;
+}
+
+.inboxYearSection {
+  display: grid;
+  gap: 10px;
+}
+
+.inboxYearSection > h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 1.02rem;
+  font-weight: 900;
+}
+
+.inboxMonthSection {
+  display: grid;
+  gap: 8px;
+}
+
+.inboxMonthSection h4 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.96rem;
+  font-weight: 900;
+}
+
+.undatedInboxSection {
+  display: grid;
+  gap: 10px;
+}
+
+.undatedAchievementGroup {
+  display: grid;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.undatedAchievementGroup h4 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.undatedChoreForm {
+  margin-bottom: 0;
+}
+
+.inboxSectionToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--accent-strong);
+  padding: 0 12px;
+  font-weight: 900;
+}
+
+.inboxSectionToggle span:last-child {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.projectPanel {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.projectSidebar,
+.projectTaskPane {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.projectSidebar {
+  border-right: 1px solid var(--line);
+  padding-right: 14px;
+}
+
+.projectList {
+  display: grid;
+  gap: 8px;
+}
+
+.projectListItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 6px;
+}
+
+.projectListItem.active {
+  border-color: var(--accent);
+  background: #eaf4ee;
+}
+
+.projectListItem > button:first-child {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-weight: 900;
+}
+
+.projectListItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.projectListItem input {
+  min-height: 38px;
+}
+
+.projectListItem:hover .iconButton,
+.projectListItem:focus-within .iconButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.projectCreateForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.projectCreateForm button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.projectCreateForm input:disabled,
+.projectCreateForm button:disabled,
+.moveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.projectTaskHeader h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.projectTaskItem {
+  grid-template-columns: minmax(0, 1fr) 96px auto;
+}
+
+.moveButton {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.projectTaskForm {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.achievementPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.achievementForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 42px;
+  gap: 8px;
+}
+
+.achievementForm.hasMonth {
+  grid-template-columns: minmax(0, 1fr) 136px 120px 42px;
+}
+
+.achievementForm button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.achievementList {
+  display: grid;
+  gap: 10px;
+}
+
+.achievementMonthGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.achievementMonthGroup h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.94rem;
+  font-weight: 900;
+}
+
+.achievementItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px 92px 42px;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.achievementYearItem {
+  grid-template-columns: minmax(0, 1fr) 132px 136px 92px 42px;
+}
+
+.achievementItem:hover .iconButton,
+.achievementItem:focus-within .iconButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.achievementMain {
+  display: grid;
+  gap: 8px;
+}
+
+.achievementMain strong {
+  overflow-wrap: anywhere;
+}
+
+.achievedTitle {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.achievementProgress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eee9;
+}
+
+.achievementProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.achievementControls {
+  display: grid;
+  grid-template-columns: 32px minmax(44px, 1fr) 32px;
+  align-items: center;
+  gap: 6px;
+}
+
+.achievementControls button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #e8eee9;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.achievementControls span {
+  color: var(--accent-strong);
+  font-weight: 900;
+  text-align: center;
+}
+
+.achievementTargetInput {
+  min-height: 36px;
+}
+
+.achievementMonthSelect {
+  min-height: 36px;
+}
+
+.todayChore {
+  border-color: rgba(183, 116, 34, 0.55);
+  background: #fff8e8;
+  box-shadow: 0 0 0 3px rgba(183, 116, 34, 0.12);
+}
+
+.todayChore .inlineDate {
+  border-color: rgba(183, 116, 34, 0.55);
+  background: #fff2cd;
+  color: #8a5618;
+  font-weight: 900;
+}
+
+.todayChore .checkButton {
+  background: var(--gold);
+  color: white;
+}
+
+.recurringSection {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.recurringSection + .recurringSection {
+  margin-top: 14px;
+}
+
+.todayRecurringSection {
+  border-color: rgba(23, 107, 85, 0.36);
+  background: #f2faf6;
+}
+
+.ruleRecurringSection {
+  background: #fbfcfa;
+}
+
+.subSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subSectionHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.subSectionHeader span,
+.emptyText {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.emptyText.compact {
+  padding: 10px;
+  font-size: 0.82rem;
+}
+
+.miniTabList {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.miniTab {
+  min-width: 72px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.miniTab.active {
+  border-color: var(--accent);
+  background: #e7f2ec;
+  color: var(--accent-strong);
+}
+
+.emptyText {
+  margin: 0;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.recurringForm {
+  grid-template-columns: minmax(0, 1fr) 92px 42px;
+}
+
+.recurringForm.hasDetail {
+  grid-template-columns: minmax(0, 1fr) 92px 104px 42px;
+}
+
+.taskForm button,
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.formCadenceLabel {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #e7f2ec;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.taskItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.editableTitle {
+  min-height: 24px;
+  cursor: text;
+}
+
+.taskItem > input,
+.taskItem > div > input {
+  min-height: 38px;
+}
+
+.taskItem p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.taskItem p select {
+  width: auto;
+  min-width: 82px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.recurringRuleItem {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.inlineDate {
+  width: 154px;
+  min-width: 0;
+  min-height: 36px;
+  margin-top: 0;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.weekdayBoard {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(118px, 1fr));
+  gap: 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.weekdayColumn {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 118px;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: white;
+  padding: 10px;
+}
+
+.weekdayColumn:last-child {
+  border-right: 0;
+}
+
+.weekdayColumn h4 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.weekdayColumn .recurringRuleItem {
+  min-height: 0;
+  padding: 9px;
+}
+
+.iconButton {
+  background: transparent;
+  color: var(--danger);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.taskItem:hover .iconButton,
+.taskItem:focus-within .iconButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.focusOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.1), transparent 34%),
+    rgba(10, 18, 15, 0.92);
+}
+
+.focusCard {
+  display: grid;
+  gap: 22px;
+  width: min(680px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 34px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.focusCard h2 {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  line-height: 1.12;
+}
+
+.focusActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.completeFocusButton,
+.cancelFocusButton {
+  min-height: 48px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 20px;
+  font-weight: 900;
+}
+
+.completeFocusButton {
+  background: var(--accent);
+  color: white;
+}
+
+.cancelFocusButton {
+  background: #e8eee9;
+  color: var(--accent-strong);
+}
+
+.scheduleSidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 18;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 14px;
+  width: min(480px, calc(100% - 32px));
+  height: 100dvh;
+  border-left: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: -18px 0 54px rgba(37, 48, 43, 0.16);
+  padding: 18px;
+  transform: translateX(105%);
+  transition: transform 180ms ease;
+}
+
+.scheduleSidebar.open {
+  transform: translateX(0);
+}
+
+.scheduleClose {
+  justify-self: end;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: #e8eee9;
+  color: var(--accent-strong);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.scheduleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scheduleHeader h2 {
+  font-size: 1.2rem;
+}
+
+.scheduleHeader time {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.scheduleManageLink,
+.backLink {
+  display: inline-grid;
+  place-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #e8eee9;
+  color: var(--accent-strong);
+  padding: 0 10px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.scheduleList {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.scheduleItem {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 8px 10px;
+}
+
+.scheduleItem.current {
+  border-color: rgba(183, 116, 34, 0.55);
+  background: #fff8e8;
+  box-shadow: 0 0 0 3px rgba(183, 116, 34, 0.12);
+}
+
+.scheduleItem time {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.scheduleItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.scheduleManageFooter {
+  justify-self: stretch;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.schedulePage {
+  display: grid;
+  gap: 18px;
+}
+
+.settingsPage {
+  display: grid;
+  gap: 18px;
+}
+
+.goalsPage {
+  display: grid;
+  gap: 18px;
+}
+
+.roadmapPage {
+  display: grid;
+  gap: 18px;
+}
+
+.settingsHeader h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.goalsPageHeader h1,
+.roadmapHeader h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.roadmapHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 18px;
+}
+
+.roadmapModeTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.roadmapModeTabs .miniTab {
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+  font-size: 1.05rem;
+}
+
+.roadmapAddButton,
+.roadmapAppendButton {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  padding: 0 16px;
+  font-weight: 900;
+}
+
+.roadmapBlockList {
+  display: grid;
+  gap: 34px;
+}
+
+.roadmapBlock {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.roadmapBlock.single {
+  width: min(760px, 100%);
+  justify-self: center;
+}
+
+.memoBlockHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+}
+
+.memoBlockActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.memoDeleteButton {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(165, 59, 59, 0.22);
+  border-radius: 8px;
+  background: #fff5f3;
+  color: var(--danger);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.memoTitleInput {
+  min-height: 42px;
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.memoTitleInput:focus {
+  border-color: var(--accent);
+}
+
+.roadmapAppendButton {
+  justify-self: center;
+  min-width: 140px;
+}
+
+.roadmapWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+}
+
+.roadmapWorkspace.single {
+  grid-template-columns: 1fr;
+  width: min(760px, 100%);
+  justify-self: center;
+}
+
+.roadmapEditorPane,
+.roadmapPreviewPane {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.roadmapEditorPane + .roadmapPreviewPane {
+  border-left: 1px solid var(--line);
+}
+
+.roadmapEditorPane {
+  display: grid;
+}
+
+.roadmapEditorPane textarea {
+  width: 100%;
+  min-height: 220px;
+  overflow: hidden;
+  resize: none;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  padding: 16px;
+  line-height: 1.6;
+}
+
+.roadmapPreviewPane {
+  overflow: auto;
+  padding: 18px;
+}
+
+.roadmapMarkdown {
+  display: grid;
+  gap: 12px;
+}
+
+.roadmapMarkdown h1,
+.roadmapMarkdown h2,
+.roadmapMarkdown h3,
+.roadmapMarkdown p,
+.roadmapMarkdown ul,
+.roadmapMarkdown ol,
+.roadmapMarkdown blockquote,
+.roadmapMarkdown table,
+.roadmapMarkdown pre {
+  margin: 0;
+}
+
+.roadmapMarkdown h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.roadmapMarkdown h2 {
+  margin-top: 8px;
+  color: var(--accent-strong);
+  font-size: 1.25rem;
+}
+
+.roadmapMarkdown h3 {
+  color: var(--gold);
+  font-size: 1rem;
+}
+
+.roadmapMarkdown h4,
+.roadmapMarkdown h5,
+.roadmapMarkdown h6 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.96rem;
+}
+
+.roadmapMarkdownSection {
+  display: grid;
+  gap: 10px;
+}
+
+.roadmapSectionBody {
+  display: grid;
+  gap: 10px;
+}
+
+.roadmapCollapsibleHeading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+}
+
+.roadmapHeadingArrow {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--accent-strong);
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.roadmapCollapsibleHeading button:hover .roadmapHeadingArrow,
+.roadmapCollapsibleHeading button:focus-visible .roadmapHeadingArrow,
+.roadmapHeadingArrow.visible {
+  opacity: 1;
+}
+
+.roadmapListHeading {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+}
+
+.roadmapListContent {
+  min-width: 0;
+}
+
+.roadmapListToggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+}
+
+.roadmapTaskHeading {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 18px;
+  align-items: center;
+  column-gap: 7px;
+  line-height: 1.35;
+}
+
+.roadmapChecklistTree {
+  list-style: none;
+  padding-left: 0;
+}
+
+.roadmapChecklistTree .roadmapChecklistTree {
+  margin-left: 21px;
+}
+
+.roadmapChecklistTree li {
+  list-style: none;
+}
+
+.roadmapTaskHeading.noToggle {
+  grid-template-columns: 14px minmax(0, 1fr);
+}
+
+.roadmapTaskContent {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.roadmapMarkdown p,
+.roadmapMarkdown li {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.roadmapMarkdown a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.roadmapMarkdown strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.roadmapMarkdown del {
+  color: var(--muted);
+}
+
+.roadmapMarkdown ul,
+.roadmapMarkdown ol {
+  display: grid;
+  gap: 6px;
+  padding-left: 24px;
+}
+
+.roadmapMarkdown .roadmapChecklist {
+  gap: 0;
+  list-style: none;
+  padding-left: 0;
+}
+
+.roadmapMarkdown .contains-task-list {
+  gap: 0;
+}
+
+.roadmapMarkdown .roadmapChecklist li,
+.roadmapMarkdown .contains-task-list .task-list-item,
+.roadmapMarkdown li:has(> input[type="checkbox"]) {
+  display: block;
+  line-height: 1.35;
+}
+
+.roadmapMarkdown .contains-task-list .task-list-item > ul,
+.roadmapMarkdown .contains-task-list .task-list-item > ol,
+.roadmapMarkdown li:has(> input[type="checkbox"]) > ul,
+.roadmapMarkdown li:has(> input[type="checkbox"]) > ol {
+  margin-top: 0;
+  margin-left: 21px;
+}
+
+.roadmapMarkdown .roadmapChecklist input,
+.roadmapMarkdown .contains-task-list input[type="checkbox"] {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.roadmapTaskHeading input[type="checkbox"] {
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.roadmapMarkdown .contains-task-list .task-list-item > p {
+  display: inline;
+  margin: 0;
+}
+
+.roadmapMarkdown .roadmapChecklist input:checked + span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.roadmapMarkdown .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.roadmapTaskHeading:has(input:checked) .roadmapTaskContent,
+.roadmapMarkdown .task-list-item:has(> input:checked) {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.roadmapMarkdown blockquote {
+  border-left: 4px solid var(--line);
+  color: var(--muted);
+  padding-left: 12px;
+}
+
+.roadmapMarkdown code {
+  border-radius: 6px;
+  background: #e8eee9;
+  color: var(--accent-strong);
+  padding: 2px 5px;
+  font-size: 0.92em;
+}
+
+.roadmapMarkdown pre {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #17201b;
+  padding: 12px;
+}
+
+.roadmapMarkdown pre code {
+  background: transparent;
+  color: #f3f7f1;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.roadmapMarkdown table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+.roadmapMarkdown th,
+.roadmapMarkdown td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.roadmapMarkdown th {
+  background: #eef4ef;
+  color: var(--accent-strong);
+}
+
+.roadmapMarkdown hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.settingsPanel {
+  display: grid;
+  gap: 14px;
+  width: min(520px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.settingsPanel label {
+  display: grid;
+  gap: 8px;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.goalsArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.goalsArchiveSection {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.goalsArchiveSection h2 {
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+.goalsArchiveList {
+  display: grid;
+  gap: 8px;
+}
+
+.goalArchiveItem {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 10px;
+}
+
+.goalArchiveItem time {
+  color: var(--gold);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.goalArchiveItem p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  font-weight: 800;
+}
+
+.floatingGoalsSection {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.floatingGoalsSection h2 {
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+.goalSectionToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--accent-strong);
+  padding: 0 12px;
+  font-weight: 900;
+}
+
+.goalSectionToggle span:last-child {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.floatingGoalForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+
+.floatingGoalForm button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.floatingGoalList {
+  display: grid;
+  gap: 8px;
+}
+
+.floatingGoalItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  min-height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 8px;
+}
+
+.floatingGoalItem strong {
+  overflow-wrap: anywhere;
+}
+
+.schedulePageHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+  align-items: end;
+  gap: 18px;
+}
+
+.schedulePageHeader h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.scheduleCreateForm,
+.scheduleEntryForm {
+  display: grid;
+  gap: 8px;
+}
+
+.scheduleCreateForm {
+  grid-template-columns: minmax(0, 1fr) 74px;
+}
+
+.scheduleCreateForm button,
+.scheduleEntryForm button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+}
+
+.scheduleWorkspace {
+  display: grid;
+  gap: 14px;
+}
+
+.scheduleTabList {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.scheduleTab {
+  min-height: 42px;
+  max-width: 220px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  padding: 0 14px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleTab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.scheduleEditorCard {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.scheduleEditorHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+}
+
+.scheduleEditorHeader h2 {
+  overflow-wrap: anywhere;
+}
+
+.iconButton.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.weekdayToggleRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.weekdayToggle {
+  min-height: 38px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: white;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.weekdayToggle:last-child {
+  border-right: 0;
+}
+
+.weekdayToggle.active {
+  background: var(--accent);
+  color: white;
+}
+
+.scheduleEntryList {
+  display: grid;
+  gap: 8px;
+}
+
+.scheduleEntry {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 7px;
+}
+
+.scheduleEntry time {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.scheduleEntry strong {
+  overflow-wrap: anywhere;
+}
+
+.scheduleEntry input {
+  min-height: 36px;
+}
+
+.scheduleEntry input[type="time"],
+.scheduleEntryForm input[type="time"] {
+  min-width: 108px;
+  border-color: var(--accent);
+  background: #eef8f2;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.scheduleEntryForm {
+  grid-template-columns: 112px minmax(0, 1fr) 42px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.timetablePage {
+  display: grid;
+  gap: 18px;
+}
+
+.timetablePageHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  align-items: end;
+  gap: 18px;
+}
+
+.timetablePageHeader h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.timetableCreateForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 190px) 74px;
+  gap: 8px;
+}
+
+.timetableCreateForm button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+}
+
+.timetableEditorCard {
+  display: grid;
+  gap: 14px;
+  width: min(760px, 100%);
+  justify-self: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.timetableEntryList {
+  display: grid;
+  gap: 8px;
+}
+
+.timetableEditorHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+}
+
+.timetableEditorHeader h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.1rem;
+}
+
+.timetableEntry {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 7px;
+}
+
+.timetableEntry.hasNumber {
+  grid-template-columns: 104px 34px minmax(0, 1fr) 42px;
+}
+
+.timetableEntry:hover .iconButton,
+.timetableEntry:focus-within .iconButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.timetableEntry time {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.timetableEntry strong {
+  overflow-wrap: anywhere;
+}
+
+.timetableEntry input {
+  min-height: 36px;
+}
+
+.timetableEntry input[type="time"],
+.timetableEntryForm input[type="time"] {
+  min-width: 108px;
+  border-color: var(--accent);
+  background: #eef8f2;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.timetableEntryForm {
+  display: grid;
+  grid-template-columns: 112px 142px minmax(0, 1fr) 42px;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.timetableEntryForm.compact {
+  grid-template-columns: 112px 142px 42px;
+}
+
+.timetableEntryForm button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+}
+
+@media (max-width: 980px) {
+  .scheduleOpenShell > .topbar,
+  .scheduleOpenShell > .workspaceGrid {
+    width: 100%;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 8px;
+  }
+
+  .headerDateBlock {
+    justify-items: start;
+  }
+
+  .topbarNav {
+    justify-self: start;
+    justify-content: flex-start;
+  }
+
+  .schedulePageHeader {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .timetablePageHeader {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .roadmapHeader {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .roadmapWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .dailyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .currentTimetablePanel {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .goalsArchiveGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .shell {
+    width: min(100% - 20px, 1180px);
+    padding-top: 18px;
+  }
+
+  .topbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .goalMonthPanel,
+  .goalWeekPanel {
+    margin-left: 0;
+  }
+
+  .goalYearPanel,
+  .goalMonthPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .goalYearPanel > .goalHeading,
+  .goalMonthPanel > .goalHeading {
+    display: flex;
+  }
+
+  .goalYearPanel > .goalHeading > span:first-child,
+  .goalMonthPanel > .goalHeading > span:first-child {
+    white-space: normal;
+  }
+
+  .goalYearPanel > .goalHeading > .periodSwitcher,
+  .goalMonthPanel > .goalHeading > .periodSwitcher {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .goalLineInput {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .scheduleEntryForm {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .scheduleEntryForm input[type="time"],
+  .timetableEntryForm input[type="time"],
+  .timetableEntryForm select {
+    grid-column: 1 / -1;
+  }
+
+  .timetableEntryForm {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .timetableEntryForm.compact {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .timetableEntryForm.compact button {
+    grid-column: 2;
+  }
+
+  .timetableCreateForm {
+    grid-template-columns: 1fr 74px;
+  }
+
+  .timetableCreateForm select {
+    grid-column: 1 / -1;
+  }
+
+  .timetableEntry {
+    grid-template-columns: 82px minmax(0, 1fr) 42px;
+  }
+
+  .timetableEntry.hasNumber {
+    grid-template-columns: 82px 30px minmax(0, 1fr) 42px;
+  }
+
+  .recurringForm {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .choreForm {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .choreForm input[type="date"],
+  .choreForm .achievementMonthSelect {
+    grid-column: 1 / -1;
+  }
+
+  .choreForm .achievementToggle {
+    grid-column: 1 / 2;
+  }
+
+  .choreForm .achievementCadenceTabs {
+    grid-column: 1 / -1;
+  }
+
+  .recurringForm select {
+    grid-column: 1 / -1;
+  }
+
+  .priorityDashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .todayTaskColumn {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    padding-left: 0;
+  }
+
+  .taskItem {
+    grid-template-columns: 38px minmax(0, 1fr) 42px;
+  }
+
+  .priority {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .priority .focusButton {
+    grid-column: 2 / 3;
+    width: 84px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .priority .iconButton {
+    grid-column: 2 / 3;
+    width: 42px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .choreItem {
+    grid-template-columns: 38px minmax(0, 1fr) 42px;
+  }
+
+  .projectPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .projectSidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-right: 0;
+    padding-bottom: 14px;
+  }
+
+  .projectTaskItem {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .achievementForm {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .achievementForm.hasMonth {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .achievementForm select,
+  .achievementForm input[type="number"] {
+    grid-column: 1 / -1;
+  }
+
+  .achievementItem {
+    grid-template-columns: 1fr;
+  }
+
+  .achievementItem .iconButton {
+    width: 42px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .projectTaskItem .moveButton,
+  .projectTaskItem .iconButton {
+    width: 100%;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .choreItem .inlineDate {
+    grid-column: 2 / 3;
+    width: 100%;
+  }
+
+  .choreItem .focusButton,
+  .taskItem .focusButton {
+    grid-column: 2 / 3;
+    width: 84px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .recurringRuleItem {
+    grid-template-columns: minmax(0, 1fr) 42px;
+  }
+}
