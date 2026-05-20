@@ -9,9 +9,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   callbacks: {
     ...authConfig.callbacks,
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    session({ session, token }) {
+      if (session.user && typeof token.id === "string") {
+        session.user.id = token.id;
       }
 
       return session;
