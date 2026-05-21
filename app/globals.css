@@ -1715,6 +1715,7 @@ select {
   gap: 18px;
 }
 
+.diaryPage,
 .roadmapPage {
   display: grid;
   gap: 18px;
@@ -1726,16 +1727,102 @@ select {
 }
 
 .goalsPageHeader h1,
+.diaryHeader h1,
 .roadmapHeader h1 {
   margin-top: 10px;
   font-size: clamp(2rem, 5vw, 4rem);
 }
 
+.diaryHeader,
 .roadmapHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 18px;
+}
+
+.diaryLayout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.diaryList,
+.diaryEditor {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.diaryList {
+  display: grid;
+  align-content: start;
+  padding: 8px;
+}
+
+.diaryListItem {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 11px 10px;
+  text-align: left;
+}
+
+.diaryListItem:hover,
+.diaryListItem.active {
+  background: var(--surface-strong);
+}
+
+.diaryListItem time {
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.diaryListItem span {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diaryEditor {
+  display: grid;
+  overflow: hidden;
+}
+
+.diaryEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+}
+
+.diaryEditorHeader input {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 0 10px;
+  font-weight: 900;
+}
+
+.diaryEditor textarea {
+  min-height: 420px;
+  border: 0;
+  background: white;
+  padding: 18px;
+  resize: vertical;
+  line-height: 1.75;
+  outline: none;
 }
 
 .roadmapModeTabs {
@@ -2627,9 +2714,14 @@ select {
     align-items: start;
   }
 
+  .diaryHeader,
   .roadmapHeader {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .diaryLayout {
+    grid-template-columns: 1fr;
   }
 
   .roadmapWorkspace {
