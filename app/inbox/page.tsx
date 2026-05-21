@@ -1,21 +1,8 @@
-import { MarkdownMemoPage } from "../roadmap/page";
+import InboxClient from "../../components/InboxClient";
+import { getInboxState } from "../../lib/server-state";
 
-const storageKey = "inbox-markdown-v1";
-const defaultMarkdown = `# Inbox
+export default async function InboxPage() {
+  const inbox = await getInboxState();
 
-- 
-`;
-
-export default function InboxPage() {
-  return (
-    <MarkdownMemoPage
-      apiPath="/api/inbox"
-      ariaLabel="Inbox"
-      defaultMarkdown={defaultMarkdown}
-      defaultTitle="Inbox"
-      idPrefix="inbox"
-      pageTitle="Inbox"
-      storageKey={storageKey}
-    />
-  );
+  return <InboxClient initialValue={inbox} />;
 }
