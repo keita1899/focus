@@ -1823,7 +1823,7 @@ select {
 
 .inboxTaskForm {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px 74px;
+  grid-template-columns: minmax(0, 1fr) 170px 74px 74px;
   gap: 8px;
   border-bottom: 1px solid var(--line);
   padding: 12px;
@@ -1843,6 +1843,12 @@ select {
   background: var(--accent);
   color: white;
   font-weight: 900;
+}
+
+.inboxTaskForm button.secondary {
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--accent-strong);
 }
 
 .inboxMonthTasks {
@@ -1890,28 +1896,68 @@ select {
   background: #fff1ef;
 }
 
+.inboxTodoItem.today {
+  border-color: rgba(183, 116, 34, 0.58);
+  background: #fff8e8;
+  box-shadow: 0 0 0 3px rgba(183, 116, 34, 0.12);
+}
+
+.inboxTodoItem.undated {
+  border-color: rgba(98, 112, 106, 0.32);
+  background: #fbfcfa;
+}
+
 .inboxTodoItem.expired .checkButton {
   background: #f5d8d4;
   color: var(--danger);
 }
 
-.inboxTodoItem strong,
-.inboxTodoItem time {
-  display: block;
-}
-
 .inboxTodoItem strong {
+  display: block;
   overflow-wrap: anywhere;
 }
 
-.inboxTodoItem time {
+.inboxTodoContent {
+  display: grid;
+  gap: 5px;
+}
+
+.inboxTodoTitleInput {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: white;
+  padding: 0 8px;
+  font-weight: 900;
+}
+
+.inboxTodoMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 3px;
+}
+
+.inboxTodoMeta span {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
-.inboxTodoItem.expired time {
+.inboxTodoMeta input {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.inboxTodoItem.expired .inboxTodoMeta span,
+.inboxTodoItem.expired .inboxTodoMeta input {
   color: var(--danger);
 }
 

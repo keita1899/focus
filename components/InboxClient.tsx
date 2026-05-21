@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
 
 type InboxTask = {
   id: string;
@@ -31,6 +31,7 @@ function getTodayKey() {
 }
 
 function getMonthKey(dateKey: string) {
+  if (!dateKey) return "";
   return dateKey.slice(0, 7);
 }
 
@@ -50,12 +51,12 @@ function normalizeTasks(value: unknown): InboxTask[] {
   return value
     .map((task, index) => {
       const item = task as Partial<InboxTask>;
-      if (!item.title || !item.date) return null;
+      if (!item.title) return null;
 
       return {
         id: item.id || `inbox-${index + 1}`,
         title: item.title,
-        date: item.date,
+        date: item.date || "",
         createdAt: item.createdAt || new Date().toISOString(),
       };
     })
@@ -80,17 +81,23 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(getTodayKey());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [editingTaskId, setEditingTaskId] = useState("");
   const [isReady, setIsReady] = useState(initialValue !== null);
   const todayKey = getTodayKey();
   const currentMonthKey = getCurrentMonthKey();
 
   const monthKeys = useMemo(() => getYearMonthKeys(selectedYear), [selectedYear]);
+  const undatedTasks = useMemo(
+    () => tasks.filter((task) => !task.date),
+    [tasks],
+  );
   const visibleMonthKeys = useMemo(
     () =>
       monthKeys.filter((monthKey) => {
         if (monthKey >= currentMonthKey) return true;
         return tasks.some(
-          (task) => getMonthKey(task.date) === monthKey && task.date < todayKey,
+          (task) =>
+            task.date && getMonthKey(task.date) === monthKey && task.date < todayKey,
         );
       }),
     [currentMonthKey, monthKeys, tasks, todayKey],
@@ -121,7 +128,7 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
   function addTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const taskTitle = title.trim();
-    if (!taskTitle || !date) return;
+    if (!taskTitle) return;
 
     setTasks((current) =>
       [
@@ -145,7 +152,34 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
     setTasks((current) => current.filter((task) => task.id !== taskId));
   }
 
+  function updateTask(taskId: string, value: Partial<Pick<InboxTask, "date" | "title">>) {
+    setTasks((current) =>
+      current
+        .map((task) => (task.id === taskId ? { ...task, ...value } : task))
+        .sort((first, second) =>
+          first.date === second.date
+            ? first.createdAt.localeCompare(second.createdAt)
+            : first.date.localeCompare(second.date),
+        ),
+    );
+  }
+
+  function finishEditing(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.currentTarget.blur();
+      setEditingTaskId("");
+    }
+  }
+
   function scrollToMonth(monthKey: string) {
+    if (monthKey === "undated") {
+      document
+        .getElementById("inbox-undated")
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
+
     document
       .getElementById(`inbox-month-${monthKey}`)
       ?.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -181,6 +215,15 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
               &gt;
             </button>
           </div>
+          {undatedTasks.length > 0 && (
+            <button
+              className="inboxMonthLink"
+              type="button"
+              onClick={() => scrollToMonth("undated")}
+            >
+              未定
+            </button>
+          )}
           {visibleMonthKeys.map((monthKey) => (
             <button
               className={
@@ -211,10 +254,71 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
               value={date}
               onChange={(event) => setDate(event.target.value)}
             />
+            <button
+              className="secondary"
+              type="button"
+              onClick={() => setDate("")}
+            >
+              未定
+            </button>
             <button type="submit">追加</button>
           </form>
 
           <div className="inboxMonthTasks">
+            {undatedTasks.length > 0 && (
+              <section
+                className="inboxTodoMonth"
+                id="inbox-undated"
+                aria-label="未定タスク"
+              >
+                <h2>未定</h2>
+                <div className="inboxTodoList">
+                  {undatedTasks.map((task) => (
+                    <div className="inboxTodoItem undated" key={task.id}>
+                      <button
+                        className="checkButton"
+                        type="button"
+                        onClick={() => completeTask(task.id)}
+                        aria-label={`${task.title}を完了`}
+                      />
+                      <div className="inboxTodoContent">
+                        {editingTaskId === task.id ? (
+                          <input
+                            aria-label="タスク名を編集"
+                            className="inboxTodoTitleInput"
+                            autoFocus
+                            value={task.title}
+                            onBlur={() => setEditingTaskId("")}
+                            onChange={(event) =>
+                              updateTask(task.id, {
+                                title: event.target.value,
+                              })
+                            }
+                            onKeyDown={finishEditing}
+                          />
+                        ) : (
+                          <strong onDoubleClick={() => setEditingTaskId(task.id)}>
+                            {task.title}
+                          </strong>
+                        )}
+                        <div className="inboxTodoMeta">
+                          <input
+                            aria-label={`${task.title}の日付`}
+                            type="date"
+                            value={task.date}
+                            onChange={(event) =>
+                              updateTask(task.id, {
+                                date: event.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
             {visibleMonthKeys.map((monthKey) => {
               const monthTasks = tasks.filter(
                 (task) => getMonthKey(task.date) === monthKey,
@@ -233,12 +337,17 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
                     <div className="inboxTodoList">
                       {monthTasks.map((task) => {
                         const isExpired = task.date < todayKey;
+                        const isToday = task.date === todayKey;
                         return (
                           <div
                             className={
-                              isExpired
-                                ? "inboxTodoItem expired"
-                                : "inboxTodoItem"
+                              [
+                                "inboxTodoItem",
+                                isExpired ? "expired" : "",
+                                isToday ? "today" : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")
                             }
                             key={task.id}
                           >
@@ -248,12 +357,39 @@ export default function InboxClient({ initialValue }: InboxClientProps) {
                               onClick={() => completeTask(task.id)}
                               aria-label={`${task.title}を完了`}
                             />
-                            <div>
-                              <strong>{task.title}</strong>
-                              <time dateTime={task.date}>
-                                {isExpired ? "期限切れ " : ""}
-                                {task.date}
-                              </time>
+                            <div className="inboxTodoContent">
+                              {editingTaskId === task.id ? (
+                                <input
+                                  aria-label="タスク名を編集"
+                                  className="inboxTodoTitleInput"
+                                  autoFocus
+                                  value={task.title}
+                                  onBlur={() => setEditingTaskId("")}
+                                  onChange={(event) =>
+                                    updateTask(task.id, {
+                                      title: event.target.value,
+                                    })
+                                  }
+                                  onKeyDown={finishEditing}
+                                />
+                              ) : (
+                                <strong onDoubleClick={() => setEditingTaskId(task.id)}>
+                                  {task.title}
+                                </strong>
+                              )}
+                              <div className="inboxTodoMeta">
+                                {isExpired && <span>期限切れ</span>}
+                                <input
+                                  aria-label={`${task.title}の日付`}
+                                  type="date"
+                                  value={task.date}
+                                  onChange={(event) =>
+                                    updateTask(task.id, {
+                                      date: event.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
                             </div>
                           </div>
                         );
