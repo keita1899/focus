@@ -455,12 +455,28 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   }, [todaysTimetable]);
   const currentTimetableId = useMemo(() => {
     const nowMinutes = timeToMinutes(currentTime);
-    return (
-      todaysTimetable
-        .filter((entry) => timeToMinutes(entry.time) <= nowMinutes)
-        .at(-1)?.id || null
+    const currentEntries = todaysTimetable.filter(
+      (entry) => timeToMinutes(entry.time) <= nowMinutes,
     );
-  }, [currentTime, todaysTimetable]);
+    const currentTimeEntry = currentEntries.at(-1);
+    if (!currentTimeEntry) return null;
+
+    const currentTimeGroup = currentEntries.filter(
+      (entry) => entry.time === currentTimeEntry.time,
+    );
+    const pendingHabit = currentTimeGroup.find(
+      (entry) =>
+        entry.kind === "habit" &&
+        !(entry.completedDates || []).includes(todayKey),
+    );
+    if (pendingHabit) return pendingHabit.id;
+
+    return (
+      currentTimeGroup.find((entry) => entry.kind !== "habit")?.id ||
+      currentTimeGroup.at(-1)?.id ||
+      null
+    );
+  }, [currentTime, todayKey, todaysTimetable]);
   const currentTimetableEntry = useMemo(
     () =>
       todaysTimetable.find((entry) => entry.id === currentTimetableId) || null,
@@ -478,9 +494,11 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   }, [currentTimetableEntry, todayKey]);
   const visibleTimetable = useMemo(() => {
     const nowMinutes = timeToMinutes(currentTime);
-    return todaysTimetable.filter((_, index) => {
-      const nextEntry = todaysTimetable[index + 1];
-      return !nextEntry || timeToMinutes(nextEntry.time) > nowMinutes;
+    return todaysTimetable.filter((entry, index) => {
+      const nextLaterEntry = todaysTimetable
+        .slice(index + 1)
+        .find((nextEntry) => nextEntry.time !== entry.time);
+      return !nextLaterEntry || timeToMinutes(nextLaterEntry.time) > nowMinutes;
     });
   }, [currentTime, todaysTimetable]);
 
