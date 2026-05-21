@@ -48,7 +48,7 @@ export async function PUT(request: Request) {
       data: memos.map((memo, index) => ({
         id: memo.id,
         userId,
-        title: memo.title || "メモ",
+        title: memo.title || "ロードマップ",
         markdown: memo.markdown || "",
         viewMode:
           memo.viewMode === "split" ||

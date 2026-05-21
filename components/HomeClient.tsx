@@ -650,7 +650,7 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
             inbox
           </a>
           <a className="navLink" href="/roadmap">
-            memo
+            roadmap
           </a>
           <a className="navLink" href="/diary">
             diary
