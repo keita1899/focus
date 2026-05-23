@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Focus Planner">
+  <rect width="512" height="512" fill="#176b55"/>
+  <rect x="112" y="104" width="288" height="304" rx="44" fill="#f7f4ee"/>
+  <path fill="#0e4f3e" d="M158 182c0-13 10-23 23-23h150c13 0 23 10 23 23s-10 23-23 23H181c-13 0-23-10-23-23Zm0 76c0-13 10-23 23-23h150c13 0 23 10 23 23s-10 23-23 23H181c-13 0-23-10-23-23Zm0 76c0-13 10-23 23-23h78c13 0 23 10 23 23s-10 23-23 23h-78c-13 0-23-10-23-23Z"/>
+  <circle cx="338" cy="340" r="34" fill="#b77422"/>
+</svg>
