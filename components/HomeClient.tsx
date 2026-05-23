@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  FormEvent,
-  KeyboardEvent,
   useEffect,
   useMemo,
   useState,
@@ -60,11 +58,6 @@ type FocusTarget = {
   id: string;
 } | null;
 
-type EditingTarget = {
-  kind: "priority";
-  id: string;
-} | null;
-
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
 };
@@ -89,18 +82,8 @@ const initialState: PlannerState = {
       title: "最重要機能を実装",
       done: false,
     },
-    {
-      id: "priority-2",
-      title: "ユーザー導線を確認",
-      done: false,
-    },
-    {
-      id: "priority-3",
-      title: "公開前チェック",
-      done: false,
-    },
   ],
-  priorityBatchLocked: true,
+  priorityBatchLocked: false,
   timetables: [],
 };
 
@@ -292,16 +275,13 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     },
     goalsByPeriod,
     birthday: typeof value.birthday === "string" ? value.birthday : "",
-    priorities: rawPriorities.slice(0, 3).map((task, index) => ({
+    priorities: rawPriorities.slice(0, 1).map((task, index) => ({
       id: task.id || `priority-${index + 1}`,
       title: task.title || "",
       done: Boolean(task.done),
       projectName: task.projectName || undefined,
     })),
-    priorityBatchLocked:
-      typeof value.priorityBatchLocked === "boolean"
-        ? value.priorityBatchLocked
-        : rawPriorities.length > 0,
+    priorityBatchLocked: false,
     timetables: normalizeTimetables(value.timetables, value.timetable),
   };
 }
@@ -371,9 +351,8 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     initialPlannerValue ? normalizePlanner(initialPlannerValue) : initialState,
   );
   const [isReady, setIsReady] = useState(Boolean(initialPlannerValue));
-  const [priorityTitle, setPriorityTitle] = useState("");
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
-  const [editing, setEditing] = useState<EditingTarget>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -437,8 +416,7 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     return planner.priorities.find((task) => task.id === focusTarget.id) || null;
   }, [focusTarget, planner.priorities]);
 
-  const canAddPriority =
-    !planner.priorityBatchLocked && planner.priorities.length < 3;
+  const primaryPriority = planner.priorities[0] || null;
   const todayTimetable =
     planner.timetables.find((timetable) =>
       timetable.weekdays.includes(todayWeekday),
@@ -523,21 +501,31 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     }));
   }
 
-  function finishEditing(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.nativeEvent.isComposing) return;
-    if (event.key === "Enter" || event.key === "Escape") {
-      event.currentTarget.blur();
-      setEditing(null);
-    }
-  }
+  function updatePrimaryPriorityTitle(value: string) {
+    setPlanner((current) => {
+      const [priority] = current.priorities;
 
-  function updatePriorityTitle(id: string, value: string) {
-    setPlanner((current) => ({
-      ...current,
-      priorities: current.priorities.map((task) =>
-        task.id === id ? { ...task, title: value } : task,
-      ),
-    }));
+      if (!priority) {
+        if (!value.trim()) return current;
+        return {
+          ...current,
+          priorities: [
+            {
+              id: createId("priority"),
+              title: value,
+              done: false,
+            },
+          ],
+          priorityBatchLocked: false,
+        };
+      }
+
+      return {
+        ...current,
+        priorities: [{ ...priority, title: value }],
+        priorityBatchLocked: false,
+      };
+    });
   }
 
   function completePriority(id: string) {
@@ -545,9 +533,8 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
       const priorities = current.priorities.filter((task) => task.id !== id);
       return {
         ...current,
-        priorities,
-        priorityBatchLocked:
-          priorities.length === 0 ? false : current.priorityBatchLocked,
+        priorities: priorities.slice(0, 1),
+        priorityBatchLocked: false,
       };
     });
     if (focusTarget?.id === id) {
@@ -560,32 +547,13 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
       const priorities = current.priorities.filter((task) => task.id !== id);
       return {
         ...current,
-        priorities,
-        priorityBatchLocked:
-          priorities.length === 0 ? false : current.priorityBatchLocked,
+        priorities: priorities.slice(0, 1),
+        priorityBatchLocked: false,
       };
     });
     if (focusTarget?.id === id) {
       setFocusTarget(null);
     }
-  }
-
-  function addPriority(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canAddPriority || !priorityTitle.trim()) return;
-    setPlanner((current) => ({
-      ...current,
-      priorities: [
-        ...current.priorities,
-        {
-          id: createId("priority"),
-          title: priorityTitle.trim(),
-          done: false,
-        },
-      ],
-      priorityBatchLocked: current.priorities.length + 1 >= 3,
-    }));
-    setPriorityTitle("");
   }
 
   function updateTimetableEntryTitle(
@@ -643,10 +611,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   return (
     <main className="shell">
       <header className="topbar">
-        <div className="brand">
-          <span className="brandMark" aria-hidden="true" />
-          <span>Focus Planner</span>
-        </div>
         <div className="headerDateBlock">
           <time className="todayLabel" dateTime={todayLabel}>
             {todayLabel}
@@ -658,25 +622,72 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
             </span>
           )}
         </div>
-        <nav className="topbarNav" aria-label="ナビゲーション">
+        <button
+          className="mobileMenuButton"
+          type="button"
+          onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+          aria-label="メニュー"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="topbar-navigation"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        {isMobileMenuOpen && (
+          <button
+            className="mobileMenuOverlay"
+            type="button"
+            aria-label="メニューを閉じる"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+        <nav
+          className={["topbarNav", isMobileMenuOpen ? "open" : ""]
+            .filter(Boolean)
+            .join(" ")}
+          id="topbar-navigation"
+          aria-label="ナビゲーション"
+        >
           {session?.user && (
             <span className="userBadge">
               {session.user.name || session.user.email || "ログイン中"}
             </span>
           )}
-          <a className="navLink" href="/inbox">
+          <a
+            className="navLink"
+            href="/inbox"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             inbox
           </a>
-          <a className="navLink" href="/roadmap">
+          <a
+            className="navLink"
+            href="/roadmap"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             roadmap
           </a>
-          <a className="navLink" href="/diary">
+          <a
+            className="navLink"
+            href="/diary"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             diary
           </a>
-          <a className="navLink" href="/timetable">
+          <a
+            className="navLink"
+            href="/timetable"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             timetable
           </a>
-          <a className="settingsLink" href="/settings" aria-label="設定">
+          <a
+            className="settingsLink"
+            href="/settings"
+            aria-label="設定"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             ⚙
           </a>
           <SignOutButton className="navLink authNavButton" />
@@ -775,9 +786,68 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
                 </span>
               </div>
               <input
+                className="goalWeekInput"
                 value={planner.goalsByPeriod.week[periodKeys.week] || ""}
                 onChange={(event) => updateGoal("week", event.target.value)}
               />
+
+              <div className="goalPanel priorityGoalPanel">
+                <div className="goalHeading">
+                  <span>今日のタスク</span>
+                </div>
+                <div className="priority prioritySingle">
+                  <button
+                    className="checkButton"
+                    type="button"
+                    onClick={() =>
+                      primaryPriority && completePriority(primaryPriority.id)
+                    }
+                    aria-label={
+                      primaryPriority
+                        ? `${primaryPriority.title}を完了にする`
+                        : "今日のタスクを完了にする"
+                    }
+                    disabled={!primaryPriority}
+                  >
+                    1
+                  </button>
+                  <div className="priorityFields">
+                    <input
+                      aria-label="今日のタスク"
+                      placeholder="今日いちばん進めること"
+                      value={primaryPriority?.title || ""}
+                      onChange={(event) =>
+                        updatePrimaryPriorityTitle(event.target.value)
+                      }
+                    />
+                  </div>
+                  {primaryPriority && (
+                    <div className="priorityActions">
+                      <button
+                        className="focusButton"
+                        type="button"
+                        onClick={() =>
+                          setFocusTarget({
+                            kind: "priority",
+                            id: primaryPriority.id,
+                          })
+                        }
+                        aria-label={`${primaryPriority.title}に集中する`}
+                      >
+                        focus
+                      </button>
+                      <button
+                        className="iconButton"
+                        type="button"
+                        onClick={() => removePriority(primaryPriority.id)}
+                        aria-label={`${primaryPriority.title}を削除`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -836,102 +906,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
       )}
 
       <div className="dailyGrid">
-        <section className="taskArea" aria-label="最優先タスク">
-          <div className="panel priorityPanel">
-            <section className="priorityPrimaryColumn" aria-label="最優先タスク">
-              <div className="priorityList">
-                {planner.priorities.map((task, index) => (
-                  <article
-                    className={[
-                      "priority",
-                      index === 0 ? "priorityFirst" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    key={task.id}
-                  >
-                    <button
-                      className="checkButton"
-                      type="button"
-                      onClick={() => completePriority(task.id)}
-                      aria-label={`${task.title}を完了にする`}
-                    >
-                      {index + 1}
-                    </button>
-                    <div className="priorityFields">
-                      {task.projectName && (
-                        <span className="priorityProjectName">
-                          {task.projectName}
-                        </span>
-                      )}
-                      {editing?.kind === "priority" &&
-                      editing.id === task.id ? (
-                        <input
-                          aria-label={`最優先タスク${index + 1}`}
-                          autoFocus
-                          value={task.title}
-                          onBlur={() => setEditing(null)}
-                          onKeyDown={finishEditing}
-                          onChange={(event) =>
-                            updatePriorityTitle(task.id, event.target.value)
-                          }
-                        />
-                      ) : (
-                        <strong
-                          className="editableTitle"
-                          onDoubleClick={() =>
-                            setEditing({ kind: "priority", id: task.id })
-                          }
-                        >
-                          {task.title || "無題のタスク"}
-                        </strong>
-                      )}
-                    </div>
-                    <button
-                      className="focusButton"
-                      type="button"
-                      onClick={() =>
-                        setFocusTarget({ kind: "priority", id: task.id })
-                      }
-                      aria-label={`${task.title}に集中する`}
-                    >
-                      focus
-                    </button>
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => removePriority(task.id)}
-                      aria-label={`${task.title}を削除`}
-                    >
-                      ×
-                    </button>
-                  </article>
-                ))}
-              </div>
-
-              <form className="taskForm priorityForm" onSubmit={addPriority}>
-                <input
-                  disabled={!canAddPriority}
-                  placeholder={
-                    canAddPriority
-                      ? `最優先タスク ${planner.priorities.length + 1}/3`
-                      : "3つのセットが終わるまで追加できません"
-                  }
-                  value={priorityTitle}
-                  onChange={(event) => setPriorityTitle(event.target.value)}
-                />
-                <button
-                  disabled={!canAddPriority}
-                  type="submit"
-                  aria-label="最優先タスクを追加"
-                >
-                  +
-                </button>
-              </form>
-            </section>
-          </div>
-        </section>
-
         <section className="timetableSummary panel" aria-label="今日の時間割">
           <div className="timetableSummaryHeader">
             <span>今日の時間割</span>

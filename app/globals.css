@@ -42,7 +42,7 @@ button {
 }
 
 .shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(820px, calc(100% - 32px));
   margin: 0 auto;
   padding: 28px 0 40px;
 }
@@ -62,7 +62,7 @@ button {
 
 .topbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 24px;
   min-height: 58px;
@@ -85,7 +85,7 @@ button {
 
 .headerDateBlock {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 3px;
 }
 
@@ -102,6 +102,14 @@ button {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.mobileMenuButton {
+  display: none;
+}
+
+.mobileMenuOverlay {
+  display: none;
 }
 
 .scheduleToggle {
@@ -242,7 +250,7 @@ h2 {
 
 .goalNest {
   display: grid;
-  width: 100%;
+  width: min(760px, 100%);
   justify-self: center;
   margin-bottom: 18px;
 }
@@ -302,11 +310,25 @@ h2 {
   box-shadow: none;
 }
 
-.goalWeekPanel input {
+.goalWeekPanel > .goalWeekInput {
   min-height: 64px;
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
+}
+
+.priorityGoalPanel {
+  grid-column: 1 / -1;
+  margin-left: clamp(10px, 2vw, 22px);
+  border-color: rgba(198, 50, 50, 0.34);
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+  background: #fff8f7;
+  padding: 12px;
+  box-shadow: none;
 }
 
 .goalPanel input {
@@ -453,10 +475,11 @@ select {
 
 .dailyGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+  grid-template-columns: 1fr;
   align-items: start;
   gap: 18px;
-  width: 100%;
+  width: min(760px, 100%);
+  justify-self: center;
   margin-top: 10px;
 }
 
@@ -546,7 +569,8 @@ select {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
-  width: 100%;
+  width: min(760px, 100%);
+  justify-self: center;
   margin-bottom: 18px;
   border: 1px solid rgba(183, 116, 34, 0.45);
   border-radius: 8px;
@@ -781,8 +805,22 @@ select {
 }
 
 .priority {
-  grid-template-columns: 42px minmax(0, 1fr) 76px 42px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   min-height: 66px;
+}
+
+.prioritySingle {
+  border-color: rgba(198, 50, 50, 0.28);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.priorityActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
 }
 
 .focusButton {
@@ -800,6 +838,12 @@ select {
 
 .priority:hover .focusButton,
 .priority:focus-within .focusButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.priority:hover .priorityActions,
+.priority:focus-within .priorityActions {
   opacity: 1;
   pointer-events: auto;
 }
@@ -856,6 +900,12 @@ select {
   font-weight: 800;
 }
 
+.prioritySingle input {
+  min-height: 42px;
+  font-size: 1rem;
+  text-align: left;
+}
+
 .priority .mutedInput {
   color: var(--muted);
   font-weight: 500;
@@ -870,6 +920,11 @@ select {
   background: #e8eee9;
   color: var(--accent-strong);
   font-weight: 900;
+}
+
+.checkButton:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .done {
@@ -2911,18 +2966,94 @@ select {
   }
 
   .topbar {
-    grid-template-columns: 1fr;
-    justify-items: start;
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    justify-items: stretch;
+    align-items: center;
     gap: 8px;
   }
 
   .headerDateBlock {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
     justify-items: start;
   }
 
+  .mobileMenuButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    justify-self: end;
+    position: relative;
+    z-index: 32;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.86);
+    padding: 0;
+  }
+
+  .mobileMenuButton span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+  }
+
   .topbarNav {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 31;
+    display: none;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+    padding: 8px;
     justify-self: start;
-    justify-content: flex-start;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .mobileMenuOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    border: 0;
+    border-radius: 0;
+    background: rgba(23, 32, 28, 0.34);
+    padding: 0;
+  }
+
+  .topbarNav.open {
+    display: flex;
+  }
+
+  .topbarNav .navLink,
+  .topbarNav .settingsLink {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .topbarNav .settingsLink {
+    min-height: 38px;
+  }
+
+  .topbarNav .userBadge {
+    max-width: 100%;
+    padding: 4px 6px;
   }
 
   .schedulePageHeader {
@@ -3102,18 +3233,24 @@ select {
     grid-template-columns: 42px minmax(0, 1fr);
   }
 
-  .priority .focusButton {
+  .priorityActions {
     grid-column: 2 / 3;
+    max-height: 0;
+    overflow: hidden;
+  }
+
+  .priority:hover .priorityActions,
+  .priority:focus-within .priorityActions {
+    max-height: 42px;
+    margin-top: 2px;
+  }
+
+  .priority .focusButton {
     width: 84px;
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .priority .iconButton {
-    grid-column: 2 / 3;
     width: 42px;
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .choreItem {
