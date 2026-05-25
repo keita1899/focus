@@ -1,0 +1,247 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+type Note = {
+  id: string;
+  title: string;
+  markdown: string;
+  updatedAt: string;
+};
+
+type NotesClientProps = {
+  initialValue: unknown;
+};
+
+const storageKey = "simple-notes-v1";
+const defaultMarkdown = `# 新しいメモ
+
+- 
+`;
+
+function createNoteId() {
+  return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createNote(title = "新しいメモ"): Note {
+  return {
+    id: createNoteId(),
+    title,
+    markdown: defaultMarkdown,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeNotes(value: unknown): Note[] {
+  if (typeof value === "string") {
+    try {
+      return normalizeNotes(JSON.parse(value) as unknown);
+    } catch {
+      return [createNote()];
+    }
+  }
+
+  if (!Array.isArray(value)) {
+    return [createNote()];
+  }
+
+  const notes = value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const note = item as Partial<Note>;
+      return {
+        id: typeof note.id === "string" ? note.id : `note-${index + 1}`,
+        title:
+          typeof note.title === "string" && note.title.trim()
+            ? note.title
+            : "無題のメモ",
+        markdown:
+          typeof note.markdown === "string" ? note.markdown : defaultMarkdown,
+        updatedAt:
+          typeof note.updatedAt === "string"
+            ? note.updatedAt
+            : new Date().toISOString(),
+      };
+    })
+    .filter((note): note is Note => Boolean(note));
+
+  return notes.length > 0 ? notes : [createNote()];
+}
+
+function formatUpdatedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export default function NotesClient({ initialValue }: NotesClientProps) {
+  const [notes, setNotes] = useState<Note[]>(() => normalizeNotes(initialValue));
+  const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
+  const [isReady, setIsReady] = useState(initialValue !== null);
+
+  const activeNote = useMemo(
+    () => notes.find((note) => note.id === activeNoteId) || notes[0],
+    [activeNoteId, notes],
+  );
+
+  useEffect(() => {
+    if (initialValue !== null) return;
+
+    async function loadNotes() {
+      try {
+        const response = await fetch("/api/notes", { cache: "no-store" });
+        const data = (await response.json()) as { value: unknown };
+        if (data.value) {
+          const loadedNotes = normalizeNotes(data.value);
+          setNotes(loadedNotes);
+          setActiveNoteId(loadedNotes[0]?.id || "");
+          return;
+        }
+
+        const stored = window.localStorage.getItem(storageKey);
+        if (!stored) return;
+
+        const loadedNotes = normalizeNotes(JSON.parse(stored));
+        setNotes(loadedNotes);
+        setActiveNoteId(loadedNotes[0]?.id || "");
+        await fetch("/api/notes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(loadedNotes),
+        });
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        const stored = window.localStorage.getItem(storageKey);
+        if (!stored) return;
+        try {
+          const loadedNotes = normalizeNotes(JSON.parse(stored));
+          setNotes(loadedNotes);
+          setActiveNoteId(loadedNotes[0]?.id || "");
+        } catch {
+          setNotes([createNote()]);
+        }
+      }
+    }
+
+    loadNotes().finally(() => setIsReady(true));
+  }, [initialValue]);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    fetch("/api/notes", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(notes),
+    }).catch(() => undefined);
+  }, [isReady, notes]);
+
+  function updateActiveNote(value: Partial<Pick<Note, "title" | "markdown">>) {
+    if (!activeNote) return;
+
+    setNotes((current) =>
+      current.map((note) =>
+        note.id === activeNote.id
+          ? { ...note, ...value, updatedAt: new Date().toISOString() }
+          : note,
+      ),
+    );
+  }
+
+  function addNote() {
+    const note = createNote();
+    setNotes((current) => [note, ...current]);
+    setActiveNoteId(note.id);
+  }
+
+  function deleteActiveNote() {
+    if (!activeNote) return;
+
+    setNotes((current) => {
+      const nextNotes = current.filter((note) => note.id !== activeNote.id);
+      const normalizedNotes = nextNotes.length > 0 ? nextNotes : [createNote()];
+      setActiveNoteId(normalizedNotes[0].id);
+      return normalizedNotes;
+    });
+  }
+
+  return (
+    <main className="shell notesPage">
+      <section className="notesHeader" aria-label="メモ">
+        <div>
+          <a className="backLink" href="/">
+            ← メイン
+          </a>
+          <h1>Notes</h1>
+        </div>
+        <button className="notesAddButton" type="button" onClick={addNote}>
+          追加
+        </button>
+      </section>
+
+      <section className="notesWorkspace" aria-label="メモ一覧と編集">
+        <aside className="notesSidebar" aria-label="メモ一覧">
+          {notes.map((note) => (
+            <button
+              className={note.id === activeNote?.id ? "active" : ""}
+              key={note.id}
+              type="button"
+              onClick={() => setActiveNoteId(note.id)}
+            >
+              <strong>{note.title || "無題のメモ"}</strong>
+              <span>{formatUpdatedAt(note.updatedAt)}</span>
+            </button>
+          ))}
+        </aside>
+
+        <section className="notesEditorPanel" aria-label="メモ編集">
+          {activeNote && (
+            <>
+              <div className="notesEditorHeader">
+                <input
+                  aria-label="メモタイトル"
+                  value={activeNote.title}
+                  onChange={(event) =>
+                    updateActiveNote({ title: event.target.value })
+                  }
+                />
+                <button
+                  className="memoDeleteButton"
+                  type="button"
+                  onClick={deleteActiveNote}
+                  aria-label={`${activeNote.title || "メモ"}を削除`}
+                  title="削除"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="notesEditorGrid">
+                <textarea
+                  aria-label="メモ本文"
+                  value={activeNote.markdown}
+                  onChange={(event) =>
+                    updateActiveNote({ markdown: event.target.value })
+                  }
+                />
+                <article className="notesPreview" aria-label="プレビュー">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {activeNote.markdown || " "}
+                  </ReactMarkdown>
+                </article>
+              </div>
+            </>
+          )}
+        </section>
+      </section>
+    </main>
+  );
+}

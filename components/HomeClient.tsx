@@ -352,7 +352,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   );
   const [isReady, setIsReady] = useState(Boolean(initialPlannerValue));
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -622,75 +621,33 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
             </span>
           )}
         </div>
-        <button
-          className="mobileMenuButton"
-          type="button"
-          onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
-          aria-label="メニュー"
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="topbar-navigation"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        {isMobileMenuOpen && (
-          <button
-            className="mobileMenuOverlay"
-            type="button"
-            aria-label="メニューを閉じる"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-        <nav
-          className={["topbarNav", isMobileMenuOpen ? "open" : ""]
-            .filter(Boolean)
-            .join(" ")}
-          id="topbar-navigation"
-          aria-label="ナビゲーション"
-        >
+        <div className="topbarAuth">
           {session?.user && (
             <span className="userBadge">
               {session.user.name || session.user.email || "ログイン中"}
             </span>
           )}
-          <a
-            className="navLink"
-            href="/inbox"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            inbox
-          </a>
-          <a
-            className="navLink"
-            href="/roadmap"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            roadmap
-          </a>
-          <a
-            className="navLink"
-            href="/diary"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            diary
-          </a>
-          <a
-            className="navLink"
-            href="/timetable"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            timetable
-          </a>
-          <a
-            className="settingsLink"
-            href="/settings"
-            aria-label="設定"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
+          <a className="settingsLink" href="/settings" aria-label="設定">
             ⚙
           </a>
           <SignOutButton className="navLink authNavButton" />
+        </div>
+        <nav className="topbarNav" aria-label="ナビゲーション">
+          <a className="navLink" href="/inbox">
+            inbox
+          </a>
+          <a className="navLink" href="/roadmap">
+            roadmap
+          </a>
+          <a className="navLink" href="/notes">
+            notes
+          </a>
+          <a className="navLink" href="/diary">
+            diary
+          </a>
+          <a className="navLink" href="/timetable">
+            timetable
+          </a>
         </nav>
       </header>
 

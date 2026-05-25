@@ -6,6 +6,6 @@ export const proxy = NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icon.svg|maskable-icon.svg).*)",
+    "/((?!api/auth|api/notifications/schedule|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icon.svg|maskable-icon.svg).*)",
   ],
 };
