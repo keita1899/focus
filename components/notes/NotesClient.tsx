@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -156,6 +156,58 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     );
   }
 
+  function handleMarkdownKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!activeNote || event.nativeEvent.isComposing) return;
+    if (event.key !== "Enter") return;
+
+    const markdown = activeNote.markdown;
+    const textarea = event.currentTarget;
+    const cursorStart = textarea.selectionStart;
+    const cursorEnd = textarea.selectionEnd;
+    const lineStart = markdown.lastIndexOf("\n", cursorStart - 1) + 1;
+    const currentLine = markdown.slice(lineStart, cursorStart);
+
+    const emptyListMatch = currentLine.match(
+      /^(\s*)([-*+]|\d+\.|[-*+]\s+\[(?: |x|X)\])\s*$/,
+    );
+
+    if (emptyListMatch) {
+      event.preventDefault();
+      const nextMarkdown =
+        markdown.slice(0, lineStart) + markdown.slice(cursorEnd);
+      updateActiveNote({ markdown: nextMarkdown });
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(lineStart, lineStart);
+      });
+      return;
+    }
+
+    const checklistMatch = currentLine.match(/^(\s*)[-*+]\s+\[( |x|X)\]\s+.+$/);
+    const unorderedMatch = currentLine.match(/^(\s*)([-*+])\s+.+$/);
+    const orderedMatch = currentLine.match(/^(\s*)(\d+)\.\s+.+$/);
+    let nextPrefix = "";
+
+    if (checklistMatch) {
+      nextPrefix = `${checklistMatch[1]}- [ ] `;
+    } else if (orderedMatch) {
+      nextPrefix = `${orderedMatch[1]}${Number(orderedMatch[2]) + 1}. `;
+    } else if (unorderedMatch) {
+      nextPrefix = `${unorderedMatch[1]}${unorderedMatch[2]} `;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const insertion = `\n${nextPrefix}`;
+    const nextMarkdown =
+      markdown.slice(0, cursorStart) + insertion + markdown.slice(cursorEnd);
+    const nextCursor = cursorStart + insertion.length;
+    updateActiveNote({ markdown: nextMarkdown });
+    requestAnimationFrame(() => {
+      textarea.setSelectionRange(nextCursor, nextCursor);
+    });
+  }
+
   function addNote() {
     const note = createNote();
     setNotes((current) => [note, ...current]);
@@ -228,6 +280,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 <textarea
                   aria-label="メモ本文"
                   value={activeNote.markdown}
+                  onKeyDown={handleMarkdownKeyDown}
                   onChange={(event) =>
                     updateActiveNote({ markdown: event.target.value })
                   }
