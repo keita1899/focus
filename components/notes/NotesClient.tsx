@@ -5,6 +5,7 @@ import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import {
   ChecklistItem,
   MarkdownPreview,
+  normalizeOrderedListAfterDeletion,
   normalizeOrderedListAt,
 } from "../MarkdownMemoClient";
 
@@ -207,10 +208,11 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
           event.shiftKey ? line.replace(/^ {1,4}/, "") : `    ${line}`,
         );
         const nextBlock = updatedLines.join("\n");
-        const nextMarkdown =
+        let nextMarkdown =
           markdown.slice(0, selectionStartLine) +
           nextBlock +
           markdown.slice(selectionEndLineEnd);
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, selectionStartLine);
         const cursorDelta = nextBlock.length - selectedBlock.length;
         updateActiveNote({ markdown: nextMarkdown });
         requestAnimationFrame(() => {
@@ -227,8 +229,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         const nextLine = line.replace(/^ {1,4}/, "");
         const removed = line.length - nextLine.length;
         if (removed === 0) return;
-        const nextMarkdown =
+        let nextMarkdown =
           markdown.slice(0, lineStart) + nextLine + markdown.slice(lineEnd);
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, lineStart);
         const nextCursor = Math.max(lineStart, cursorStart - removed);
         updateActiveNote({ markdown: nextMarkdown });
         requestAnimationFrame(() => {
@@ -238,11 +241,12 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       }
 
       const insertion = "    ";
-      const nextMarkdown =
+      let nextMarkdown =
         markdown.slice(0, lineStart) +
         insertion +
         markdown.slice(lineStart);
       const nextCursor = cursorStart + insertion.length;
+      nextMarkdown = normalizeOrderedListAt(nextMarkdown, nextCursor);
       updateActiveNote({ markdown: nextMarkdown });
       requestAnimationFrame(() => {
         textarea.setSelectionRange(nextCursor, nextCursor);
@@ -409,7 +413,13 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   onKeyDown={handleMarkdownKeyDown}
                   onChange={(event) => {
                     resizeMemoTextarea(event.currentTarget, true);
-                    updateActiveNote({ markdown: event.target.value });
+                    updateActiveNote({
+                      markdown: normalizeOrderedListAfterDeletion(
+                        activeNote.markdown,
+                        event.target.value,
+                        event.currentTarget.selectionStart,
+                      ),
+                    });
                   }}
                 />
                 <article className="notesPreview" aria-label="プレビュー">

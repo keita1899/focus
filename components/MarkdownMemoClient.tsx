@@ -70,6 +70,11 @@ function getOrderedListLine(line: string): OrderedListLine | null {
   };
 }
 
+function getListLineIndentWidth(line: string) {
+  const match = line.match(/^(\s*)(?:[-*+]|\d+\.)\s+/);
+  return match ? getIndentWidth(match[1]) : null;
+}
+
 function findLineIndexAt(markdown: string, position: number) {
   const safePosition = Math.max(0, Math.min(position, markdown.length));
   return markdown.slice(0, safePosition).split("\n").length - 1;
@@ -120,27 +125,51 @@ export function normalizeOrderedListAt(markdown: string, position: number) {
     listEnd += 1;
   }
 
-  let nextNumber =
-    getOrderedListLine(lines.slice(listStart, listEnd + 1).find((line) => {
-      const orderedLine = getOrderedListLine(line);
-      return orderedLine?.indentWidth === targetLine.indentWidth;
-    }) || "")?.number || 1;
+  const nextNumbers = new Map<number, number>();
 
   const nextLines = lines.map((line, index) => {
     if (index < listStart || index > listEnd) return line;
     const orderedLine = getOrderedListLine(line);
-    if (orderedLine?.indentWidth !== targetLine.indentWidth) return line;
+    const listLineIndentWidth = getListLineIndentWidth(line);
+
+    if (!orderedLine) {
+      if (listLineIndentWidth !== null) {
+        [...nextNumbers.keys()].forEach((indentWidth) => {
+          if (indentWidth >= listLineIndentWidth) {
+            nextNumbers.delete(indentWidth);
+          }
+        });
+      }
+      return line;
+    }
+
+    [...nextNumbers.keys()].forEach((indentWidth) => {
+      if (indentWidth > orderedLine.indentWidth) {
+        nextNumbers.delete(indentWidth);
+      }
+    });
+
+    const nextNumber = nextNumbers.get(orderedLine.indentWidth) || 1;
+    nextNumbers.set(orderedLine.indentWidth, nextNumber + 1);
 
     const renumberedLine = line.replace(
       /^(\s*)\d+(\.\s+)/,
       (_match, indent: string, markerEnd: string) =>
         `${indent}${nextNumber}${markerEnd}`,
     );
-    nextNumber += 1;
     return renumberedLine;
   });
 
   return nextLines.join("\n");
+}
+
+export function normalizeOrderedListAfterDeletion(
+  previousMarkdown: string,
+  nextMarkdown: string,
+  cursorPosition: number,
+) {
+  if (nextMarkdown.length >= previousMarkdown.length) return nextMarkdown;
+  return normalizeOrderedListAt(nextMarkdown, cursorPosition);
 }
 
 function createRoadmapBlock(
@@ -757,10 +786,11 @@ export function MarkdownMemoPage({
           event.shiftKey ? line.replace(/^ {1,4}/, "") : `    ${line}`,
         );
         const nextBlock = updatedLines.join("\n");
-        const nextMarkdown =
+        let nextMarkdown =
           markdown.slice(0, selectionStartLine) +
           nextBlock +
           markdown.slice(selectionEndLineEnd);
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, selectionStartLine);
         const cursorDelta = nextBlock.length - selectedBlock.length;
         updateRoadmapMarkdown(blockId, nextMarkdown);
         requestAnimationFrame(() => {
@@ -777,8 +807,9 @@ export function MarkdownMemoPage({
         const nextLine = line.replace(/^ {1,4}/, "");
         const removed = line.length - nextLine.length;
         if (removed === 0) return;
-        const nextMarkdown =
+        let nextMarkdown =
           markdown.slice(0, lineStart) + nextLine + markdown.slice(lineEnd);
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, lineStart);
         const nextCursor = Math.max(lineStart, cursorStart - removed);
         updateRoadmapMarkdown(blockId, nextMarkdown);
         requestAnimationFrame(() => {
@@ -788,11 +819,12 @@ export function MarkdownMemoPage({
       }
 
       const insertion = "    ";
-      const nextMarkdown =
+      let nextMarkdown =
         markdown.slice(0, lineStart) +
         insertion +
         markdown.slice(lineStart);
       const nextCursor = cursorStart + insertion.length;
+      nextMarkdown = normalizeOrderedListAt(nextMarkdown, nextCursor);
       updateRoadmapMarkdown(blockId, nextMarkdown);
       requestAnimationFrame(() => {
         textarea.setSelectionRange(nextCursor, nextCursor);
@@ -941,7 +973,14 @@ export function MarkdownMemoPage({
                     }
                     onChange={(event) => {
                       resizeMemoTextarea(event.currentTarget, true);
-                      updateRoadmapMarkdown(block.id, event.target.value);
+                      updateRoadmapMarkdown(
+                        block.id,
+                        normalizeOrderedListAfterDeletion(
+                          block.markdown,
+                          event.target.value,
+                          event.currentTarget.selectionStart,
+                        ),
+                      );
                     }}
                   />
                 </div>
