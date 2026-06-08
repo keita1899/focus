@@ -1,8 +1,11 @@
 "use client";
 
 import { KeyboardEvent, useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+
+import {
+  ChecklistItem,
+  MarkdownPreview,
+} from "../MarkdownMemoClient";
 
 type Note = {
   id: string;
@@ -141,8 +144,29 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(notes),
-    }).catch(() => undefined);
+      }).catch(() => undefined);
   }, [isReady, notes]);
+
+  function resizeMemoTextarea(
+    textarea: HTMLTextAreaElement | null,
+    preserveScroll = false,
+  ) {
+    if (!textarea) return;
+    const scrollY = window.scrollY;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+    if (preserveScroll) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY });
+      });
+    }
+  }
+
+  useEffect(() => {
+    document
+      .querySelectorAll<HTMLTextAreaElement>(".notesEditorGrid textarea")
+      .forEach((textarea) => resizeMemoTextarea(textarea));
+  }, [notes]);
 
   function updateActiveNote(value: Partial<Pick<Note, "title" | "markdown">>) {
     if (!activeNote) return;
@@ -158,14 +182,74 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
   function handleMarkdownKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (!activeNote || event.nativeEvent.isComposing) return;
-    if (event.key !== "Enter") return;
-
     const markdown = activeNote.markdown;
     const textarea = event.currentTarget;
     const cursorStart = textarea.selectionStart;
     const cursorEnd = textarea.selectionEnd;
     const lineStart = markdown.lastIndexOf("\n", cursorStart - 1) + 1;
+    const lineEndIndex = markdown.indexOf("\n", cursorStart);
+    const lineEnd = lineEndIndex === -1 ? markdown.length : lineEndIndex;
     const currentLine = markdown.slice(lineStart, cursorStart);
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const selectionStartLine = markdown.lastIndexOf("\n", cursorStart - 1) + 1;
+      const selectionEndLineEndIndex = markdown.indexOf("\n", cursorEnd);
+      const selectionEndLineEnd =
+        selectionEndLineEndIndex === -1 ? markdown.length : selectionEndLineEndIndex;
+      const selectedBlock = markdown.slice(selectionStartLine, selectionEndLineEnd);
+      const lines = selectedBlock.split("\n");
+      const shouldHandleBlock = cursorStart !== cursorEnd || lines.length > 1;
+
+      if (shouldHandleBlock) {
+        const updatedLines = lines.map((line) =>
+          event.shiftKey ? line.replace(/^ {1,4}/, "") : `    ${line}`,
+        );
+        const nextBlock = updatedLines.join("\n");
+        const nextMarkdown =
+          markdown.slice(0, selectionStartLine) +
+          nextBlock +
+          markdown.slice(selectionEndLineEnd);
+        const cursorDelta = nextBlock.length - selectedBlock.length;
+        updateActiveNote({ markdown: nextMarkdown });
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(
+            Math.max(selectionStartLine, cursorStart + (event.shiftKey ? 0 : 4)),
+            Math.max(selectionStartLine, cursorEnd + cursorDelta),
+          );
+        });
+        return;
+      }
+
+      if (event.shiftKey) {
+        const line = markdown.slice(lineStart, lineEnd);
+        const nextLine = line.replace(/^ {1,4}/, "");
+        const removed = line.length - nextLine.length;
+        if (removed === 0) return;
+        const nextMarkdown =
+          markdown.slice(0, lineStart) + nextLine + markdown.slice(lineEnd);
+        const nextCursor = Math.max(lineStart, cursorStart - removed);
+        updateActiveNote({ markdown: nextMarkdown });
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(nextCursor, nextCursor);
+        });
+        return;
+      }
+
+      const insertion = "    ";
+      const nextMarkdown =
+        markdown.slice(0, lineStart) +
+        insertion +
+        markdown.slice(lineStart);
+      const nextCursor = cursorStart + insertion.length;
+      updateActiveNote({ markdown: nextMarkdown });
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(nextCursor, nextCursor);
+      });
+      return;
+    }
+
+    if (event.key !== "Enter") return;
 
     const emptyListMatch = currentLine.match(
       /^(\s*)([-*+]|\d+\.|[-*+]\s+\[(?: |x|X)\])\s*$/,
@@ -205,6 +289,35 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     updateActiveNote({ markdown: nextMarkdown });
     requestAnimationFrame(() => {
       textarea.setSelectionRange(nextCursor, nextCursor);
+    });
+  }
+
+  function toggleChecklist(item: ChecklistItem) {
+    if (!activeNote || item.lineNumber < 1) return;
+
+    const lineNumbers = new Set<number>();
+
+    function collectLineNumbers(target: ChecklistItem) {
+      lineNumbers.add(target.lineNumber);
+      target.children.forEach(collectLineNumbers);
+    }
+
+    collectLineNumbers(item);
+    const nextChecked = !item.checked;
+
+    updateActiveNote({
+      markdown: activeNote.markdown
+        .split("\n")
+        .map((line, index) => {
+          if (!lineNumbers.has(index + 1)) return line;
+          if (!/^\s*[-*+]\s+\[( |x|X)\]\s+/.test(line)) return line;
+          return line.replace(
+            /^(\s*[-*+]\s+\[)( |x|X)(\]\s+)/,
+            (_match, start: string, _marker: string, end: string) =>
+              `${start}${nextChecked ? "x" : " "}${end}`,
+          );
+        })
+        .join("\n"),
     });
   }
 
@@ -279,16 +392,19 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
               <div className="notesEditorGrid">
                 <textarea
                   aria-label="メモ本文"
+                  ref={resizeMemoTextarea}
                   value={activeNote.markdown}
                   onKeyDown={handleMarkdownKeyDown}
-                  onChange={(event) =>
-                    updateActiveNote({ markdown: event.target.value })
-                  }
+                  onChange={(event) => {
+                    resizeMemoTextarea(event.currentTarget, true);
+                    updateActiveNote({ markdown: event.target.value });
+                  }}
                 />
                 <article className="notesPreview" aria-label="プレビュー">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {activeNote.markdown || " "}
-                  </ReactMarkdown>
+                  <MarkdownPreview
+                    markdown={activeNote.markdown}
+                    onToggleChecklist={toggleChecklist}
+                  />
                 </article>
               </div>
             </>

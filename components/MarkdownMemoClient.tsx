@@ -870,3 +870,5 @@ export function MarkdownMemoPage({
 }
 
 export { defaultMemoMarkdown, memoStorageKey };
+export type { ChecklistItem };
+export { MarkdownPreview };
