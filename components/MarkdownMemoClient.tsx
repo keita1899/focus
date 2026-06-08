@@ -35,6 +35,10 @@ type ChecklistItem = {
   lineNumber: number;
   text: string;
 };
+type OrderedListLine = {
+  indentWidth: number;
+  number: number;
+};
 
 const memoStorageKey = "roadmap-markdown-v1";
 const defaultMemoMarkdown = `# ロードマップ
@@ -50,6 +54,93 @@ const viewModes: { key: RoadmapViewMode; icon: string; label: string }[] = [
 
 function createRoadmapId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function getIndentWidth(value: string) {
+  return value.replace(/\t/g, "    ").length;
+}
+
+function getOrderedListLine(line: string): OrderedListLine | null {
+  const match = line.match(/^(\s*)(\d+)\.\s+/);
+  if (!match) return null;
+
+  return {
+    indentWidth: getIndentWidth(match[1]),
+    number: Number(match[2]),
+  };
+}
+
+function findLineIndexAt(markdown: string, position: number) {
+  const safePosition = Math.max(0, Math.min(position, markdown.length));
+  return markdown.slice(0, safePosition).split("\n").length - 1;
+}
+
+function canStayInOrderedList(line: string, targetIndentWidth: number) {
+  if (!line.trim()) return false;
+  const orderedLine = getOrderedListLine(line);
+  if (orderedLine) {
+    return orderedLine.indentWidth >= targetIndentWidth;
+  }
+  const indentMatch = line.match(/^(\s*)/);
+  const indentWidth = getIndentWidth(indentMatch?.[1] || "");
+  return indentWidth > targetIndentWidth;
+}
+
+export function normalizeOrderedListAt(markdown: string, position: number) {
+  const lines = markdown.split("\n");
+  const initialLineIndex = findLineIndexAt(markdown, position);
+  let targetLineIndex = initialLineIndex;
+  let targetLine = getOrderedListLine(lines[targetLineIndex] || "");
+
+  if (!targetLine) {
+    targetLineIndex = initialLineIndex - 1;
+    targetLine = getOrderedListLine(lines[targetLineIndex] || "");
+  }
+
+  if (!targetLine) {
+    targetLineIndex = initialLineIndex + 1;
+    targetLine = getOrderedListLine(lines[targetLineIndex] || "");
+  }
+
+  if (!targetLine) return markdown;
+
+  let listStart = targetLineIndex;
+  while (
+    listStart > 0 &&
+    canStayInOrderedList(lines[listStart - 1], targetLine.indentWidth)
+  ) {
+    listStart -= 1;
+  }
+
+  let listEnd = targetLineIndex;
+  while (
+    listEnd + 1 < lines.length &&
+    canStayInOrderedList(lines[listEnd + 1], targetLine.indentWidth)
+  ) {
+    listEnd += 1;
+  }
+
+  let nextNumber =
+    getOrderedListLine(lines.slice(listStart, listEnd + 1).find((line) => {
+      const orderedLine = getOrderedListLine(line);
+      return orderedLine?.indentWidth === targetLine.indentWidth;
+    }) || "")?.number || 1;
+
+  const nextLines = lines.map((line, index) => {
+    if (index < listStart || index > listEnd) return line;
+    const orderedLine = getOrderedListLine(line);
+    if (orderedLine?.indentWidth !== targetLine.indentWidth) return line;
+
+    const renumberedLine = line.replace(
+      /^(\s*)\d+(\.\s+)/,
+      (_match, indent: string, markerEnd: string) =>
+        `${indent}${nextNumber}${markerEnd}`,
+    );
+    nextNumber += 1;
+    return renumberedLine;
+  });
+
+  return nextLines.join("\n");
 }
 
 function createRoadmapBlock(
@@ -717,8 +808,16 @@ export function MarkdownMemoPage({
 
     if (emptyListMatch) {
       event.preventDefault();
-      const nextMarkdown =
-        markdown.slice(0, lineStart) + markdown.slice(cursorEnd);
+      const isEmptyOrderedListItem = /^\s*\d+\.\s*$/.test(currentLine);
+      const removalEnd =
+        isEmptyOrderedListItem && markdown[cursorEnd] === "\n"
+          ? cursorEnd + 1
+          : cursorEnd;
+      let nextMarkdown =
+        markdown.slice(0, lineStart) + markdown.slice(removalEnd);
+      if (isEmptyOrderedListItem) {
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, lineStart);
+      }
       updateRoadmapMarkdown(blockId, nextMarkdown);
       requestAnimationFrame(() => {
         textarea.setSelectionRange(lineStart, lineStart);
@@ -743,9 +842,12 @@ export function MarkdownMemoPage({
 
     event.preventDefault();
     const insertion = `\n${nextPrefix}`;
-    const nextMarkdown =
+    let nextMarkdown =
       markdown.slice(0, cursorStart) + insertion + markdown.slice(cursorEnd);
     const nextCursor = cursorStart + insertion.length;
+    if (orderedMatch) {
+      nextMarkdown = normalizeOrderedListAt(nextMarkdown, nextCursor);
+    }
     updateRoadmapMarkdown(blockId, nextMarkdown);
     requestAnimationFrame(() => {
       textarea.setSelectionRange(nextCursor, nextCursor);

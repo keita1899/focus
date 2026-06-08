@@ -5,6 +5,7 @@ import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import {
   ChecklistItem,
   MarkdownPreview,
+  normalizeOrderedListAt,
 } from "../MarkdownMemoClient";
 
 type Note = {
@@ -257,8 +258,16 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
     if (emptyListMatch) {
       event.preventDefault();
-      const nextMarkdown =
-        markdown.slice(0, lineStart) + markdown.slice(cursorEnd);
+      const isEmptyOrderedListItem = /^\s*\d+\.\s*$/.test(currentLine);
+      const removalEnd =
+        isEmptyOrderedListItem && markdown[cursorEnd] === "\n"
+          ? cursorEnd + 1
+          : cursorEnd;
+      let nextMarkdown =
+        markdown.slice(0, lineStart) + markdown.slice(removalEnd);
+      if (isEmptyOrderedListItem) {
+        nextMarkdown = normalizeOrderedListAt(nextMarkdown, lineStart);
+      }
       updateActiveNote({ markdown: nextMarkdown });
       requestAnimationFrame(() => {
         textarea.setSelectionRange(lineStart, lineStart);
@@ -283,9 +292,12 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
     event.preventDefault();
     const insertion = `\n${nextPrefix}`;
-    const nextMarkdown =
+    let nextMarkdown =
       markdown.slice(0, cursorStart) + insertion + markdown.slice(cursorEnd);
     const nextCursor = cursorStart + insertion.length;
+    if (orderedMatch) {
+      nextMarkdown = normalizeOrderedListAt(nextMarkdown, nextCursor);
+    }
     updateActiveNote({ markdown: nextMarkdown });
     requestAnimationFrame(() => {
       textarea.setSelectionRange(nextCursor, nextCursor);
