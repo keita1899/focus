@@ -93,7 +93,7 @@ export async function GET(request: Request) {
       .filter((entry) => {
         if (!entry.id || !entry.time) return false;
         const entryMinutes = timeToMinutes(entry.time);
-        return entryMinutes >= nowMinutes && entryMinutes < nowMinutes + windowMinutes;
+        return entryMinutes <= nowMinutes && entryMinutes > nowMinutes - windowMinutes;
       });
 
     if (todaysEntries.length === 0) continue;

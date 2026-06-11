@@ -218,6 +218,7 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
       const response = await fetch("/api/push/test", { method: "POST" });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
+        sent?: number;
       };
       if (!response.ok) {
         if (response.status === 401) {
@@ -240,7 +241,20 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
         );
         return;
       }
-      setPushStatus("テスト通知を送信しました。");
+      if (document.visibilityState === "visible") {
+        const registration = await navigator.serviceWorker.ready;
+        await registration
+          .showNotification("Focus Planner", {
+            body: "Push通知のテストです。",
+            icon: "/icon.svg",
+            badge: "/maskable-icon.svg",
+            data: { url: "/" },
+          })
+          .catch(() => undefined);
+      }
+      setPushStatus(
+        `テスト通知を送信しました。送信先: ${data.sent ?? 1}件`,
+      );
     } catch {
       setPushStatus("テスト通知の送信に失敗しました。");
     }

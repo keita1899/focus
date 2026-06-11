@@ -50,7 +50,12 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  const payload = event.data?.json() || {};
+  let payload = {};
+  try {
+    payload = event.data?.json() || {};
+  } catch {
+    payload = {};
+  }
   const title = payload.title || "Focus Planner";
   const options = {
     body: payload.body || "",
