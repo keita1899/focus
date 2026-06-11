@@ -101,10 +101,32 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
 
     if (!supported) return;
 
-    fetch("/api/push/subscriptions", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data: { enabled?: boolean }) => setPushEnabled(Boolean(data.enabled)))
-      .catch(() => undefined);
+    async function syncPushState() {
+      try {
+        const [response, registration] = await Promise.all([
+          fetch("/api/push/subscriptions", { cache: "no-store" }),
+          navigator.serviceWorker.getRegistration(),
+        ]);
+        const data = (await response.json()) as { enabled?: boolean };
+        const subscription = await registration?.pushManager.getSubscription();
+
+        if (subscription && !data.enabled) {
+          const syncResponse = await fetch("/api/push/subscriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(subscription),
+          });
+          setPushEnabled(syncResponse.ok);
+          return;
+        }
+
+        setPushEnabled(Boolean(data.enabled && subscription));
+      } catch {
+        setPushEnabled(false);
+      }
+    }
+
+    syncPushState();
   }, []);
 
   async function enablePush() {
@@ -136,11 +158,17 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
           applicationServerKey: urlBase64ToUint8Array(publicKey),
         }));
 
-      await fetch("/api/push/subscriptions", {
+      const saveResponse = await fetch("/api/push/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription),
       });
+
+      if (!saveResponse.ok) {
+        setPushEnabled(false);
+        setPushStatus("通知の保存に失敗しました。再ログインして試してください。");
+        return;
+      }
 
       setPushEnabled(true);
       setPushStatus("Push通知を有効にしました。");
@@ -173,8 +201,28 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
     try {
       setPushStatus("テスト通知を送信しています...");
       const response = await fetch("/api/push/test", { method: "POST" });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
       if (!response.ok) {
-        setPushStatus("テスト通知の送信に失敗しました。");
+        if (response.status === 401) {
+          setPushStatus("ログインが切れています。再ログインしてください。");
+          return;
+        }
+        if (response.status === 410) {
+          setPushEnabled(false);
+          setPushStatus("通知の登録が古くなっています。もう一度有効化してください。");
+          return;
+        }
+        if (data.error?.includes("VAPID")) {
+          setPushStatus("Push通知の環境変数が本番環境に設定されていません。");
+          return;
+        }
+        setPushStatus(
+          data.error
+            ? `テスト通知の送信に失敗しました: ${data.error}`
+            : "テスト通知の送信に失敗しました。",
+        );
         return;
       }
       setPushStatus("テスト通知を送信しました。");
