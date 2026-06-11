@@ -76,7 +76,14 @@ export async function GET(request: Request) {
     },
   });
 
-  let sent = 0;
+  const summary = {
+    checkedStates: states.length,
+    matchedEntries: 0,
+    usersWithSubscriptions: 0,
+    deliveredEntries: 0,
+    staleSubscriptions: 0,
+    sent: 0,
+  };
 
   for (const state of states) {
     if (!state.userId) continue;
@@ -93,8 +100,10 @@ export async function GET(request: Request) {
       .filter((entry) => {
         if (!entry.id || !entry.time) return false;
         const entryMinutes = timeToMinutes(entry.time);
-        return entryMinutes <= nowMinutes && entryMinutes > nowMinutes - windowMinutes;
+        return entryMinutes <= nowMinutes && entryMinutes >= nowMinutes - windowMinutes;
       });
+
+    summary.matchedEntries += todaysEntries.length;
 
     if (todaysEntries.length === 0) continue;
 
@@ -103,6 +112,7 @@ export async function GET(request: Request) {
     });
 
     if (subscriptions.length === 0) continue;
+    summary.usersWithSubscriptions += 1;
 
     for (const entry of todaysEntries) {
       const deliveryKey = `${dateKey}:${entry.id}:${entry.time}`;
@@ -116,6 +126,7 @@ export async function GET(request: Request) {
         .catch(() => null);
 
       if (!delivery) continue;
+      summary.deliveredEntries += 1;
 
       const title =
         entry.kind === "timetable"
@@ -142,7 +153,8 @@ export async function GET(request: Request) {
         ),
       );
 
-      sent += results.filter((result) => result.status === "fulfilled").length;
+      summary.sent += results.filter((result) => result.status === "fulfilled")
+        .length;
 
       const staleEndpoints = results
         .map((result, index) =>
@@ -155,6 +167,7 @@ export async function GET(request: Request) {
         .filter((endpoint): endpoint is string => Boolean(endpoint));
 
       if (staleEndpoints.length > 0) {
+        summary.staleSubscriptions += staleEndpoints.length;
         await prisma.pushSubscription.deleteMany({
           where: { endpoint: { in: staleEndpoints } },
         });
@@ -162,5 +175,12 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({
+    ok: true,
+    dateKey,
+    time,
+    weekday,
+    windowMinutes,
+    ...summary,
+  });
 }
