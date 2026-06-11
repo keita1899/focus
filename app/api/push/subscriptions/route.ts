@@ -11,6 +11,10 @@ type PushSubscriptionInput = {
   };
 };
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 export async function GET() {
   const userId = await getUserId();
 
@@ -26,45 +30,54 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const userId = await getUserId();
+  try {
+    const userId = await getUserId();
 
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const subscription = (await request.json()) as PushSubscriptionInput;
-  const endpoint =
-    typeof subscription.endpoint === "string" ? subscription.endpoint : "";
-  const p256dh =
-    typeof subscription.keys?.p256dh === "string" ? subscription.keys.p256dh : "";
-  const auth =
-    typeof subscription.keys?.auth === "string" ? subscription.keys.auth : "";
+    const subscription = (await request.json()) as PushSubscriptionInput;
+    const endpoint =
+      typeof subscription.endpoint === "string" ? subscription.endpoint : "";
+    const p256dh =
+      typeof subscription.keys?.p256dh === "string"
+        ? subscription.keys.p256dh
+        : "";
+    const auth =
+      typeof subscription.keys?.auth === "string" ? subscription.keys.auth : "";
 
-  if (!endpoint || !p256dh || !auth) {
+    if (!endpoint || !p256dh || !auth) {
+      return NextResponse.json(
+        { error: "Invalid push subscription" },
+        { status: 400 },
+      );
+    }
+
+    await prisma.pushSubscription.upsert({
+      where: { endpoint },
+      create: {
+        endpoint,
+        p256dh,
+        auth,
+        userAgent: request.headers.get("user-agent"),
+        userId,
+      },
+      update: {
+        p256dh,
+        auth,
+        userAgent: request.headers.get("user-agent"),
+        userId,
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
     return NextResponse.json(
-      { error: "Invalid push subscription" },
-      { status: 400 },
+      { error: getErrorMessage(error) },
+      { status: 500 },
     );
   }
-
-  await prisma.pushSubscription.upsert({
-    where: { endpoint },
-    create: {
-      endpoint,
-      p256dh,
-      auth,
-      userAgent: request.headers.get("user-agent"),
-      userId,
-    },
-    update: {
-      p256dh,
-      auth,
-      userAgent: request.headers.get("user-agent"),
-      userId,
-    },
-  });
-
-  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {

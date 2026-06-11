@@ -163,10 +163,25 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription),
       });
+      const saveData = (await saveResponse.json().catch(() => ({}))) as {
+        error?: string;
+      };
 
       if (!saveResponse.ok) {
         setPushEnabled(false);
-        setPushStatus("通知の保存に失敗しました。再ログインして試してください。");
+        if (saveResponse.status === 401) {
+          setPushStatus("通知の保存に失敗しました。再ログインして試してください。");
+          return;
+        }
+        if (saveResponse.status === 400) {
+          setPushStatus("通知の登録情報を取得できませんでした。通知を一度解除して再度有効化してください。");
+          return;
+        }
+        setPushStatus(
+          saveData.error
+            ? `通知の保存に失敗しました: ${saveData.error}`
+            : "通知の保存に失敗しました。",
+        );
         return;
       }
 
