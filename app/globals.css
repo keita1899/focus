@@ -270,7 +270,7 @@ h2 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .homeDiaryPanel {
@@ -322,7 +322,7 @@ h2 {
   min-height: 420px;
   border: 1px solid var(--line);
   border-right-width: 0;
-  border-radius: 0;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: none;
   padding: 16px;
@@ -333,13 +333,13 @@ h2 {
 }
 
 .homeColumns > .homeColumn:first-child {
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
 }
 
 .homeColumns > .homeColumn:last-child {
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 .homeColumn h2 {
@@ -351,6 +351,11 @@ h2 {
 .goalColumn {
   grid-column: 1 / -1;
   min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
 }
 
 .achievementGroup {
@@ -465,15 +470,7 @@ h2 {
 
 .goalNest {
   display: grid;
-  width: min(760px, 100%);
-  justify-self: center;
-  margin-bottom: 18px;
-}
-
-.goalColumn .goalNest {
   width: 100%;
-  justify-self: stretch;
-  margin-bottom: 0;
 }
 
 .goalPanel,
@@ -582,6 +579,26 @@ h2 {
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
+}
+
+.dailyColumn {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  gap: 12px;
+  min-height: 0;
+}
+
+.dailySectionCard,
+.weeklySection {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: none;
+  padding: 16px;
 }
 
 .priorityGoalPanel {
@@ -1634,14 +1651,6 @@ select {
   color: var(--accent-strong);
   font-size: 0.92rem;
   font-weight: 900;
-}
-
-.weeklySection {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
 }
 
 .weeklyTaskForm {

@@ -1561,8 +1561,9 @@ export default function HomeClient({
           </section>
         </section>
 
-        <section className="homeColumn dailyColumn" aria-label="毎日やることリスト">
-          <h2>毎日やることリスト</h2>
+        <section className="homeColumn dailyColumn" aria-label="日次と週次">
+          <section className="dailySectionCard" aria-label="毎日やることリスト">
+            <h2>毎日やることリスト</h2>
           <form
             className="taskForm"
             onSubmit={(event) => {
@@ -1636,6 +1637,7 @@ export default function HomeClient({
               );
             })}
           </div>
+          </section>
 
           <section className="weeklySection" aria-label="毎週やることリスト">
             <div className="sectionHeader">
