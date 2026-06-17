@@ -562,28 +562,30 @@ export default function HomeClient({
             </span>
           )}
         </div>
-        <div className="topbarAuth">
-          {session?.user && (
-            <span className="userBadge">
-              {session.user.name || session.user.email || "ログイン中"}
-            </span>
-          )}
-          <a className="settingsLink" href="/settings" aria-label="設定">
-            ⚙
-          </a>
-          <SignOutButton className="navLink authNavButton" />
+        <div className="topbarLinks">
+          <nav className="topbarNav" aria-label="ナビゲーション">
+            <a className="navLink" href="/roadmap">
+              roadmap
+            </a>
+            <a className="navLink" href="/notes">
+              notes
+            </a>
+            <a className="navLink" href="/diary">
+              diary
+            </a>
+          </nav>
+          <div className="topbarAuth">
+            {session?.user && (
+              <span className="userBadge">
+                {session.user.name || session.user.email || "ログイン中"}
+              </span>
+            )}
+            <a className="settingsLink" href="/settings" aria-label="設定">
+              ⚙
+            </a>
+            <SignOutButton className="navLink authNavButton" />
+          </div>
         </div>
-        <nav className="topbarNav" aria-label="ナビゲーション">
-          <a className="navLink" href="/roadmap">
-            roadmap
-          </a>
-          <a className="navLink" href="/notes">
-            notes
-          </a>
-          <a className="navLink" href="/diary">
-            diary
-          </a>
-        </nav>
       </header>
 
       <section className="homeColumns" aria-label="今日の管理">
