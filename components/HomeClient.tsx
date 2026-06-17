@@ -29,8 +29,8 @@ type DailyTask = {
 type WeeklyTask = {
   id: string;
   title: string;
-  weekdays: number[];
-  completedSlots: string[];
+  weekday: number;
+  completedWeeks: string[];
 };
 
 type AchievementTask = {
@@ -116,6 +116,10 @@ const initialState: PlannerState = {
 
 function getAchievementYearLabel(offset: number) {
   return `${currentYear + offset}年`;
+}
+
+function getWeekdayLabel(weekday: number) {
+  return `${weekdayLabels[weekday]}曜日`;
 }
 
 const goalLabels: Record<GoalKey, string> = {
@@ -207,13 +211,6 @@ function getCurrentWeekKey() {
 
 function getWeeklySlotKey(weekKey: string, weekday: number) {
   return `${weekKey}-${weekday}`;
-}
-
-function sortWeekdays(days: number[]) {
-  return [...days].sort(
-    (left, right) => weekdayOrder.indexOf(left as (typeof weekdayOrder)[number]) -
-      weekdayOrder.indexOf(right as (typeof weekdayOrder)[number]),
-  );
 }
 
 function getPeriodInfo(offsets: PeriodOffsets) {
@@ -325,6 +322,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const rawWeeklyTasks = Array.isArray(legacyValue.weeklyTasks)
     ? legacyValue.weeklyTasks
     : initialState.weeklyTasks;
+  const fallbackWeekday = new Date().getDay();
   const currentPeriodInfo = getPeriodInfo({ year: 0, month: 0, week: 0 });
   const storedGoalsByPeriod = value.goalsByPeriod || initialState.goalsByPeriod;
   const goalsByPeriod: PeriodGoalMap = {
@@ -381,14 +379,47 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     weeklyTasks: rawWeeklyTasks.map((task, index) => ({
       id: task.id || `weekly-task-${index + 1}`,
       title: task.title || "",
-      weekdays: Array.isArray(task.weekdays)
-        ? task.weekdays.filter((day): day is number =>
-            Number.isInteger(day) && day >= 0 && day <= 6,
-          )
-        : [],
-      completedSlots: Array.isArray(task.completedSlots)
-        ? task.completedSlots.filter((slot) => typeof slot === "string")
-        : [],
+      weekday: (() => {
+        const legacyTask = task as {
+          weekday?: unknown;
+          weekdays?: unknown[];
+        };
+        if (
+          typeof legacyTask.weekday === "number" &&
+          Number.isInteger(legacyTask.weekday) &&
+          legacyTask.weekday >= 0 &&
+          legacyTask.weekday <= 6
+        ) {
+          return legacyTask.weekday;
+        }
+        const legacyWeekday = legacyTask.weekdays?.[0];
+        if (
+          typeof legacyWeekday === "number" &&
+          Number.isInteger(legacyWeekday) &&
+          legacyWeekday >= 0 &&
+          legacyWeekday <= 6
+        ) {
+          return legacyWeekday;
+        }
+        return fallbackWeekday;
+      })(),
+      completedWeeks: (() => {
+        const legacyTask = task as {
+          completedWeeks?: unknown[];
+          completedSlots?: unknown[];
+        };
+        if (Array.isArray(legacyTask.completedWeeks)) {
+          return legacyTask.completedWeeks.filter(
+            (slot): slot is string => typeof slot === "string",
+          );
+        }
+        if (Array.isArray(legacyTask.completedSlots)) {
+          return legacyTask.completedSlots.filter(
+            (slot): slot is string => typeof slot === "string",
+          );
+        }
+        return [];
+      })(),
     })),
   };
 }
@@ -442,8 +473,8 @@ export default function HomeClient({
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
   const [newWeeklyTaskTitle, setNewWeeklyTaskTitle] = useState("");
-  const [newWeeklyTaskWeekdays, setNewWeeklyTaskWeekdays] = useState<number[]>(
-    () => [new Date().getDay()],
+  const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
+    () => new Date().getDay(),
   );
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
@@ -456,8 +487,8 @@ export default function HomeClient({
   const remainingDays = periodInfo.remainingDays;
   const todayWeekday = new Date().getDay();
   const currentWeekKey = getCurrentWeekKey();
-  const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, todayWeekday);
   const achievementYear = currentYear + achievementYearOffset;
+  const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -965,16 +996,12 @@ export default function HomeClient({
         {
           id: createId("weekly-task"),
           title,
-          weekdays:
-            newWeeklyTaskWeekdays.length > 0
-              ? [...newWeeklyTaskWeekdays]
-              : [todayWeekday],
-          completedSlots: [],
+          weekday: selectedWeeklyWeekday,
+          completedWeeks: [],
         },
       ],
     }));
     setNewWeeklyTaskTitle("");
-    setNewWeeklyTaskWeekdays([todayWeekday]);
   }
 
   function updateDailyTaskTitle(id: string, title: string) {
@@ -1018,25 +1045,8 @@ export default function HomeClient({
     }));
   }
 
-  function toggleWeeklyTaskWeekday(id: string, weekday: number) {
-    setPlanner((current) => ({
-      ...current,
-      weeklyTasks: current.weeklyTasks.map((task) => {
-        if (task.id !== id) return task;
-        const weekdays = task.weekdays.includes(weekday)
-          ? task.weekdays.filter((day) => day !== weekday)
-          : sortWeekdays([...task.weekdays, weekday]);
-        return { ...task, weekdays };
-      }),
-    }));
-  }
-
-  function toggleNewWeeklyTaskWeekday(weekday: number) {
-    setNewWeeklyTaskWeekdays((current) =>
-      current.includes(weekday)
-        ? current.filter((day) => day !== weekday)
-        : sortWeekdays([...current, weekday]),
-    );
+  function toggleSelectedWeeklyWeekday(weekday: number) {
+    setSelectedWeeklyWeekday(weekday);
   }
 
   function toggleWeeklyTask(id: string) {
@@ -1044,13 +1054,13 @@ export default function HomeClient({
       ...current,
       weeklyTasks: current.weeklyTasks.map((task) => {
         if (task.id !== id) return task;
-        if (!task.weekdays.includes(todayWeekday)) return task;
-        const isCompleted = task.completedSlots.includes(currentWeeklySlotKey);
+        if (task.weekday !== selectedWeeklyWeekday) return task;
+        const isCompleted = task.completedWeeks.includes(currentWeeklySlotKey);
         return {
           ...task,
-          completedSlots: isCompleted
-            ? task.completedSlots.filter((slot) => slot !== currentWeeklySlotKey)
-            : [...task.completedSlots, currentWeeklySlotKey],
+          completedWeeks: isCompleted
+            ? task.completedWeeks.filter((slot) => slot !== currentWeeklySlotKey)
+            : [...task.completedWeeks, currentWeeklySlotKey],
         };
       }),
     }));
@@ -1064,22 +1074,21 @@ export default function HomeClient({
   }
 
   function renderWeekdayToggles(
-    selectedWeekdays: number[],
+    selectedWeekday: number,
     onToggle: (weekday: number) => void,
-    labelPrefix: string,
   ) {
     return (
       <div className="weekdayToggleRow">
         {weekdayOrder.map((weekday) => {
-          const isActive = selectedWeekdays.includes(weekday);
+          const isActive = selectedWeekday === weekday;
           return (
             <button
-              key={`${labelPrefix}-${weekday}`}
+              key={weekday}
               className={isActive ? "weekdayToggle active" : "weekdayToggle"}
               type="button"
               onClick={() => onToggle(weekday)}
               aria-pressed={isActive}
-              aria-label={`${weekdayLabels[weekday]}曜日`}
+              aria-label={getWeekdayLabel(weekday)}
             >
               {weekdayLabels[weekday]}
             </button>
@@ -1092,8 +1101,8 @@ export default function HomeClient({
   function renderWeeklyTask(task: WeeklyTask) {
     const editTarget = { kind: "weekly", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
-    const isTodayScheduled = task.weekdays.includes(todayWeekday);
-    const isCompleted = task.completedSlots.includes(currentWeeklySlotKey);
+    const isTodayScheduled = task.weekday === selectedWeeklyWeekday;
+    const isCompleted = task.completedWeeks.includes(currentWeeklySlotKey);
     return (
       <article
         className={isCompleted ? "taskItem done weeklyItem" : "taskItem weeklyItem"}
@@ -1144,11 +1153,7 @@ export default function HomeClient({
           ×
         </button>
         <div className="weeklyItemWeekdays">
-          {renderWeekdayToggles(
-            task.weekdays,
-            (weekday) => toggleWeeklyTaskWeekday(task.id, weekday),
-            "毎週やることの曜日",
-          )}
+          <span className="weeklyItemDayBadge">{getWeekdayLabel(task.weekday)}</span>
         </div>
       </article>
     );
@@ -1655,17 +1660,18 @@ export default function HomeClient({
               </button>
               <div className="weeklyTaskFormWeekdays">
                 {renderWeekdayToggles(
-                  newWeeklyTaskWeekdays,
-                  toggleNewWeeklyTaskWeekday,
-                  "追加日の曜日",
+                  selectedWeeklyWeekday,
+                  toggleSelectedWeeklyWeekday,
                 )}
               </div>
             </form>
             <div className="taskList">
-              {planner.weeklyTasks.length === 0 && (
+              {planner.weeklyTasks.filter((task) => task.weekday === selectedWeeklyWeekday).length === 0 && (
                 <p className="emptyText">毎週やることはありません。</p>
               )}
-              {planner.weeklyTasks.map(renderWeeklyTask)}
+              {planner.weeklyTasks
+                .filter((task) => task.weekday === selectedWeeklyWeekday)
+                .map(renderWeeklyTask)}
             </div>
           </section>
         </section>
