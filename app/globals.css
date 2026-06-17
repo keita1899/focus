@@ -1134,7 +1134,8 @@ select {
 }
 
 .done strong,
-.done input {
+.done input,
+.done textarea {
   text-decoration: line-through;
 }
 
@@ -1491,10 +1492,10 @@ select {
 
 .achievementItem {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px 92px 42px;
+  grid-template-columns: 38px minmax(0, 1fr) 42px;
   align-items: center;
   gap: 10px;
-  min-height: 66px;
+  min-height: 62px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -1502,7 +1503,7 @@ select {
 }
 
 .achievementYearItem {
-  grid-template-columns: minmax(0, 1fr) 132px 136px 92px 42px;
+  grid-template-columns: 38px minmax(0, 1fr) 42px;
 }
 
 .achievementItem:hover .iconButton,
@@ -1708,6 +1709,7 @@ select {
 }
 
 .taskItem textarea {
+  width: 100%;
   min-width: 0;
   min-height: 38px;
   border-color: transparent;
