@@ -620,13 +620,23 @@ export default function HomeClient({
     }));
   }
 
-  function renderAchievementTask(task: AchievementTask, isChild = false) {
+  function renderAchievementTask(
+    task: AchievementTask,
+    isChild = false,
+    isParent = false,
+  ) {
     const editTarget = { kind: "achievement", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
     return (
       <article
         className={
-          task.done ? "taskItem achievementItem done" : "taskItem achievementItem"
+          task.done
+            ? isParent
+              ? "taskItem achievementItem achievementParentItem done"
+              : "taskItem achievementItem done"
+            : isParent
+              ? "taskItem achievementItem achievementParentItem"
+              : "taskItem achievementItem"
         }
         key={task.id}
       >
@@ -638,6 +648,18 @@ export default function HomeClient({
         >
           ✓
         </button>
+        {isParent && (
+          <button
+            className="achievementDisclosure"
+            type="button"
+            onClick={() => toggleAchievementChildren(task.id)}
+            aria-expanded={expandedAchievementParents[task.id] ?? false}
+            aria-label={`${task.title || "達成項目"}の子項目を開閉`}
+            title="開閉"
+          >
+            ▸
+          </button>
+        )}
         <textarea
           aria-label={isChild ? "達成リストの子項目" : "達成リスト"}
           value={task.title}
@@ -666,16 +688,7 @@ export default function HomeClient({
     const isExpanded = expandedAchievementParents[task.id] ?? false;
     return (
       <div className="achievementGroup" key={task.id}>
-        {renderAchievementTask(task)}
-        <button
-          className="achievementToggle"
-          type="button"
-          onClick={() => toggleAchievementChildren(task.id)}
-          aria-expanded={isExpanded}
-          aria-label={`${task.title || "達成項目"}の子項目を${isExpanded ? "隠す" : "表示"}`}
-        >
-          {isExpanded ? "子項目を隠す" : children.length > 0 ? "子項目を表示" : "子項目"}
-        </button>
+        {renderAchievementTask(task, false, true)}
         {children.length > 0 && isExpanded && (
           <div className="achievementChildren">
             {children.map((child) => renderAchievementTask(child, true))}
