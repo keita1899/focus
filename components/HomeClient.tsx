@@ -20,12 +20,18 @@ type PriorityTask = {
   projectName?: string;
 };
 
+type DailyTask = {
+  id: string;
+  title: string;
+  completedDates: string[];
+};
+
 type PlannerState = {
   goals: GoalMap;
   goalsByPeriod: PeriodGoalMap;
   birthday: string;
-  priorities: PriorityTask[];
-  priorityBatchLocked: boolean;
+  todayTasks: PriorityTask[];
+  dailyTasks: DailyTask[];
 };
 
 type StoredPlannerState = Partial<PlannerState>;
@@ -53,14 +59,8 @@ const initialState: PlannerState = {
     week: {},
   },
   birthday: "",
-  priorities: [
-    {
-      id: "priority-1",
-      title: "最重要機能を実装",
-      done: false,
-    },
-  ],
-  priorityBatchLocked: false,
+  todayTasks: [],
+  dailyTasks: [],
 };
 
 const goalLabels: Record<GoalKey, string> = {
@@ -206,9 +206,18 @@ function getAgeInfo(birthday: string) {
 }
 
 function normalizePlanner(value: StoredPlannerState): PlannerState {
-  const rawPriorities = Array.isArray(value.priorities)
-    ? value.priorities
-    : initialState.priorities;
+  const legacyValue = value as StoredPlannerState & {
+    priorities?: PriorityTask[];
+    dailyTasks?: DailyTask[];
+  };
+  const rawTodayTasks = Array.isArray(value.todayTasks)
+    ? value.todayTasks
+    : Array.isArray(legacyValue.priorities)
+      ? legacyValue.priorities
+      : initialState.todayTasks;
+  const rawDailyTasks = Array.isArray(value.dailyTasks)
+    ? value.dailyTasks
+    : initialState.dailyTasks;
   const currentPeriodInfo = getPeriodInfo({ year: 0, month: 0, week: 0 });
   const storedGoalsByPeriod = value.goalsByPeriod || initialState.goalsByPeriod;
   const goalsByPeriod: PeriodGoalMap = {
@@ -232,13 +241,19 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     },
     goalsByPeriod,
     birthday: typeof value.birthday === "string" ? value.birthday : "",
-    priorities: rawPriorities.slice(0, 1).map((task, index) => ({
-      id: task.id || `priority-${index + 1}`,
+    todayTasks: rawTodayTasks.map((task, index) => ({
+      id: task.id || `today-task-${index + 1}`,
       title: task.title || "",
       done: Boolean(task.done),
       projectName: task.projectName || undefined,
     })),
-    priorityBatchLocked: false,
+    dailyTasks: rawDailyTasks.map((task, index) => ({
+      id: task.id || `daily-task-${index + 1}`,
+      title: task.title || "",
+      completedDates: Array.isArray(task.completedDates)
+        ? task.completedDates
+        : [],
+    })),
   };
 }
 
@@ -249,6 +264,8 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   );
   const [isReady, setIsReady] = useState(Boolean(initialPlannerValue));
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
+  const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
+  const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -259,6 +276,7 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
   const todayLabel = getTodayLabel();
+  const todayKey = formatDateKey(new Date());
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -299,10 +317,8 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
 
   const focusedTask = useMemo(() => {
     if (!focusTarget) return null;
-    return planner.priorities.find((task) => task.id === focusTarget.id) || null;
-  }, [focusTarget, planner.priorities]);
-
-  const primaryPriority = planner.priorities[0] || null;
+    return planner.todayTasks.find((task) => task.id === focusTarget.id) || null;
+  }, [focusTarget, planner.todayTasks]);
 
   function updateGoal(key: GoalKey, value: string) {
     const periodKey = periodKeys[key];
@@ -325,59 +341,97 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     }));
   }
 
-  function updatePrimaryPriorityTitle(value: string) {
-    setPlanner((current) => {
-      const [priority] = current.priorities;
+  function addTodayTask() {
+    const title = newTodayTaskTitle.trim();
+    if (!title) return;
+    setPlanner((current) => ({
+      ...current,
+      todayTasks: [
+        ...current.todayTasks,
+        { id: createId("today-task"), title, done: false },
+      ],
+    }));
+    setNewTodayTaskTitle("");
+  }
 
-      if (!priority) {
-        if (!value.trim()) return current;
-        return {
-          ...current,
-          priorities: [
-            {
-              id: createId("priority"),
-              title: value,
-              done: false,
-            },
-          ],
-          priorityBatchLocked: false,
-        };
-      }
+  function updateTodayTaskTitle(id: string, title: string) {
+    setPlanner((current) => ({
+      ...current,
+      todayTasks: current.todayTasks.map((task) =>
+        task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
 
-      return {
-        ...current,
-        priorities: [{ ...priority, title: value }],
-        priorityBatchLocked: false,
-      };
-    });
+  function toggleTodayTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      todayTasks: current.todayTasks.map((task) =>
+        task.id === id ? { ...task, done: !task.done } : task,
+      ),
+    }));
   }
 
   function completePriority(id: string) {
-    setPlanner((current) => {
-      const priorities = current.priorities.filter((task) => task.id !== id);
-      return {
-        ...current,
-        priorities: priorities.slice(0, 1),
-        priorityBatchLocked: false,
-      };
-    });
+    toggleTodayTask(id);
     if (focusTarget?.id === id) {
       setFocusTarget(null);
     }
   }
 
-  function removePriority(id: string) {
-    setPlanner((current) => {
-      const priorities = current.priorities.filter((task) => task.id !== id);
-      return {
-        ...current,
-        priorities: priorities.slice(0, 1),
-        priorityBatchLocked: false,
-      };
-    });
+  function removeTodayTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      todayTasks: current.todayTasks.filter((task) => task.id !== id),
+    }));
     if (focusTarget?.id === id) {
       setFocusTarget(null);
     }
+  }
+
+  function addDailyTask() {
+    const title = newDailyTaskTitle.trim();
+    if (!title) return;
+    setPlanner((current) => ({
+      ...current,
+      dailyTasks: [
+        ...current.dailyTasks,
+        { id: createId("daily-task"), title, completedDates: [] },
+      ],
+    }));
+    setNewDailyTaskTitle("");
+  }
+
+  function updateDailyTaskTitle(id: string, title: string) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTasks: current.dailyTasks.map((task) =>
+        task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function toggleDailyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTasks: current.dailyTasks.map((task) => {
+        if (task.id !== id) return task;
+        const isCompleted = task.completedDates.includes(todayKey);
+        return {
+          ...task,
+          completedDates: isCompleted
+            ? task.completedDates.filter((date) => date !== todayKey)
+            : [...task.completedDates, todayKey],
+        };
+      }),
+    }));
+  }
+
+  function removeDailyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTasks: current.dailyTasks.filter((task) => task.id !== id),
+    }));
   }
 
   return (
@@ -406,9 +460,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
           <SignOutButton className="navLink authNavButton" />
         </div>
         <nav className="topbarNav" aria-label="ナビゲーション">
-          <a className="navLink" href="/inbox">
-            inbox
-          </a>
           <a className="navLink" href="/roadmap">
             roadmap
           </a>
@@ -421,163 +472,173 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
         </nav>
       </header>
 
-      <section className="goalNest" aria-label="目標">
-        <div className="goalPanel goalYearPanel">
-          <div className="goalHeading">
-            <span>
-              {getGoalLabel("year", periodOffsets.year, periodLabels.year)}
-            </span>
-            <span className="periodSwitcher">
-              <button
-                type="button"
-                onClick={() => changePeriod("year", -1)}
-                aria-label="前年へ"
-              >
-                &lt;
-              </button>
-              <span className="periodMeta">
-                <time>{periodLabels.year}</time>
-                <span>残り{remainingDays.year}日</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => changePeriod("year", 1)}
-                aria-label="翌年へ"
-              >
-                &gt;
-              </button>
-            </span>
-          </div>
-          <input
-            className="goalLineInput"
-            value={planner.goalsByPeriod.year[periodKeys.year] || ""}
-            onChange={(event) => updateGoal("year", event.target.value)}
-          />
-
-          <div className="goalPanel goalMonthPanel">
-            <div className="goalHeading">
-              <span>
-                {getGoalLabel("month", periodOffsets.month, periodLabels.month)}
-              </span>
-              <span className="periodSwitcher">
-                <button
-                  type="button"
-                  onClick={() => changePeriod("month", -1)}
-                  aria-label="前月へ"
-                >
-                  &lt;
-                </button>
-                <span className="periodMeta">
-                  <time>{periodLabels.month}</time>
-                  <span>残り{remainingDays.month}日</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => changePeriod("month", 1)}
-                  aria-label="翌月へ"
-                >
-                  &gt;
-                </button>
-              </span>
-            </div>
-            <input
-              className="goalLineInput"
-              value={planner.goalsByPeriod.month[periodKeys.month] || ""}
-              onChange={(event) => updateGoal("month", event.target.value)}
-            />
-
-            <div className="goalPanel goalWeekPanel">
-              <div className="goalHeading">
-                <span>
-                  {getGoalLabel("week", periodOffsets.week, periodLabels.week)}
-                </span>
-                <span className="periodSwitcher">
-                  <button
-                    type="button"
-                    onClick={() => changePeriod("week", -1)}
-                    aria-label="前週へ"
-                  >
-                    &lt;
-                  </button>
-                  <span className="periodMeta">
-                    <time>{periodLabels.week}</time>
-                    <span>残り{remainingDays.week}日</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => changePeriod("week", 1)}
-                    aria-label="翌週へ"
-                  >
-                    &gt;
-                  </button>
-                </span>
-              </div>
-              <input
-                className="goalWeekInput"
-                value={planner.goalsByPeriod.week[periodKeys.week] || ""}
-                onChange={(event) => updateGoal("week", event.target.value)}
-              />
-
-              <div className="goalPanel priorityGoalPanel">
+      <section className="homeColumns" aria-label="今日の管理">
+        <section className="homeColumn goalColumn" aria-label="目標">
+          <h2>目標</h2>
+          <div className="goalStack">
+            {(["year", "month", "week"] as GoalKey[]).map((key) => (
+              <section className={`goalCard goalCard-${key}`} key={key}>
                 <div className="goalHeading">
-                  <span>今日のタスク</span>
+                  <span>
+                    {getGoalLabel(key, periodOffsets[key], periodLabels[key])}
+                  </span>
+                  <span className="periodSwitcher">
+                    <button
+                      type="button"
+                      onClick={() => changePeriod(key, -1)}
+                      aria-label={`${goalLabels[key]}を前へ`}
+                    >
+                      &lt;
+                    </button>
+                    <span className="periodMeta">
+                      <time>{periodLabels[key]}</time>
+                      <span>残り{remainingDays[key]}日</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => changePeriod(key, 1)}
+                      aria-label={`${goalLabels[key]}を次へ`}
+                    >
+                      &gt;
+                    </button>
+                  </span>
                 </div>
-                <div className="priority prioritySingle">
+                <textarea
+                  aria-label={goalLabels[key]}
+                  value={planner.goalsByPeriod[key][periodKeys[key]] || ""}
+                  onChange={(event) => updateGoal(key, event.target.value)}
+                />
+              </section>
+            ))}
+          </div>
+        </section>
+
+        <section className="homeColumn taskColumn" aria-label="今日やることリスト">
+          <h2>今日やることリスト</h2>
+          <form
+            className="taskForm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addTodayTask();
+            }}
+          >
+            <input
+              aria-label="今日やることを追加"
+              placeholder="今日やること"
+              value={newTodayTaskTitle}
+              onChange={(event) => setNewTodayTaskTitle(event.target.value)}
+            />
+            <button type="submit" aria-label="今日やることを追加">
+              +
+            </button>
+          </form>
+          <div className="taskList">
+            {planner.todayTasks.length === 0 && (
+              <p className="emptyText">今日やることはありません。</p>
+            )}
+            {planner.todayTasks.map((task) => (
+              <article
+                className={task.done ? "taskItem done" : "taskItem"}
+                key={task.id}
+              >
+                <button
+                  className="checkButton"
+                  type="button"
+                  onClick={() => toggleTodayTask(task.id)}
+                  aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+                >
+                  ✓
+                </button>
+                <input
+                  aria-label="今日やること"
+                  value={task.title}
+                  onChange={(event) =>
+                    updateTodayTaskTitle(task.id, event.target.value)
+                  }
+                />
+                <div className="priorityActions">
+                  <button
+                    className="focusButton"
+                    type="button"
+                    onClick={() =>
+                      setFocusTarget({ kind: "priority", id: task.id })
+                    }
+                    aria-label={`${task.title || "無題のタスク"}に集中する`}
+                  >
+                    focus
+                  </button>
+                  <button
+                    className="iconButton"
+                    type="button"
+                    onClick={() => removeTodayTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}を削除`}
+                  >
+                    ×
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="homeColumn dailyColumn" aria-label="毎日やることリスト">
+          <h2>毎日やることリスト</h2>
+          <form
+            className="taskForm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addDailyTask();
+            }}
+          >
+            <input
+              aria-label="毎日やることを追加"
+              placeholder="毎日やること"
+              value={newDailyTaskTitle}
+              onChange={(event) => setNewDailyTaskTitle(event.target.value)}
+            />
+            <button type="submit" aria-label="毎日やることを追加">
+              +
+            </button>
+          </form>
+          <div className="taskList">
+            {planner.dailyTasks.length === 0 && (
+              <p className="emptyText">毎日やることはありません。</p>
+            )}
+            {planner.dailyTasks.map((task) => {
+              const isCompleted = task.completedDates.includes(todayKey);
+              return (
+                <article
+                  className={isCompleted ? "taskItem done" : "taskItem"}
+                  key={task.id}
+                >
                   <button
                     className="checkButton"
                     type="button"
-                    onClick={() =>
-                      primaryPriority && completePriority(primaryPriority.id)
-                    }
-                    aria-label={
-                      primaryPriority
-                        ? `${primaryPriority.title}を完了にする`
-                        : "今日のタスクを完了にする"
-                    }
-                    disabled={!primaryPriority}
+                    onClick={() => toggleDailyTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
                   >
-                    1
+                    ✓
                   </button>
-                  <div className="priorityFields">
-                    <input
-                      aria-label="今日のタスク"
-                      placeholder="今日いちばん進めること"
-                      value={primaryPriority?.title || ""}
-                      onChange={(event) =>
-                        updatePrimaryPriorityTitle(event.target.value)
-                      }
-                    />
-                  </div>
-                  {primaryPriority && (
-                    <div className="priorityActions">
-                      <button
-                        className="focusButton"
-                        type="button"
-                        onClick={() =>
-                          setFocusTarget({
-                            kind: "priority",
-                            id: primaryPriority.id,
-                          })
-                        }
-                        aria-label={`${primaryPriority.title}に集中する`}
-                      >
-                        focus
-                      </button>
-                      <button
-                        className="iconButton"
-                        type="button"
-                        onClick={() => removePriority(primaryPriority.id)}
-                        aria-label={`${primaryPriority.title}を削除`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+                  <input
+                    aria-label="毎日やること"
+                    value={task.title}
+                    onChange={(event) =>
+                      updateDailyTaskTitle(task.id, event.target.value)
+                    }
+                  />
+                  <button
+                    className="iconButton"
+                    type="button"
+                    onClick={() => removeDailyTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}を削除`}
+                  >
+                    ×
+                  </button>
+                </article>
+              );
+            })}
           </div>
-        </div>
+        </section>
       </section>
 
       {focusedTask && (

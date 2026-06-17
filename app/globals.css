@@ -249,6 +249,81 @@ h2 {
   align-items: start;
 }
 
+.homeColumns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.homeColumn {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.homeColumn h2 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 1.05rem;
+}
+
+.goalStack {
+  display: grid;
+  gap: 12px;
+}
+
+.goalCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 12px;
+}
+
+.goalCard-year {
+  border-color: rgba(183, 116, 34, 0.32);
+  background: #fffdf8;
+}
+
+.goalCard-month {
+  border-color: rgba(23, 107, 85, 0.26);
+  background: #f8fcf9;
+}
+
+.goalCard-week {
+  border-color: rgba(23, 107, 85, 0.42);
+  background: linear-gradient(180deg, #ffffff, var(--surface-strong));
+}
+
+.goalCard textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.goalCard textarea:focus {
+  border-color: var(--accent);
+  background: white;
+  padding: 8px;
+}
+
 .goalNest {
   display: grid;
   width: min(760px, 100%);
@@ -854,6 +929,19 @@ select {
 .taskItem:focus-within .focusButton {
   opacity: 1;
   pointer-events: auto;
+}
+
+.taskItem input {
+  min-width: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.taskItem input:focus {
+  border-color: var(--accent);
+  background: white;
 }
 
 .priority:hover .iconButton,
@@ -3237,6 +3325,10 @@ select {
     min-height: 260px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .homeColumns {
+    grid-template-columns: 1fr;
   }
 
   .inboxTodoLayout {

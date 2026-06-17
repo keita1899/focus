@@ -2,7 +2,6 @@ import { auth } from "../auth";
 import { prisma } from "./prisma";
 
 const plannerKey = "focus-planner-state-v1";
-const inboxKey = "inbox-markdown-v1";
 const diaryKey = "diary-v1";
 const notesKey = "simple-notes-v1";
 
@@ -21,17 +20,6 @@ export async function getPlannerState() {
 
   const state = await prisma.appState.findUnique({
     where: { key: getScopedKey(userId, plannerKey) },
-  });
-
-  return state ? JSON.parse(state.value) : null;
-}
-
-export async function getInboxState() {
-  const userId = await getUserId();
-  if (!userId) return null;
-
-  const state = await prisma.appState.findUnique({
-    where: { key: getScopedKey(userId, inboxKey) },
   });
 
   return state ? JSON.parse(state.value) : null;
