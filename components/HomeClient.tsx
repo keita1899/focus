@@ -589,41 +589,116 @@ export default function HomeClient({
       <section className="homeColumns" aria-label="今日の管理">
         <section className="homeColumn goalColumn" aria-label="目標">
           <h2>目標</h2>
-          <div className="goalStack">
-            {(["year", "month", "week"] as GoalKey[]).map((key) => (
-              <section className={`goalCard goalCard-${key}`} key={key}>
+          <div className="goalNest">
+            <section className="goalPanel goalYearPanel">
+              <div className="goalHeading">
+                <span>
+                  {getGoalLabel("year", periodOffsets.year, periodLabels.year)}
+                </span>
+                <span className="periodSwitcher">
+                  <button
+                    type="button"
+                    onClick={() => changePeriod("year", -1)}
+                    aria-label="年の目標を前へ"
+                  >
+                    &lt;
+                  </button>
+                  <span className="periodMeta">
+                    <time>{periodLabels.year}</time>
+                    <span>残り{remainingDays.year}日</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => changePeriod("year", 1)}
+                    aria-label="年の目標を次へ"
+                  >
+                    &gt;
+                  </button>
+                </span>
+              </div>
+              <input
+                className="goalLineInput"
+                aria-label="年の目標"
+                value={planner.goalsByPeriod.year[periodKeys.year] || ""}
+                onChange={(event) => updateGoal("year", event.target.value)}
+              />
+
+              <section className="goalPanel goalMonthPanel">
                 <div className="goalHeading">
                   <span>
-                    {getGoalLabel(key, periodOffsets[key], periodLabels[key])}
+                    {getGoalLabel(
+                      "month",
+                      periodOffsets.month,
+                      periodLabels.month,
+                    )}
                   </span>
                   <span className="periodSwitcher">
                     <button
                       type="button"
-                      onClick={() => changePeriod(key, -1)}
-                      aria-label={`${goalLabels[key]}を前へ`}
+                      onClick={() => changePeriod("month", -1)}
+                      aria-label="月の目標を前へ"
                     >
                       &lt;
                     </button>
                     <span className="periodMeta">
-                      <time>{periodLabels[key]}</time>
-                      <span>残り{remainingDays[key]}日</span>
+                      <time>{periodLabels.month}</time>
+                      <span>残り{remainingDays.month}日</span>
                     </span>
                     <button
                       type="button"
-                      onClick={() => changePeriod(key, 1)}
-                      aria-label={`${goalLabels[key]}を次へ`}
+                      onClick={() => changePeriod("month", 1)}
+                      aria-label="月の目標を次へ"
                     >
                       &gt;
                     </button>
                   </span>
                 </div>
                 <input
-                  aria-label={goalLabels[key]}
-                  value={planner.goalsByPeriod[key][periodKeys[key]] || ""}
-                  onChange={(event) => updateGoal(key, event.target.value)}
+                  className="goalLineInput"
+                  aria-label="月の目標"
+                  value={planner.goalsByPeriod.month[periodKeys.month] || ""}
+                  onChange={(event) => updateGoal("month", event.target.value)}
                 />
+
+                <section className="goalPanel goalWeekPanel">
+                  <div className="goalHeading">
+                    <span>
+                      {getGoalLabel(
+                        "week",
+                        periodOffsets.week,
+                        periodLabels.week,
+                      )}
+                    </span>
+                    <span className="periodSwitcher">
+                      <button
+                        type="button"
+                        onClick={() => changePeriod("week", -1)}
+                        aria-label="週の目標を前へ"
+                      >
+                        &lt;
+                      </button>
+                      <span className="periodMeta">
+                        <time>{periodLabels.week}</time>
+                        <span>残り{remainingDays.week}日</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => changePeriod("week", 1)}
+                        aria-label="週の目標を次へ"
+                      >
+                        &gt;
+                      </button>
+                    </span>
+                  </div>
+                  <input
+                    className="goalWeekInput"
+                    aria-label="週の目標"
+                    value={planner.goalsByPeriod.week[periodKeys.week] || ""}
+                    onChange={(event) => updateGoal("week", event.target.value)}
+                  />
+                </section>
               </section>
-            ))}
+            </section>
           </div>
         </section>
 

@@ -11,9 +11,21 @@ import {
 
 type Note = {
   id: string;
+  folderId: string;
   title: string;
   markdown: string;
   updatedAt: string;
+};
+
+type NoteFolder = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+type NotesState = {
+  folders: NoteFolder[];
+  notes: Note[];
 };
 
 type NotesClientProps = {
@@ -21,6 +33,8 @@ type NotesClientProps = {
 };
 
 const storageKey = "simple-notes-v1";
+const allFoldersId = "all";
+const defaultFolderId = "folder-default";
 const defaultMarkdown = `# 新しいメモ
 
 - 
@@ -30,34 +44,91 @@ function createNoteId() {
   return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function createNote(title = "新しいメモ"): Note {
+function createFolderId() {
+  return `folder-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createFolder(name: string): NoteFolder {
+  return {
+    id: createFolderId(),
+    name,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function createNote(title = "新しいメモ", folderId = defaultFolderId): Note {
   return {
     id: createNoteId(),
+    folderId,
     title,
     markdown: defaultMarkdown,
     updatedAt: new Date().toISOString(),
   };
 }
 
-function normalizeNotes(value: unknown): Note[] {
+function getDefaultFolder(): NoteFolder {
+  return {
+    id: defaultFolderId,
+    name: "未分類",
+    createdAt: new Date(0).toISOString(),
+  };
+}
+
+function normalizeNotesState(value: unknown): NotesState {
   if (typeof value === "string") {
     try {
-      return normalizeNotes(JSON.parse(value) as unknown);
+      return normalizeNotesState(JSON.parse(value) as unknown);
     } catch {
-      return [createNote()];
+      return { folders: [getDefaultFolder()], notes: [createNote()] };
     }
   }
 
-  if (!Array.isArray(value)) {
-    return [createNote()];
-  }
+  const source = Array.isArray(value)
+    ? { folders: [getDefaultFolder()], notes: value }
+    : value && typeof value === "object"
+      ? (value as Partial<NotesState>)
+      : { folders: [getDefaultFolder()], notes: [createNote()] };
 
-  const notes = value
+  const rawFolders = Array.isArray(source.folders)
+    ? source.folders
+    : [getDefaultFolder()];
+  const folders = rawFolders
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const folder = item as Partial<NoteFolder>;
+      return {
+        id:
+          typeof folder.id === "string" && folder.id
+            ? folder.id
+            : `folder-${index + 1}`,
+        name:
+          typeof folder.name === "string" && folder.name.trim()
+            ? folder.name
+            : "無題のフォルダ",
+        createdAt:
+          typeof folder.createdAt === "string"
+            ? folder.createdAt
+            : new Date().toISOString(),
+      };
+    })
+    .filter((folder): folder is NoteFolder => Boolean(folder));
+  const normalizedFolders = folders.some((folder) => folder.id === defaultFolderId)
+    ? folders
+    : [getDefaultFolder(), ...folders];
+  const folderIds = new Set(normalizedFolders.map((folder) => folder.id));
+
+  const rawNotes = Array.isArray(source.notes) ? source.notes : [createNote()];
+  const notes = rawNotes
     .map((item, index) => {
       if (!item || typeof item !== "object") return null;
       const note = item as Partial<Note>;
+      const folderId =
+        typeof note.folderId === "string" && folderIds.has(note.folderId)
+          ? note.folderId
+          : defaultFolderId;
       return {
         id: typeof note.id === "string" ? note.id : `note-${index + 1}`,
+        folderId,
         title:
           typeof note.title === "string" && note.title.trim()
             ? note.title
@@ -72,7 +143,10 @@ function normalizeNotes(value: unknown): Note[] {
     })
     .filter((note): note is Note => Boolean(note));
 
-  return notes.length > 0 ? notes : [createNote()];
+  return {
+    folders: normalizedFolders,
+    notes: notes.length > 0 ? notes : [createNote()],
+  };
 }
 
 function formatUpdatedAt(value: string) {
@@ -88,13 +162,33 @@ function formatUpdatedAt(value: string) {
 }
 
 export default function NotesClient({ initialValue }: NotesClientProps) {
-  const [notes, setNotes] = useState<Note[]>(() => normalizeNotes(initialValue));
+  const initialNotesState = useMemo(
+    () => normalizeNotesState(initialValue),
+    [initialValue],
+  );
+  const [folders, setFolders] = useState<NoteFolder[]>(
+    () => initialNotesState.folders,
+  );
+  const [notes, setNotes] = useState<Note[]>(() => initialNotesState.notes);
+  const [activeFolderId, setActiveFolderId] = useState(allFoldersId);
+  const [newFolderName, setNewFolderName] = useState("");
   const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
 
+  const visibleNotes = useMemo(
+    () =>
+      activeFolderId === allFoldersId
+        ? notes
+        : notes.filter((note) => note.folderId === activeFolderId),
+    [activeFolderId, notes],
+  );
+
   const activeNote = useMemo(
-    () => notes.find((note) => note.id === activeNoteId) || notes[0],
-    [activeNoteId, notes],
+    () =>
+      visibleNotes.find((note) => note.id === activeNoteId) ||
+      visibleNotes[0] ||
+      null,
+    [activeNoteId, visibleNotes],
   );
 
   useEffect(() => {
@@ -105,31 +199,37 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         const response = await fetch("/api/notes", { cache: "no-store" });
         const data = (await response.json()) as { value: unknown };
         if (data.value) {
-          const loadedNotes = normalizeNotes(data.value);
-          setNotes(loadedNotes);
-          setActiveNoteId(loadedNotes[0]?.id || "");
+          const loadedState = normalizeNotesState(data.value);
+          setFolders(loadedState.folders);
+          setNotes(loadedState.notes);
+          setActiveFolderId(allFoldersId);
+          setActiveNoteId(loadedState.notes[0]?.id || "");
           return;
         }
 
         const stored = window.localStorage.getItem(storageKey);
         if (!stored) return;
 
-        const loadedNotes = normalizeNotes(JSON.parse(stored));
-        setNotes(loadedNotes);
-        setActiveNoteId(loadedNotes[0]?.id || "");
+        const loadedState = normalizeNotesState(JSON.parse(stored));
+        setFolders(loadedState.folders);
+        setNotes(loadedState.notes);
+        setActiveFolderId(allFoldersId);
+        setActiveNoteId(loadedState.notes[0]?.id || "");
         await fetch("/api/notes", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(loadedNotes),
+          body: JSON.stringify(loadedState),
         });
         window.localStorage.removeItem(storageKey);
       } catch {
         const stored = window.localStorage.getItem(storageKey);
         if (!stored) return;
         try {
-          const loadedNotes = normalizeNotes(JSON.parse(stored));
-          setNotes(loadedNotes);
-          setActiveNoteId(loadedNotes[0]?.id || "");
+          const loadedState = normalizeNotesState(JSON.parse(stored));
+          setFolders(loadedState.folders);
+          setNotes(loadedState.notes);
+          setActiveFolderId(allFoldersId);
+          setActiveNoteId(loadedState.notes[0]?.id || "");
         } catch {
           setNotes([createNote()]);
         }
@@ -145,9 +245,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     fetch("/api/notes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(notes),
+      body: JSON.stringify({ folders, notes }),
       }).catch(() => undefined);
-  }, [isReady, notes]);
+  }, [folders, isReady, notes]);
 
   function resizeMemoTextarea(
     textarea: HTMLTextAreaElement | null,
@@ -170,7 +270,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       .forEach((textarea) => resizeMemoTextarea(textarea));
   }, [notes]);
 
-  function updateActiveNote(value: Partial<Pick<Note, "title" | "markdown">>) {
+  function updateActiveNote(
+    value: Partial<Pick<Note, "folderId" | "title" | "markdown">>,
+  ) {
     if (!activeNote) return;
 
     setNotes((current) =>
@@ -180,6 +282,56 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
           : note,
       ),
     );
+  }
+
+  function selectFolder(folderId: string) {
+    setActiveFolderId(folderId);
+    const nextNote =
+      folderId === allFoldersId
+        ? notes[0]
+        : notes.find((note) => note.folderId === folderId);
+    setActiveNoteId(nextNote?.id || "");
+  }
+
+  function addFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    const folder = createFolder(name);
+    setFolders((current) => [...current, folder]);
+    setActiveFolderId(folder.id);
+    setActiveNoteId("");
+    setNewFolderName("");
+  }
+
+  function updateFolderName(folderId: string, name: string) {
+    setFolders((current) =>
+      current.map((folder) =>
+        folder.id === folderId ? { ...folder, name } : folder,
+      ),
+    );
+  }
+
+  function moveActiveNote(folderId: string) {
+    updateActiveNote({ folderId });
+    setActiveFolderId(folderId);
+  }
+
+  function deleteFolder(folderId: string) {
+    if (folderId === defaultFolderId) return;
+
+    setFolders((current) => current.filter((folder) => folder.id !== folderId));
+    setNotes((current) =>
+      current.map((note) =>
+        note.folderId === folderId ? { ...note, folderId: defaultFolderId } : note,
+      ),
+    );
+    if (activeFolderId === folderId) {
+      setActiveFolderId(defaultFolderId);
+      const nextNote = notes.find(
+        (note) => note.folderId === folderId || note.folderId === defaultFolderId,
+      );
+      setActiveNoteId(nextNote?.id || "");
+    }
   }
 
   function handleMarkdownKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -338,7 +490,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   }
 
   function addNote() {
-    const note = createNote();
+    const folderId =
+      activeFolderId === allFoldersId ? defaultFolderId : activeFolderId;
+    const note = createNote("新しいメモ", folderId);
     setNotes((current) => [note, ...current]);
     setActiveNoteId(note.id);
   }
@@ -350,6 +504,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       const nextNotes = current.filter((note) => note.id !== activeNote.id);
       const normalizedNotes = nextNotes.length > 0 ? nextNotes : [createNote()];
       setActiveNoteId(normalizedNotes[0].id);
+      setActiveFolderId(allFoldersId);
       return normalizedNotes;
     });
   }
@@ -370,17 +525,98 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
       <section className="notesWorkspace" aria-label="メモ一覧と編集">
         <aside className="notesSidebar" aria-label="メモ一覧">
-          {notes.map((note) => (
+          <section className="notesFolderPanel" aria-label="フォルダ">
             <button
-              className={note.id === activeNote?.id ? "active" : ""}
-              key={note.id}
+              className={
+                activeFolderId === allFoldersId
+                  ? "notesFolderButton active"
+                  : "notesFolderButton"
+              }
               type="button"
-              onClick={() => setActiveNoteId(note.id)}
+              onClick={() => selectFolder(allFoldersId)}
             >
-              <strong>{note.title || "無題のメモ"}</strong>
-              <span>{formatUpdatedAt(note.updatedAt)}</span>
+              <strong>すべて</strong>
+              <span>{notes.length}</span>
             </button>
-          ))}
+            {folders.map((folder) => {
+              const noteCount = notes.filter(
+                (note) => note.folderId === folder.id,
+              ).length;
+              return (
+                <div
+                  className={
+                    activeFolderId === folder.id
+                      ? "notesFolderItem active"
+                      : "notesFolderItem"
+                  }
+                  key={folder.id}
+                >
+                  <button
+                    className="notesFolderButton"
+                    type="button"
+                    onClick={() => selectFolder(folder.id)}
+                  >
+                    <strong>{folder.name}</strong>
+                    <span>{noteCount}</span>
+                  </button>
+                  <input
+                    aria-label={`${folder.name}のフォルダ名`}
+                    value={folder.name}
+                    onFocus={() => selectFolder(folder.id)}
+                    onChange={(event) =>
+                      updateFolderName(folder.id, event.target.value)
+                    }
+                  />
+                  {folder.id !== defaultFolderId && (
+                    <button
+                      className="notesFolderDelete"
+                      type="button"
+                      onClick={() => deleteFolder(folder.id)}
+                      aria-label={`${folder.name || "フォルダ"}を削除`}
+                      title="削除"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            <form
+              className="notesFolderForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addFolder();
+              }}
+            >
+              <input
+                aria-label="新しいフォルダ名"
+                placeholder="新しいフォルダ"
+                value={newFolderName}
+                onChange={(event) => setNewFolderName(event.target.value)}
+              />
+              <button type="submit" aria-label="フォルダを追加">
+                +
+              </button>
+            </form>
+          </section>
+
+          <section className="notesListPanel" aria-label="メモ">
+            {visibleNotes.length === 0 ? (
+              <p className="emptyText compact">メモがありません。</p>
+            ) : (
+              visibleNotes.map((note) => (
+                <button
+                  className={note.id === activeNote?.id ? "active" : ""}
+                  key={note.id}
+                  type="button"
+                  onClick={() => setActiveNoteId(note.id)}
+                >
+                  <strong>{note.title || "無題のメモ"}</strong>
+                  <span>{formatUpdatedAt(note.updatedAt)}</span>
+                </button>
+              ))
+            )}
+          </section>
         </aside>
 
         <section className="notesEditorPanel" aria-label="メモ編集">
@@ -394,6 +630,17 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                     updateActiveNote({ title: event.target.value })
                   }
                 />
+                <select
+                  aria-label="メモのフォルダ"
+                  value={activeNote.folderId}
+                  onChange={(event) => moveActiveNote(event.target.value)}
+                >
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   className="memoDeleteButton"
                   type="button"
