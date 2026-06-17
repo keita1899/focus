@@ -47,6 +47,13 @@ button {
   padding: 28px 0 40px;
 }
 
+.homeShell {
+  display: grid;
+  gap: 18px;
+  width: calc(100% - 32px);
+  max-width: none;
+}
+
 .shell > .topbar,
 .shell > .workspaceGrid {
   transition:
@@ -256,6 +263,48 @@ h2 {
   gap: 18px;
 }
 
+.homeDiaryPanel {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.homeDiaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+}
+
+.homeDiaryHeader h2 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 1.05rem;
+}
+
+.homeDiaryHeader time {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.homeDiaryPanel textarea {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  border: 0;
+  background: white;
+  color: var(--ink);
+  outline: none;
+  padding: 18px;
+  line-height: 1.75;
+}
+
 .homeColumn {
   display: grid;
   align-content: start;
@@ -274,61 +323,17 @@ h2 {
   font-size: 1.05rem;
 }
 
-.goalStack {
-  display: grid;
-  gap: 12px;
-}
-
-.goalCard {
-  display: grid;
-  gap: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  padding: 12px;
-}
-
-.goalCard-year {
-  border-color: rgba(183, 116, 34, 0.32);
-  background: #fffdf8;
-}
-
-.goalCard-month {
-  border-color: rgba(23, 107, 85, 0.26);
-  background: #f8fcf9;
-}
-
-.goalCard-week {
-  border-color: rgba(23, 107, 85, 0.42);
-  background: linear-gradient(180deg, #ffffff, var(--surface-strong));
-}
-
-.goalCard textarea {
-  width: 100%;
-  min-height: 84px;
-  resize: vertical;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink);
-  outline: none;
-  padding: 0;
-  font: inherit;
-  font-weight: 800;
-  line-height: 1.55;
-}
-
-.goalCard textarea:focus {
-  border-color: var(--accent);
-  background: white;
-  padding: 8px;
-}
-
 .goalNest {
   display: grid;
   width: min(760px, 100%);
   justify-self: center;
   margin-bottom: 18px;
+}
+
+.goalColumn .goalNest {
+  width: 100%;
+  justify-self: stretch;
+  margin-bottom: 0;
 }
 
 .goalPanel,
@@ -391,6 +396,10 @@ h2 {
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
+}
+
+.goalColumn .goalWeekPanel > .goalWeekInput {
+  text-align: left;
 }
 
 .priorityGoalPanel {
@@ -865,6 +874,20 @@ select {
 .taskList {
   display: grid;
   gap: 10px;
+}
+
+.completedTaskGroup {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.completedTaskGroupLabel {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .priority,
@@ -3371,6 +3394,10 @@ select {
   .shell {
     width: min(100% - 20px, 1180px);
     padding-top: 18px;
+  }
+
+  .homeShell {
+    width: calc(100% - 20px);
   }
 
   .topbar {
