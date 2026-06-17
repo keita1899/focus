@@ -26,6 +26,13 @@ type DailyTask = {
   completedDates: string[];
 };
 
+type WeeklyTask = {
+  id: string;
+  title: string;
+  weekdays: number[];
+  completedSlots: string[];
+};
+
 type AchievementTask = {
   id: string;
   title: string;
@@ -41,6 +48,7 @@ type PlannerState = {
   importantTodayTask: PriorityTask | null;
   todayTasks: PriorityTask[];
   dailyTasks: DailyTask[];
+  weeklyTasks: WeeklyTask[];
 };
 
 type StoredPlannerState = Partial<PlannerState>;
@@ -62,6 +70,7 @@ type TaskEditTarget =
   | { kind: "achievement"; id: string }
   | { kind: "important"; id: string }
   | { kind: "today"; id: string }
+  | { kind: "weekly"; id: string }
   | { kind: "daily"; id: string }
   | null;
 
@@ -73,6 +82,16 @@ type HomeClientProps = {
 const plannerStorageKey = "focus-planner-state-v1";
 const diaryStorageKey = "diary-v1";
 const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
+const weekdayOrder = [1, 2, 3, 4, 5, 6, 0] as const;
+const weekdayLabels: Record<number, string> = {
+  0: "日",
+  1: "月",
+  2: "火",
+  3: "水",
+  4: "木",
+  5: "金",
+  6: "土",
+};
 
 const initialState: PlannerState = {
   goals: {
@@ -90,6 +109,7 @@ const initialState: PlannerState = {
   importantTodayTask: null,
   todayTasks: [],
   dailyTasks: [],
+  weeklyTasks: [],
 };
 
 const goalLabels: Record<GoalKey, string> = {
@@ -173,6 +193,21 @@ function getWeekRangeLabel(offset = 0) {
   sunday.setDate(monday.getDate() + 6);
 
   return `${formatMonthDay(monday)}~${formatMonthDay(sunday)}`;
+}
+
+function getCurrentWeekKey() {
+  return formatDateKey(getWeekStartDate(0));
+}
+
+function getWeeklySlotKey(weekKey: string, weekday: number) {
+  return `${weekKey}-${weekday}`;
+}
+
+function sortWeekdays(days: number[]) {
+  return [...days].sort(
+    (left, right) => weekdayOrder.indexOf(left as (typeof weekdayOrder)[number]) -
+      weekdayOrder.indexOf(right as (typeof weekdayOrder)[number]),
+  );
 }
 
 function getPeriodInfo(offsets: PeriodOffsets) {
@@ -262,6 +297,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     achievementTasks?: AchievementTask[];
     importantTodayTask?: PriorityTask | null;
     dailyTasks?: DailyTask[];
+    weeklyTasks?: WeeklyTask[];
   };
   const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
     ? legacyValue.achievementTasks
@@ -280,6 +316,9 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const rawDailyTasks = Array.isArray(value.dailyTasks)
     ? value.dailyTasks
     : initialState.dailyTasks;
+  const rawWeeklyTasks = Array.isArray(legacyValue.weeklyTasks)
+    ? legacyValue.weeklyTasks
+    : initialState.weeklyTasks;
   const currentPeriodInfo = getPeriodInfo({ year: 0, month: 0, week: 0 });
   const storedGoalsByPeriod = value.goalsByPeriod || initialState.goalsByPeriod;
   const goalsByPeriod: PeriodGoalMap = {
@@ -332,6 +371,18 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         ? task.completedDates
         : [],
     })),
+    weeklyTasks: rawWeeklyTasks.map((task, index) => ({
+      id: task.id || `weekly-task-${index + 1}`,
+      title: task.title || "",
+      weekdays: Array.isArray(task.weekdays)
+        ? task.weekdays.filter((day): day is number =>
+            Number.isInteger(day) && day >= 0 && day <= 6,
+          )
+        : [],
+      completedSlots: Array.isArray(task.completedSlots)
+        ? task.completedSlots.filter((slot) => typeof slot === "string")
+        : [],
+    })),
   };
 }
 
@@ -382,6 +433,10 @@ export default function HomeClient({
   const [newImportantTaskTitle, setNewImportantTaskTitle] = useState("");
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
+  const [newWeeklyTaskTitle, setNewWeeklyTaskTitle] = useState("");
+  const [newWeeklyTaskWeekdays, setNewWeeklyTaskWeekdays] = useState<number[]>(
+    () => [new Date().getDay()],
+  );
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -391,6 +446,9 @@ export default function HomeClient({
   const periodLabels = periodInfo.labels;
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
+  const todayWeekday = new Date().getDay();
+  const currentWeekKey = getCurrentWeekKey();
+  const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, todayWeekday);
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -878,6 +936,28 @@ export default function HomeClient({
     setNewDailyTaskTitle("");
   }
 
+  function addWeeklyTask() {
+    const title = newWeeklyTaskTitle.trim();
+    if (!title) return;
+    setPlanner((current) => ({
+      ...current,
+      weeklyTasks: [
+        ...current.weeklyTasks,
+        {
+          id: createId("weekly-task"),
+          title,
+          weekdays:
+            newWeeklyTaskWeekdays.length > 0
+              ? [...newWeeklyTaskWeekdays]
+              : [todayWeekday],
+          completedSlots: [],
+        },
+      ],
+    }));
+    setNewWeeklyTaskTitle("");
+    setNewWeeklyTaskWeekdays([todayWeekday]);
+  }
+
   function updateDailyTaskTitle(id: string, title: string) {
     setPlanner((current) => ({
       ...current,
@@ -908,6 +988,151 @@ export default function HomeClient({
       ...current,
       dailyTasks: current.dailyTasks.filter((task) => task.id !== id),
     }));
+  }
+
+  function updateWeeklyTaskTitle(id: string, title: string) {
+    setPlanner((current) => ({
+      ...current,
+      weeklyTasks: current.weeklyTasks.map((task) =>
+        task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function toggleWeeklyTaskWeekday(id: string, weekday: number) {
+    setPlanner((current) => ({
+      ...current,
+      weeklyTasks: current.weeklyTasks.map((task) => {
+        if (task.id !== id) return task;
+        const weekdays = task.weekdays.includes(weekday)
+          ? task.weekdays.filter((day) => day !== weekday)
+          : sortWeekdays([...task.weekdays, weekday]);
+        return { ...task, weekdays };
+      }),
+    }));
+  }
+
+  function toggleNewWeeklyTaskWeekday(weekday: number) {
+    setNewWeeklyTaskWeekdays((current) =>
+      current.includes(weekday)
+        ? current.filter((day) => day !== weekday)
+        : sortWeekdays([...current, weekday]),
+    );
+  }
+
+  function toggleWeeklyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      weeklyTasks: current.weeklyTasks.map((task) => {
+        if (task.id !== id) return task;
+        if (!task.weekdays.includes(todayWeekday)) return task;
+        const isCompleted = task.completedSlots.includes(currentWeeklySlotKey);
+        return {
+          ...task,
+          completedSlots: isCompleted
+            ? task.completedSlots.filter((slot) => slot !== currentWeeklySlotKey)
+            : [...task.completedSlots, currentWeeklySlotKey],
+        };
+      }),
+    }));
+  }
+
+  function removeWeeklyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      weeklyTasks: current.weeklyTasks.filter((task) => task.id !== id),
+    }));
+  }
+
+  function renderWeekdayToggles(
+    selectedWeekdays: number[],
+    onToggle: (weekday: number) => void,
+    labelPrefix: string,
+  ) {
+    return (
+      <div className="weekdayToggleRow">
+        {weekdayOrder.map((weekday) => {
+          const isActive = selectedWeekdays.includes(weekday);
+          return (
+            <button
+              key={`${labelPrefix}-${weekday}`}
+              className={isActive ? "weekdayToggle active" : "weekdayToggle"}
+              type="button"
+              onClick={() => onToggle(weekday)}
+              aria-pressed={isActive}
+              aria-label={`${weekdayLabels[weekday]}曜日`}
+            >
+              {weekdayLabels[weekday]}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function renderWeeklyTask(task: WeeklyTask) {
+    const editTarget = { kind: "weekly", id: task.id } as const;
+    const isEditing = isTaskBeingEdited(editTarget);
+    const isTodayScheduled = task.weekdays.includes(todayWeekday);
+    const isCompleted = task.completedSlots.includes(currentWeeklySlotKey);
+    return (
+      <article
+        className={isCompleted ? "taskItem done weeklyItem" : "taskItem weeklyItem"}
+        key={task.id}
+      >
+        <button
+          className="checkButton"
+          type="button"
+          onClick={() => toggleWeeklyTask(task.id)}
+          disabled={!isTodayScheduled}
+          aria-label={
+            isTodayScheduled
+              ? `${task.title || "無題のタスク"}を今週分完了`
+              : `${task.title || "無題のタスク"}は今日は対象外`
+          }
+        >
+          ✓
+        </button>
+        {isEditing ? (
+          <textarea
+            aria-label="毎週やること"
+            value={task.title}
+            onChange={(event) =>
+              updateWeeklyTaskTitle(task.id, event.target.value)
+            }
+            onKeyDown={handleTaskEditKeyDown}
+            onBlur={() => finishTaskEdit(editTarget)}
+            rows={1}
+          />
+        ) : (
+          <div
+            className="taskTitleView"
+            role="textbox"
+            aria-label="毎週やること"
+            aria-readonly="true"
+            tabIndex={0}
+            onDoubleClick={() => beginTaskEdit(editTarget)}
+          >
+            {task.title || " "}
+          </div>
+        )}
+        <button
+          className="iconButton"
+          type="button"
+          onClick={() => removeWeeklyTask(task.id)}
+          aria-label={`${task.title || "無題のタスク"}を削除`}
+        >
+          ×
+        </button>
+        <div className="weeklyItemWeekdays">
+          {renderWeekdayToggles(
+            task.weekdays,
+            (weekday) => toggleWeeklyTaskWeekday(task.id, weekday),
+            "毎週やることの曜日",
+          )}
+        </div>
+      </article>
+    );
   }
 
   function updateTodayDiary(body: string) {
@@ -1367,6 +1592,42 @@ export default function HomeClient({
               );
             })}
           </div>
+
+          <section className="weeklySection" aria-label="毎週やることリスト">
+            <div className="sectionHeader">
+              <h3>毎週やることリスト</h3>
+            </div>
+            <form
+              className="weeklyTaskForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addWeeklyTask();
+              }}
+            >
+              <input
+                aria-label="毎週やることを追加"
+                placeholder="毎週やること"
+                value={newWeeklyTaskTitle}
+                onChange={(event) => setNewWeeklyTaskTitle(event.target.value)}
+              />
+              <button type="submit" aria-label="毎週やることを追加">
+                +
+              </button>
+              <div className="weeklyTaskFormWeekdays">
+                {renderWeekdayToggles(
+                  newWeeklyTaskWeekdays,
+                  toggleNewWeeklyTaskWeekday,
+                  "追加日の曜日",
+                )}
+              </div>
+            </form>
+            <div className="taskList">
+              {planner.weeklyTasks.length === 0 && (
+                <p className="emptyText">毎週やることはありません。</p>
+              )}
+              {planner.weeklyTasks.map(renderWeeklyTask)}
+            </div>
+          </section>
         </section>
       </section>
 

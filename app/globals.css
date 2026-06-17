@@ -1574,6 +1574,34 @@ select {
   border-top: 1px solid var(--line);
 }
 
+.weeklySection {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.weeklyTaskForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+
+.weeklyTaskFormWeekdays,
+.weeklyItemWeekdays {
+  grid-column: 1 / -1;
+}
+
+.weeklyItem {
+  grid-template-rows: auto auto;
+}
+
+.weeklyItem .taskTitleView,
+.weeklyItem textarea {
+  min-height: 38px;
+}
+
 .taskItemImportant {
   border-color: rgba(183, 116, 34, 0.45);
   background: #fff8e8;
