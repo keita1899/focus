@@ -58,6 +58,13 @@ type FocusTarget = {
   id: string;
 } | null;
 
+type TaskEditTarget =
+  | { kind: "achievement"; id: string }
+  | { kind: "important"; id: string }
+  | { kind: "today"; id: string }
+  | { kind: "daily"; id: string }
+  | null;
+
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialDiaryValue: unknown;
@@ -332,6 +339,8 @@ export default function HomeClient({
   initialDiaryValue,
 }: HomeClientProps) {
   const { data: session } = useSession();
+  const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
+  const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
   const initialDiaryEntries = useMemo(
     () => normalizeDiaryEntries(initialDiaryValue),
     [initialDiaryValue],
@@ -347,6 +356,8 @@ export default function HomeClient({
   );
   const [isDiaryReady, setIsDiaryReady] = useState(initialDiaryValue !== null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
+  const [editingTaskTarget, setEditingTaskTarget] =
+    useState<TaskEditTarget>(null);
   const [newAchievementTitle, setNewAchievementTitle] = useState("");
   const [newAchievementChildTitles, setNewAchievementChildTitles] = useState<
     Record<string, string>
@@ -366,9 +377,28 @@ export default function HomeClient({
   const periodLabels = periodInfo.labels;
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
-  const todayLabel = getTodayLabel();
-  const todayKey = formatDateKey(new Date());
   const ageInfo = getAgeInfo(planner.birthday);
+
+  useEffect(() => {
+    let timeoutId: number | null = null;
+
+    const scheduleNextTick = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+
+      timeoutId = window.setTimeout(() => {
+        setTodayKey(formatDateKey(new Date()));
+        setTodayLabel(getTodayLabel());
+        scheduleNextTick();
+      }, Math.max(0, nextMidnight.getTime() - now.getTime()));
+    };
+
+    scheduleNextTick();
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     if (initialPlannerValue) return;
@@ -454,6 +484,10 @@ export default function HomeClient({
   }, [diaryEntries, isDiaryReady]);
 
   useEffect(() => {
+    setTodayDiaryBody(getTodayDiaryBody(diaryEntries));
+  }, [diaryEntries, todayKey]);
+
+  useEffect(() => {
     document
       .querySelectorAll<HTMLTextAreaElement>(
         ".taskList textarea, .todayImportantSection textarea",
@@ -483,6 +517,29 @@ export default function HomeClient({
       [task.parentId]: [...(groups[task.parentId] || []), task],
     };
   }, {});
+
+  function taskEditKey(target: Exclude<TaskEditTarget, null>) {
+    return `${target.kind}:${target.id}`;
+  }
+
+  function isTaskBeingEdited(target: Exclude<TaskEditTarget, null>) {
+    return (
+      editingTaskTarget !== null &&
+      taskEditKey(editingTaskTarget) === taskEditKey(target)
+    );
+  }
+
+  function beginTaskEdit(target: Exclude<TaskEditTarget, null>) {
+    setEditingTaskTarget(target);
+  }
+
+  function finishTaskEdit(target: Exclude<TaskEditTarget, null>) {
+    setEditingTaskTarget((current) =>
+      current !== null && taskEditKey(current) === taskEditKey(target)
+        ? null
+        : current,
+    );
+  }
 
   function addAchievementTask(parentId?: string) {
     const title = parentId
@@ -564,6 +621,8 @@ export default function HomeClient({
   }
 
   function renderAchievementTask(task: AchievementTask, isChild = false) {
+    const editTarget = { kind: "achievement", id: task.id } as const;
+    const isEditing = isTaskBeingEdited(editTarget);
     return (
       <article
         className={
@@ -585,6 +644,9 @@ export default function HomeClient({
           onChange={(event) =>
             updateAchievementTaskTitle(task.id, event.target.value)
           }
+          readOnly={!isEditing}
+          onDoubleClick={() => beginTaskEdit(editTarget)}
+          onBlur={() => finishTaskEdit(editTarget)}
           rows={1}
         />
         <button
@@ -610,9 +672,9 @@ export default function HomeClient({
           type="button"
           onClick={() => toggleAchievementChildren(task.id)}
           aria-expanded={isExpanded}
-          aria-label={`${task.title || "達成項目"}の子項目を${isExpanded ? "隠す" : "表示"} `}
+          aria-label={`${task.title || "達成項目"}の子項目を${isExpanded ? "隠す" : "表示"}`}
         >
-          {isExpanded ? "子項目を隠す" : children.length > 0 ? "子項目を表示" : "子項目を追加"}
+          {isExpanded ? "子項目を隠す" : children.length > 0 ? "子項目を表示" : "子項目"}
         </button>
         {children.length > 0 && isExpanded && (
           <div className="achievementChildren">
@@ -621,7 +683,7 @@ export default function HomeClient({
         )}
         {isExpanded && (
           <form
-            className="taskForm achievementChildForm"
+            className="achievementGhostForm"
             onSubmit={(event) => {
               event.preventDefault();
               addAchievementTask(task.id);
@@ -629,13 +691,13 @@ export default function HomeClient({
           >
             <input
               aria-label={`${task.title || "達成項目"}の子項目を追加`}
-              placeholder="子項目"
+              placeholder="子項目を追加"
               value={newAchievementChildTitles[task.id] || ""}
               onChange={(event) =>
                 updateNewAchievementChildTitle(task.id, event.target.value)
               }
             />
-            <button type="submit" aria-label="子項目を追加">
+            <button type="submit" aria-label="子項目を追加" title="追加">
               +
             </button>
           </form>
@@ -997,6 +1059,12 @@ export default function HomeClient({
           <h2>今日やることリスト</h2>
           {(() => {
             const importantTask = planner.importantTodayTask;
+            const importantEditTarget = importantTask
+              ? ({ kind: "important", id: importantTask.id } as const)
+              : null;
+            const isImportantEditing = importantEditTarget
+              ? isTaskBeingEdited(importantEditTarget)
+              : false;
             return (
               <section className="todayImportantSection" aria-label="重要なタスク">
                 <div className="sectionHeader">
@@ -1018,6 +1086,9 @@ export default function HomeClient({
                       onChange={(event) =>
                         updateImportantTaskTitle(event.target.value)
                       }
+                      readOnly={!isImportantEditing}
+                      onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
+                      onBlur={() => finishTaskEdit(importantEditTarget!)}
                       rows={1}
                     />
                     <div className="priorityActions">
@@ -1088,34 +1159,45 @@ export default function HomeClient({
               )}
               {planner.todayTasks.map((task) => (
                 <article className={task.done ? "taskItem done" : "taskItem"} key={task.id}>
-                  <button
-                    className="checkButton"
-                    type="button"
-                    onClick={() => completeTodayTask(task.id)}
-                    aria-label={`${task.title || "無題のタスク"}を完了`}
-                  >
-                    ✓
-                  </button>
-                  <textarea
-                    aria-label="Inboxタスク"
-                    value={task.title}
-                    onChange={(event) =>
-                      updateTodayTaskTitle(task.id, event.target.value)
-                    }
-                    rows={1}
-                  />
-                  <div className="priorityActions">
-                    <button
-                      className="focusButton"
-                      type="button"
-                      onClick={() =>
-                        setFocusTarget({ kind: "priority", id: task.id })
-                      }
-                      aria-label={`${task.title || "無題のタスク"}に集中する`}
-                    >
-                      focus
-                    </button>
-                  </div>
+                  {(() => {
+                    const editTarget = { kind: "today", id: task.id } as const;
+                    const isEditing = isTaskBeingEdited(editTarget);
+                    return (
+                      <>
+                        <button
+                          className="checkButton"
+                          type="button"
+                          onClick={() => completeTodayTask(task.id)}
+                          aria-label={`${task.title || "無題のタスク"}を完了`}
+                        >
+                          ✓
+                        </button>
+                        <textarea
+                          aria-label="Inboxタスク"
+                          value={task.title}
+                          onChange={(event) =>
+                            updateTodayTaskTitle(task.id, event.target.value)
+                          }
+                          readOnly={!isEditing}
+                          onDoubleClick={() => beginTaskEdit(editTarget)}
+                          onBlur={() => finishTaskEdit(editTarget)}
+                          rows={1}
+                        />
+                        <div className="priorityActions">
+                          <button
+                            className="focusButton"
+                            type="button"
+                            onClick={() =>
+                              setFocusTarget({ kind: "priority", id: task.id })
+                            }
+                            aria-label={`${task.title || "無題のタスク"}に集中する`}
+                          >
+                            focus
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </article>
               ))}
             </div>
@@ -1147,29 +1229,34 @@ export default function HomeClient({
             )}
             {planner.dailyTasks.map((task) => {
               const isCompleted = task.completedDates.includes(todayKey);
+              const editTarget = { kind: "daily", id: task.id } as const;
+              const isEditing = isTaskBeingEdited(editTarget);
               return (
                 <article
                   className={isCompleted ? "taskItem done" : "taskItem"}
                   key={task.id}
                 >
-                <button
-                  className="checkButton"
-                  type="button"
-                  onClick={() => toggleDailyTask(task.id)}
-                  aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
-                >
-                  ✓
-                </button>
-                <textarea
-                  aria-label="毎日やること"
-                  value={task.title}
-                  onChange={(event) =>
-                    updateDailyTaskTitle(task.id, event.target.value)
-                  }
-                  rows={1}
-                />
-                <button
-                  className="iconButton"
+                  <button
+                    className="checkButton"
+                    type="button"
+                    onClick={() => toggleDailyTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+                  >
+                    ✓
+                  </button>
+                  <textarea
+                    aria-label="毎日やること"
+                    value={task.title}
+                    onChange={(event) =>
+                      updateDailyTaskTitle(task.id, event.target.value)
+                    }
+                    readOnly={!isEditing}
+                    onDoubleClick={() => beginTaskEdit(editTarget)}
+                    onBlur={() => finishTaskEdit(editTarget)}
+                    rows={1}
+                  />
+                  <button
+                    className="iconButton"
                     type="button"
                     onClick={() => removeDailyTask(task.id)}
                     aria-label={`${task.title || "無題のタスク"}を削除`}

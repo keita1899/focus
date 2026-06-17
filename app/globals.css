@@ -357,18 +357,33 @@ h2 {
   border-left: 2px solid rgba(23, 107, 85, 0.18);
 }
 
-.achievementChildForm {
+.achievementGhostForm {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 6px;
   margin-left: 38px;
+  border: 1px dashed rgba(23, 107, 85, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 8px;
 }
 
-.achievementChildForm input {
+.achievementGhostForm input {
   min-height: 34px;
+  border-color: transparent;
+  background: transparent;
+  padding: 0 8px;
 }
 
-.achievementChildForm button {
+.achievementGhostForm button {
   width: 34px;
   height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(23, 107, 85, 0.12);
+  color: var(--accent-strong);
+  font-size: 1rem;
 }
 
 .goalStack {
@@ -1753,6 +1768,10 @@ select {
   overflow: hidden;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.taskItem textarea[readonly] {
+  cursor: default;
 }
 
 .taskItem textarea:focus {
