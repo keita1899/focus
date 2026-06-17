@@ -1521,6 +1521,36 @@ select {
   overflow-wrap: anywhere;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.todayImportantSection,
+.todayInboxSection {
+  display: grid;
+  gap: 10px;
+}
+
+.todayInboxSection {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.taskItemImportant {
+  border-color: rgba(183, 116, 34, 0.45);
+  background: #fff8e8;
+}
+
 .achievedTitle {
   color: var(--muted);
   text-decoration: line-through;

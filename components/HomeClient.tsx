@@ -38,6 +38,7 @@ type PlannerState = {
   goalsByPeriod: PeriodGoalMap;
   birthday: string;
   achievementTasks: AchievementTask[];
+  importantTodayTask: PriorityTask | null;
   todayTasks: PriorityTask[];
   dailyTasks: DailyTask[];
 };
@@ -78,6 +79,7 @@ const initialState: PlannerState = {
   },
   birthday: "",
   achievementTasks: [],
+  importantTodayTask: null,
   todayTasks: [],
   dailyTasks: [],
 };
@@ -250,6 +252,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const legacyValue = value as StoredPlannerState & {
     priorities?: PriorityTask[];
     achievementTasks?: AchievementTask[];
+    importantTodayTask?: PriorityTask | null;
     dailyTasks?: DailyTask[];
   };
   const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
@@ -260,6 +263,12 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     : Array.isArray(legacyValue.priorities)
       ? legacyValue.priorities
       : initialState.todayTasks;
+  const rawImportantTask =
+    legacyValue.importantTodayTask ||
+    (rawTodayTasks.length > 0 ? rawTodayTasks[0] : null);
+  const rawInboxTasks = legacyValue.importantTodayTask
+    ? rawTodayTasks
+    : rawTodayTasks.slice(rawImportantTask ? 1 : 0);
   const rawDailyTasks = Array.isArray(value.dailyTasks)
     ? value.dailyTasks
     : initialState.dailyTasks;
@@ -292,7 +301,15 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
       done: Boolean(task.done),
       parentId: task.parentId || undefined,
     })),
-    todayTasks: rawTodayTasks
+    importantTodayTask: rawImportantTask
+      ? {
+          id: rawImportantTask.id || "important-task",
+          title: rawImportantTask.title || "",
+          done: false,
+          projectName: rawImportantTask.projectName || undefined,
+        }
+      : null,
+    todayTasks: rawInboxTasks
       .filter((task) => !task.done)
       .map((task, index) => ({
         id: task.id || `today-task-${index + 1}`,
@@ -337,6 +354,7 @@ export default function HomeClient({
   const [expandedAchievementParents, setExpandedAchievementParents] = useState<
     Record<string, boolean>
   >({});
+  const [newImportantTaskTitle, setNewImportantTaskTitle] = useState("");
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
@@ -436,18 +454,23 @@ export default function HomeClient({
   }, [diaryEntries, isDiaryReady]);
 
   useEffect(() => {
-    document.querySelectorAll<HTMLTextAreaElement>(".taskList textarea").forEach(
-      (textarea) => {
+    document
+      .querySelectorAll<HTMLTextAreaElement>(
+        ".taskList textarea, .todayImportantSection textarea",
+      )
+      .forEach((textarea) => {
         textarea.style.height = "auto";
         textarea.style.height = `${textarea.scrollHeight}px`;
-      },
-    );
+      });
   }, [planner, expandedAchievementParents]);
 
   const focusedTask = useMemo(() => {
     if (!focusTarget) return null;
+    if (planner.importantTodayTask?.id === focusTarget.id) {
+      return planner.importantTodayTask;
+    }
     return planner.todayTasks.find((task) => task.id === focusTarget.id) || null;
-  }, [focusTarget, planner.todayTasks]);
+  }, [focusTarget, planner.importantTodayTask, planner.todayTasks]);
   const achievementParents = planner.achievementTasks.filter(
     (task) => !task.parentId,
   );
@@ -582,17 +605,15 @@ export default function HomeClient({
     return (
       <div className="achievementGroup" key={task.id}>
         {renderAchievementTask(task)}
-        {children.length > 0 && (
-          <button
-            className="achievementToggle"
-            type="button"
-            onClick={() => toggleAchievementChildren(task.id)}
-            aria-expanded={isExpanded}
-            aria-label={`${task.title || "達成項目"}の子項目を${isExpanded ? "隠す" : "表示"} `}
-          >
-            {isExpanded ? "子項目を隠す" : "子項目を表示"}
-          </button>
-        )}
+        <button
+          className="achievementToggle"
+          type="button"
+          onClick={() => toggleAchievementChildren(task.id)}
+          aria-expanded={isExpanded}
+          aria-label={`${task.title || "達成項目"}の子項目を${isExpanded ? "隠す" : "表示"} `}
+        >
+          {isExpanded ? "子項目を隠す" : children.length > 0 ? "子項目を表示" : "子項目を追加"}
+        </button>
         {children.length > 0 && isExpanded && (
           <div className="achievementChildren">
             {children.map((child) => renderAchievementTask(child, true))}
@@ -657,6 +678,33 @@ export default function HomeClient({
     setNewTodayTaskTitle("");
   }
 
+  function addImportantTask() {
+    const title = newImportantTaskTitle.trim();
+    if (!title) return;
+    setPlanner((current) => ({
+      ...current,
+      importantTodayTask: {
+        id: createId("important-task"),
+        title,
+        done: false,
+      },
+    }));
+    setNewImportantTaskTitle("");
+  }
+
+  function updateImportantTaskTitle(title: string) {
+    setPlanner((current) => {
+      if (!current.importantTodayTask) return current;
+      return {
+        ...current,
+        importantTodayTask: {
+          ...current.importantTodayTask,
+          title,
+        },
+      };
+    });
+  }
+
   function updateTodayTaskTitle(id: string, title: string) {
     setPlanner((current) => ({
       ...current,
@@ -677,7 +725,18 @@ export default function HomeClient({
   }
 
   function completePriority(id: string) {
+    if (planner.importantTodayTask?.id === id) {
+      completeImportantTask(id);
+      return;
+    }
     completeTodayTask(id);
+  }
+
+  function completeImportantTask(id: string) {
+    setPlanner((current) => ({ ...current, importantTodayTask: null }));
+    if (focusTarget?.id === id) {
+      setFocusTarget(null);
+    }
   }
 
   function addDailyTask() {
@@ -936,63 +995,131 @@ export default function HomeClient({
 
         <section className="homeColumn taskColumn" aria-label="今日やることリスト">
           <h2>今日やることリスト</h2>
-          <form
-            className="taskForm"
-            onSubmit={(event) => {
-              event.preventDefault();
-              addTodayTask();
-            }}
-          >
-            <input
-              aria-label="今日やることを追加"
-              placeholder="今日やること"
-              value={newTodayTaskTitle}
-              onChange={(event) => setNewTodayTaskTitle(event.target.value)}
-            />
-            <button type="submit" aria-label="今日やることを追加">
-              +
-            </button>
-          </form>
-          <div className="taskList">
-            {planner.todayTasks.length === 0 && (
-              <p className="emptyText">今日やることはありません。</p>
-            )}
-            {planner.todayTasks.map((task) => (
-              <article
-                className="taskItem"
-                key={task.id}
-              >
-                <button
-                  className="checkButton"
-                  type="button"
-                  onClick={() => completeTodayTask(task.id)}
-                  aria-label={`${task.title || "無題のタスク"}を完了`}
-                >
-                  ✓
-                </button>
-                <textarea
-                  aria-label="今日やること"
-                  value={task.title}
-                  onChange={(event) =>
-                    updateTodayTaskTitle(task.id, event.target.value)
-                  }
-                  rows={1}
-                />
-                <div className="priorityActions">
-                  <button
-                    className="focusButton"
-                    type="button"
-                    onClick={() =>
-                      setFocusTarget({ kind: "priority", id: task.id })
-                    }
-                    aria-label={`${task.title || "無題のタスク"}に集中する`}
-                  >
-                    focus
-                  </button>
+          {(() => {
+            const importantTask = planner.importantTodayTask;
+            return (
+              <section className="todayImportantSection" aria-label="重要なタスク">
+                <div className="sectionHeader">
+                  <h3>重要なタスク</h3>
                 </div>
-              </article>
-            ))}
-          </div>
+                {importantTask ? (
+                  <article className="taskItem taskItemImportant">
+                    <button
+                      className="checkButton"
+                      type="button"
+                      onClick={() => completeImportantTask(importantTask.id)}
+                      aria-label={`${importantTask.title || "重要なタスク"}を完了`}
+                    >
+                      ✓
+                    </button>
+                    <textarea
+                      aria-label="重要なタスク"
+                      value={importantTask.title}
+                      onChange={(event) =>
+                        updateImportantTaskTitle(event.target.value)
+                      }
+                      rows={1}
+                    />
+                    <div className="priorityActions">
+                      <button
+                        className="focusButton"
+                        type="button"
+                        onClick={() =>
+                          setFocusTarget({
+                            kind: "priority",
+                            id: importantTask.id,
+                          })
+                        }
+                        aria-label={`${importantTask.title || "重要なタスク"}に集中する`}
+                      >
+                        focus
+                      </button>
+                    </div>
+                  </article>
+                ) : (
+                  <form
+                    className="taskForm"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      addImportantTask();
+                    }}
+                  >
+                    <input
+                      aria-label="重要なタスクを追加"
+                      placeholder="重要なタスク"
+                      value={newImportantTaskTitle}
+                      onChange={(event) =>
+                        setNewImportantTaskTitle(event.target.value)
+                      }
+                    />
+                    <button type="submit" aria-label="重要なタスクを追加">
+                      +
+                    </button>
+                  </form>
+                )}
+              </section>
+            );
+          })()}
+
+          <section className="todayInboxSection" aria-label="Inboxタスク">
+            <div className="sectionHeader">
+              <h3>Inbox</h3>
+            </div>
+            <form
+              className="taskForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addTodayTask();
+              }}
+            >
+              <input
+                aria-label="Inboxタスクを追加"
+                placeholder="Inboxタスク"
+                value={newTodayTaskTitle}
+                onChange={(event) => setNewTodayTaskTitle(event.target.value)}
+              />
+              <button type="submit" aria-label="Inboxタスクを追加">
+                +
+              </button>
+            </form>
+            <div className="taskList">
+              {planner.todayTasks.length === 0 && (
+                <p className="emptyText">Inboxタスクはありません。</p>
+              )}
+              {planner.todayTasks.map((task) => (
+                <article className={task.done ? "taskItem done" : "taskItem"} key={task.id}>
+                  <button
+                    className="checkButton"
+                    type="button"
+                    onClick={() => completeTodayTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}を完了`}
+                  >
+                    ✓
+                  </button>
+                  <textarea
+                    aria-label="Inboxタスク"
+                    value={task.title}
+                    onChange={(event) =>
+                      updateTodayTaskTitle(task.id, event.target.value)
+                    }
+                    rows={1}
+                  />
+                  <div className="priorityActions">
+                    <button
+                      className="focusButton"
+                      type="button"
+                      onClick={() =>
+                        setFocusTarget({ kind: "priority", id: task.id })
+                      }
+                      aria-label={`${task.title || "無題のタスク"}に集中する`}
+                    >
+                      focus
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </section>
 
         <section className="homeColumn dailyColumn" aria-label="毎日やることリスト">
