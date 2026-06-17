@@ -72,6 +72,7 @@ type HomeClientProps = {
 
 const plannerStorageKey = "focus-planner-state-v1";
 const diaryStorageKey = "diary-v1";
+const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
 
 const initialState: PlannerState = {
   goals: {
@@ -364,7 +365,20 @@ export default function HomeClient({
   >({});
   const [expandedAchievementParents, setExpandedAchievementParents] = useState<
     Record<string, boolean>
-  >({});
+  >(() => {
+    if (typeof window === "undefined") return {};
+
+    try {
+      const stored = window.localStorage.getItem(achievementExpandedStorageKey);
+      if (!stored) return {};
+      const parsed = JSON.parse(stored) as Record<string, boolean>;
+      return Object.fromEntries(
+        Object.entries(parsed).filter(([, value]) => Boolean(value)),
+      );
+    } catch {
+      return {};
+    }
+  });
   const [newImportantTaskTitle, setNewImportantTaskTitle] = useState("");
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
@@ -497,6 +511,17 @@ export default function HomeClient({
         textarea.style.height = `${textarea.scrollHeight}px`;
       });
   }, [planner, expandedAchievementParents]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        achievementExpandedStorageKey,
+        JSON.stringify(expandedAchievementParents),
+      );
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [expandedAchievementParents]);
 
   const focusedTask = useMemo(() => {
     if (!focusTarget) return null;
@@ -657,18 +682,6 @@ export default function HomeClient({
         >
           ✓
         </button>
-        {isParent && (
-          <button
-            className="achievementDisclosure"
-            type="button"
-            onClick={() => toggleAchievementChildren(task.id)}
-            aria-expanded={expandedAchievementParents[task.id] ?? false}
-            aria-label={`${task.title || "達成項目"}の子項目を開閉`}
-            title="開閉"
-          >
-            ▸
-          </button>
-        )}
         <textarea
           aria-label={isChild ? "達成リストの子項目" : "達成リスト"}
           value={task.title}
@@ -689,6 +702,22 @@ export default function HomeClient({
         >
           ×
         </button>
+        {isParent && (
+          <button
+            className={
+              expandedAchievementParents[task.id] ?? false
+                ? "achievementDisclosure expanded"
+                : "achievementDisclosure"
+            }
+            type="button"
+            onClick={() => toggleAchievementChildren(task.id)}
+            aria-expanded={expandedAchievementParents[task.id] ?? false}
+            aria-label={`${task.title || "達成項目"}の子項目を開閉`}
+            title="開閉"
+          >
+            ⌄
+          </button>
+        )}
       </article>
     );
   }
