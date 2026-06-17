@@ -1227,7 +1227,6 @@ export default function HomeClient({
 
       <section className="homeColumns" aria-label="今日の管理">
         <section className="homeColumn goalColumn" aria-label="目標">
-          <h2>目標</h2>
           <div className="goalNest">
             <section className="goalPanel goalYearPanel">
               <div className="goalHeading">
