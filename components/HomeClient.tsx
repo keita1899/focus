@@ -12,7 +12,6 @@ type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
 type PeriodGoalMap = Record<GoalKey, Record<string, string>>;
 type PeriodOffsets = Record<GoalKey, number>;
-type Weekday = "月" | "火" | "水" | "木" | "金" | "土" | "日";
 
 type PriorityTask = {
   id: string;
@@ -21,37 +20,15 @@ type PriorityTask = {
   projectName?: string;
 };
 
-type TimetableEntry = {
-  id: string;
-  time: string;
-  title: string;
-  kind: TimetableKind;
-  completedDates?: string[];
-  dailyTitles?: Record<string, string>;
-};
-
-type TimetableKind = "schedule" | "timetable" | "habit";
-
-type Timetable = {
-  id: string;
-  name: string;
-  kind: TimetableKind;
-  weekdays: Weekday[];
-  entries: TimetableEntry[];
-};
-
 type PlannerState = {
   goals: GoalMap;
   goalsByPeriod: PeriodGoalMap;
   birthday: string;
   priorities: PriorityTask[];
   priorityBatchLocked: boolean;
-  timetables: Timetable[];
 };
 
-type StoredPlannerState = Partial<PlannerState> & {
-  timetable?: unknown;
-};
+type StoredPlannerState = Partial<PlannerState>;
 
 type FocusTarget = {
   kind: "priority";
@@ -84,7 +61,6 @@ const initialState: PlannerState = {
     },
   ],
   priorityBatchLocked: false,
-  timetables: [],
 };
 
 const goalLabels: Record<GoalKey, string> = {
@@ -92,8 +68,6 @@ const goalLabels: Record<GoalKey, string> = {
   month: "今月の目標",
   week: "今週の目標",
 };
-const weekdayOptions: Weekday[] = ["月", "火", "水", "木", "金", "土", "日"];
-
 function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -112,23 +86,6 @@ function formatDateKey(date: Date) {
 function getTodayLabel() {
   const today = new Date();
   return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
-}
-
-function getTodayWeekday(): Weekday {
-  const weekdays: Weekday[] = ["日", "月", "火", "水", "木", "金", "土"];
-  return weekdays[new Date().getDay()];
-}
-
-function getCurrentTimeValue() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function timeToMinutes(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
 }
 
 function startOfDay(date: Date) {
@@ -282,67 +239,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
       projectName: task.projectName || undefined,
     })),
     priorityBatchLocked: false,
-    timetables: normalizeTimetables(value.timetables, value.timetable),
   };
-}
-
-function normalizeTimetableEntries(
-  entries: Partial<TimetableEntry>[] | undefined,
-  fallbackKind: TimetableKind = "schedule",
-) {
-  return (entries || [])
-    .map((entry, index) => ({
-      id: entry.id || `timetable-entry-${index + 1}`,
-      time: entry.time || "09:00",
-      title: entry.title || "",
-      kind:
-        entry.kind === "timetable" || entry.kind === "habit"
-          ? entry.kind
-          : fallbackKind,
-      completedDates: Array.isArray(entry.completedDates)
-        ? entry.completedDates
-        : [],
-      dailyTitles:
-        entry.dailyTitles && typeof entry.dailyTitles === "object"
-          ? entry.dailyTitles
-          : {},
-    }))
-    .sort((first, second) => first.time.localeCompare(second.time));
-}
-
-function normalizeTimetables(value: unknown, legacyValue?: unknown): Timetable[] {
-  if (Array.isArray(value)) {
-    const usedWeekdays = new Set<Weekday>();
-    return value.map((item, index) => {
-      const timetable = item as Partial<Timetable>;
-      const weekdays = (timetable.weekdays || []).filter((weekday): weekday is Weekday => {
-        if (!weekdayOptions.includes(weekday as Weekday) || usedWeekdays.has(weekday as Weekday)) {
-          return false;
-        }
-        usedWeekdays.add(weekday as Weekday);
-        return true;
-      });
-      return {
-        id: timetable.id || `timetable-${index + 1}`,
-        name: timetable.name || `時間割 ${index + 1}`,
-        kind: timetable.kind === "timetable" ? "timetable" : "schedule",
-        weekdays,
-        entries: normalizeTimetableEntries(timetable.entries, timetable.kind),
-      };
-    });
-  }
-
-  if (!legacyValue || typeof legacyValue !== "object") return initialState.timetables;
-  const legacy = legacyValue as Partial<Record<Weekday, Partial<TimetableEntry>[]>>;
-  return weekdayOptions
-    .map((weekday) => ({
-      id: `timetable-${weekday}`,
-      name: `${weekday}曜日`,
-      kind: "schedule" as const,
-      weekdays: [weekday],
-      entries: normalizeTimetableEntries(legacy[weekday]),
-    }))
-    .filter((timetable) => timetable.entries.length > 0);
 }
 
 export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
@@ -357,14 +254,11 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     month: 0,
     week: 0,
   });
-  const [currentTime, setCurrentTime] = useState(getCurrentTimeValue());
   const periodInfo = getPeriodInfo(periodOffsets);
   const periodLabels = periodInfo.labels;
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
   const todayLabel = getTodayLabel();
-  const todayWeekday = getTodayWeekday();
-  const todayKey = formatDateKey(new Date());
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -403,81 +297,12 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     }
   }, [isReady, planner]);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setCurrentTime(getCurrentTimeValue());
-    }, 30000);
-    return () => window.clearInterval(timer);
-  }, []);
-
   const focusedTask = useMemo(() => {
     if (!focusTarget) return null;
     return planner.priorities.find((task) => task.id === focusTarget.id) || null;
   }, [focusTarget, planner.priorities]);
 
   const primaryPriority = planner.priorities[0] || null;
-  const todayTimetable =
-    planner.timetables.find((timetable) =>
-      timetable.weekdays.includes(todayWeekday),
-    ) || null;
-  const todaysTimetable = todayTimetable?.entries || [];
-  const timetableNumberById = useMemo(() => {
-    const numberById = new Map<string, number>();
-    todaysTimetable
-      .filter((entry) => entry.kind === "timetable")
-      .forEach((entry, index) => {
-        numberById.set(entry.id, index + 1);
-      });
-    return numberById;
-  }, [todaysTimetable]);
-  const currentTimetableId = useMemo(() => {
-    const nowMinutes = timeToMinutes(currentTime);
-    const currentEntries = todaysTimetable.filter(
-      (entry) => timeToMinutes(entry.time) <= nowMinutes,
-    );
-    const currentTimeEntry = currentEntries.at(-1);
-    if (!currentTimeEntry) return null;
-
-    const currentTimeGroup = currentEntries.filter(
-      (entry) => entry.time === currentTimeEntry.time,
-    );
-    const pendingHabit = currentTimeGroup.find(
-      (entry) =>
-        entry.kind === "habit" &&
-        !(entry.completedDates || []).includes(todayKey),
-    );
-    if (pendingHabit) return pendingHabit.id;
-
-    return (
-      currentTimeGroup.find((entry) => entry.kind !== "habit")?.id ||
-      currentTimeGroup.at(-1)?.id ||
-      null
-    );
-  }, [currentTime, todayKey, todaysTimetable]);
-  const currentTimetableEntry = useMemo(
-    () =>
-      todaysTimetable.find((entry) => entry.id === currentTimetableId) || null,
-    [currentTimetableId, todaysTimetable],
-  );
-  const activeHabitEntry = useMemo(() => {
-    if (
-      !currentTimetableEntry ||
-      currentTimetableEntry.kind !== "habit" ||
-      (currentTimetableEntry.completedDates || []).includes(todayKey)
-    ) {
-      return null;
-    }
-    return currentTimetableEntry;
-  }, [currentTimetableEntry, todayKey]);
-  const visibleTimetable = useMemo(() => {
-    const nowMinutes = timeToMinutes(currentTime);
-    return todaysTimetable.filter((entry, index) => {
-      const nextLaterEntry = todaysTimetable
-        .slice(index + 1)
-        .find((nextEntry) => nextEntry.time !== entry.time);
-      return !nextLaterEntry || timeToMinutes(nextLaterEntry.time) > nowMinutes;
-    });
-  }, [currentTime, todaysTimetable]);
 
   function updateGoal(key: GoalKey, value: string) {
     const periodKey = periodKeys[key];
@@ -555,58 +380,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
     }
   }
 
-  function updateTimetableEntryTitle(
-    timetableId: string,
-    entryId: string,
-    value: string,
-  ) {
-    setPlanner((current) => ({
-      ...current,
-      timetables: current.timetables.map((timetable) =>
-        timetable.id === timetableId
-          ? {
-              ...timetable,
-              entries: timetable.entries.map((entry) =>
-                entry.id === entryId
-                  ? {
-                      ...entry,
-                      dailyTitles: {
-                        ...(entry.dailyTitles || {}),
-                        [todayKey]: value,
-                      },
-                    }
-                  : entry,
-              ),
-            }
-          : timetable,
-      ),
-    }));
-  }
-
-  function toggleHabitEntry(timetableId: string, entryId: string) {
-    setPlanner((current) => ({
-      ...current,
-      timetables: current.timetables.map((timetable) =>
-        timetable.id === timetableId
-          ? {
-              ...timetable,
-              entries: timetable.entries.map((entry) => {
-                if (entry.id !== entryId) return entry;
-                const completedDates = entry.completedDates || [];
-                const isCompleted = completedDates.includes(todayKey);
-                return {
-                  ...entry,
-                  completedDates: isCompleted
-                    ? completedDates.filter((date) => date !== todayKey)
-                    : [...completedDates, todayKey],
-                };
-              }),
-            }
-          : timetable,
-      ),
-    }));
-  }
-
   return (
     <main className="shell">
       <header className="topbar">
@@ -644,9 +417,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
           </a>
           <a className="navLink" href="/diary">
             diary
-          </a>
-          <a className="navLink" href="/timetable">
-            timetable
           </a>
         </nav>
       </header>
@@ -809,150 +579,6 @@ export default function HomeClient({ initialPlannerValue }: HomeClientProps) {
           </div>
         </div>
       </section>
-
-      {currentTimetableEntry && todayTimetable && (
-        <section className="currentTimetablePanel" aria-label="現在の時間割">
-          <div className="currentTimetableMeta">
-            <span>Now</span>
-            <time>{currentTimetableEntry.time}</time>
-            {currentTimetableEntry.kind === "timetable" && (
-              <span className="periodBadge">
-                {timetableNumberById.get(currentTimetableEntry.id)}
-              </span>
-            )}
-          </div>
-          {currentTimetableEntry.kind === "timetable" ? (
-            <input
-              className="currentTimetableInput"
-              aria-label={`${currentTimetableEntry.time}の時間割でやること`}
-              placeholder="やること"
-              value={currentTimetableEntry.dailyTitles?.[todayKey] || ""}
-              onChange={(event) =>
-                updateTimetableEntryTitle(
-                  todayTimetable.id,
-                  currentTimetableEntry.id,
-                  event.target.value,
-                )
-              }
-            />
-          ) : currentTimetableEntry.kind === "habit" ? (
-            <label className="currentHabitLabel">
-              <input
-                type="checkbox"
-                checked={(currentTimetableEntry.completedDates || []).includes(
-                  todayKey,
-                )}
-                onChange={() =>
-                  toggleHabitEntry(todayTimetable.id, currentTimetableEntry.id)
-                }
-              />
-              <span
-                className={
-                  (currentTimetableEntry.completedDates || []).includes(todayKey)
-                    ? "completed"
-                    : ""
-                }
-              >
-                {currentTimetableEntry.title || "名称未設定"}
-              </span>
-            </label>
-          ) : (
-            <strong>{currentTimetableEntry.title || "名称未設定"}</strong>
-          )}
-        </section>
-      )}
-
-      <div className="dailyGrid">
-        <section className="timetableSummary panel" aria-label="今日の時間割">
-          <div className="timetableSummaryHeader">
-            <span>今日の時間割</span>
-            <a href="/timetable">編集</a>
-          </div>
-          <div className="timetableSummaryList">
-            {visibleTimetable.length === 0 && (
-              <p className="emptyText">今日の時間割はありません。</p>
-            )}
-            {visibleTimetable.map((entry) => (
-              <article
-                className={
-                  [
-                    "timetableSummaryItem",
-                    entry.kind === "timetable" ? "hasNumber" : "",
-                    entry.id === currentTimetableId ? "current" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")
-                }
-                key={entry.id}
-              >
-                <time>{entry.time}</time>
-                {entry.kind === "timetable" && (
-                  <span className="periodBadge">
-                    {timetableNumberById.get(entry.id)}
-                  </span>
-                )}
-                {entry.kind === "timetable" ? (
-                  <input
-                  className="timetableActionInput"
-                  aria-label={`${entry.time}の時間割でやること`}
-                  placeholder="やること"
-                  value={entry.dailyTitles?.[todayKey] || ""}
-                  onChange={(event) =>
-                    todayTimetable &&
-                      updateTimetableEntryTitle(
-                        todayTimetable.id,
-                        entry.id,
-                        event.target.value,
-                      )
-                    }
-                  />
-                ) : entry.kind === "habit" ? (
-                  <label className="habitSummaryLabel">
-                    <input
-                      type="checkbox"
-                      checked={(entry.completedDates || []).includes(todayKey)}
-                      onChange={() =>
-                        todayTimetable &&
-                        toggleHabitEntry(todayTimetable.id, entry.id)
-                      }
-                    />
-                    <span
-                      className={
-                        (entry.completedDates || []).includes(todayKey)
-                          ? "completed"
-                          : ""
-                      }
-                    >
-                      {entry.title || "名称未設定"}
-                    </span>
-                  </label>
-                ) : (
-                  <strong>{entry.title || "名称未設定"}</strong>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {activeHabitEntry && todayTimetable && (
-        <div className="habitModalOverlay" role="dialog" aria-modal="true">
-          <article className="habitModalCard">
-            <time>{activeHabitEntry.time}</time>
-            <strong>{activeHabitEntry.title || "名称未設定"}</strong>
-            <label className="habitModalCheck">
-              <input
-                type="checkbox"
-                checked={false}
-                onChange={() =>
-                  toggleHabitEntry(todayTimetable.id, activeHabitEntry.id)
-                }
-              />
-              <span>完了</span>
-            </label>
-          </article>
-        </div>
-      )}
 
       {focusedTask && (
         <div className="focusOverlay" role="dialog" aria-modal="true">

@@ -49,47 +49,6 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-self.addEventListener("push", (event) => {
-  let payload = {};
-  try {
-    payload = event.data?.json() || {};
-  } catch {
-    payload = {};
-  }
-  const title = payload.title || "Focus Planner";
-  const options = {
-    body: payload.body || "",
-    icon: "/icon.svg",
-    badge: "/maskable-icon.svg",
-    data: {
-      url: payload.url || "/",
-    },
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-
-  const targetUrl = new URL(event.notification.data?.url || "/", self.location.origin)
-    .href;
-
-  event.waitUntil(
-    self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clients) => {
-        const client = clients.find((item) => item.url === targetUrl);
-
-        if (client) {
-          return client.focus();
-        }
-
-        return self.clients.openWindow(targetUrl);
-      }),
-  );
-});
-
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith("/_next/static/") ||
