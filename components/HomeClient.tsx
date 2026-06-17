@@ -661,6 +661,7 @@ export default function HomeClient({
   ) {
     const editTarget = { kind: "achievement", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
+    const titleLabel = isChild ? "達成リストの子項目" : "達成リスト";
     return (
       <article
         className={
@@ -682,18 +683,29 @@ export default function HomeClient({
         >
           ✓
         </button>
-        <textarea
-          aria-label={isChild ? "達成リストの子項目" : "達成リスト"}
-          value={task.title}
-          onChange={(event) =>
-            updateAchievementTaskTitle(task.id, event.target.value)
-          }
-          readOnly={!isEditing}
-          onDoubleClick={() => beginTaskEdit(editTarget)}
-          onKeyDown={handleTaskEditKeyDown}
-          onBlur={() => finishTaskEdit(editTarget)}
-          rows={1}
-        />
+        {isEditing ? (
+          <textarea
+            aria-label={titleLabel}
+            value={task.title}
+            onChange={(event) =>
+              updateAchievementTaskTitle(task.id, event.target.value)
+            }
+            onKeyDown={handleTaskEditKeyDown}
+            onBlur={() => finishTaskEdit(editTarget)}
+            rows={1}
+          />
+        ) : (
+          <div
+            className="taskTitleView"
+            role="textbox"
+            aria-label={titleLabel}
+            aria-readonly="true"
+            tabIndex={0}
+            onDoubleClick={() => beginTaskEdit(editTarget)}
+          >
+            {task.title || " "}
+          </div>
+        )}
         <button
           className="iconButton"
           type="button"
@@ -1132,18 +1144,29 @@ export default function HomeClient({
                     >
                       ✓
                     </button>
-                    <textarea
-                      aria-label="重要なタスク"
-                      value={importantTask.title}
-                      onChange={(event) =>
-                        updateImportantTaskTitle(event.target.value)
-                      }
-                      readOnly={!isImportantEditing}
-                      onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
-                      onKeyDown={handleTaskEditKeyDown}
-                      onBlur={() => finishTaskEdit(importantEditTarget!)}
-                      rows={1}
-                    />
+                    {isImportantEditing ? (
+                      <textarea
+                        aria-label="重要なタスク"
+                        value={importantTask.title}
+                        onChange={(event) =>
+                          updateImportantTaskTitle(event.target.value)
+                        }
+                        onKeyDown={handleTaskEditKeyDown}
+                        onBlur={() => finishTaskEdit(importantEditTarget!)}
+                        rows={1}
+                      />
+                    ) : (
+                      <div
+                        className="taskTitleView"
+                        role="textbox"
+                        aria-label="重要なタスク"
+                        aria-readonly="true"
+                        tabIndex={0}
+                        onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
+                      >
+                        {importantTask.title || " "}
+                      </div>
+                    )}
                     <div className="priorityActions">
                       <button
                         className="focusButton"
@@ -1225,18 +1248,29 @@ export default function HomeClient({
                         >
                           ✓
                         </button>
-                          <textarea
-                            aria-label="Inboxタスク"
-                            value={task.title}
-                            onChange={(event) =>
-                              updateTodayTaskTitle(task.id, event.target.value)
-                            }
-                            readOnly={!isEditing}
-                            onDoubleClick={() => beginTaskEdit(editTarget)}
-                            onKeyDown={handleTaskEditKeyDown}
-                            onBlur={() => finishTaskEdit(editTarget)}
-                            rows={1}
-                          />
+                          {isEditing ? (
+                            <textarea
+                              aria-label="Inboxタスク"
+                              value={task.title}
+                              onChange={(event) =>
+                                updateTodayTaskTitle(task.id, event.target.value)
+                              }
+                              onKeyDown={handleTaskEditKeyDown}
+                              onBlur={() => finishTaskEdit(editTarget)}
+                              rows={1}
+                            />
+                          ) : (
+                            <div
+                              className="taskTitleView"
+                              role="textbox"
+                              aria-label="Inboxタスク"
+                              aria-readonly="true"
+                              tabIndex={0}
+                              onDoubleClick={() => beginTaskEdit(editTarget)}
+                            >
+                              {task.title || " "}
+                            </div>
+                          )}
                         <div className="priorityActions">
                           <button
                             className="focusButton"
@@ -1298,18 +1332,29 @@ export default function HomeClient({
                   >
                     ✓
                   </button>
-                  <textarea
-                    aria-label="毎日やること"
-                    value={task.title}
-                    onChange={(event) =>
-                      updateDailyTaskTitle(task.id, event.target.value)
-                    }
-                    readOnly={!isEditing}
-                    onDoubleClick={() => beginTaskEdit(editTarget)}
-                    onKeyDown={handleTaskEditKeyDown}
-                    onBlur={() => finishTaskEdit(editTarget)}
-                    rows={1}
-                  />
+                  {isEditing ? (
+                    <textarea
+                      aria-label="毎日やること"
+                      value={task.title}
+                      onChange={(event) =>
+                        updateDailyTaskTitle(task.id, event.target.value)
+                      }
+                      onKeyDown={handleTaskEditKeyDown}
+                      onBlur={() => finishTaskEdit(editTarget)}
+                      rows={1}
+                    />
+                  ) : (
+                    <div
+                      className="taskTitleView"
+                      role="textbox"
+                      aria-label="毎日やること"
+                      aria-readonly="true"
+                      tabIndex={0}
+                      onDoubleClick={() => beginTaskEdit(editTarget)}
+                    >
+                      {task.title || " "}
+                    </div>
+                  )}
                   <button
                     className="iconButton"
                     type="button"

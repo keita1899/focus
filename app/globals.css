@@ -347,7 +347,7 @@ h2 {
   border-left: 2px solid rgba(23, 107, 85, 0.18);
 }
 
-.achievementParentItem {
+.achievementItem.achievementParentItem {
   grid-template-columns: 38px minmax(0, 1fr) 42px 32px;
 }
 
@@ -1781,6 +1781,21 @@ select {
   overflow: hidden;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.taskTitleView {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  cursor: text;
 }
 
 .taskItem textarea[readonly] {
