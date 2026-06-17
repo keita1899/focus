@@ -26,10 +26,18 @@ type DailyTask = {
   completedDates: string[];
 };
 
+type AchievementTask = {
+  id: string;
+  title: string;
+  done: boolean;
+  parentId?: string;
+};
+
 type PlannerState = {
   goals: GoalMap;
   goalsByPeriod: PeriodGoalMap;
   birthday: string;
+  achievementTasks: AchievementTask[];
   todayTasks: PriorityTask[];
   dailyTasks: DailyTask[];
 };
@@ -69,6 +77,7 @@ const initialState: PlannerState = {
     week: {},
   },
   birthday: "",
+  achievementTasks: [],
   todayTasks: [],
   dailyTasks: [],
 };
@@ -240,8 +249,12 @@ function getAgeInfo(birthday: string) {
 function normalizePlanner(value: StoredPlannerState): PlannerState {
   const legacyValue = value as StoredPlannerState & {
     priorities?: PriorityTask[];
+    achievementTasks?: AchievementTask[];
     dailyTasks?: DailyTask[];
   };
+  const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
+    ? legacyValue.achievementTasks
+    : initialState.achievementTasks;
   const rawTodayTasks = Array.isArray(value.todayTasks)
     ? value.todayTasks
     : Array.isArray(legacyValue.priorities)
@@ -273,6 +286,12 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     },
     goalsByPeriod,
     birthday: typeof value.birthday === "string" ? value.birthday : "",
+    achievementTasks: rawAchievementTasks.map((task, index) => ({
+      id: task.id || `achievement-task-${index + 1}`,
+      title: task.title || "",
+      done: Boolean(task.done),
+      parentId: task.parentId || undefined,
+    })),
     todayTasks: rawTodayTasks
       .filter((task) => !task.done)
       .map((task, index) => ({
@@ -311,6 +330,10 @@ export default function HomeClient({
   );
   const [isDiaryReady, setIsDiaryReady] = useState(initialDiaryValue !== null);
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
+  const [newAchievementTitle, setNewAchievementTitle] = useState("");
+  const [newAchievementChildTitles, setNewAchievementChildTitles] = useState<
+    Record<string, string>
+  >({});
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
@@ -413,12 +436,149 @@ export default function HomeClient({
     if (!focusTarget) return null;
     return planner.todayTasks.find((task) => task.id === focusTarget.id) || null;
   }, [focusTarget, planner.todayTasks]);
-  const incompleteDailyTasks = planner.dailyTasks.filter(
-    (task) => !task.completedDates.includes(todayKey),
+  const achievementParents = planner.achievementTasks.filter(
+    (task) => !task.parentId,
   );
-  const completedDailyTasks = planner.dailyTasks.filter((task) =>
-    task.completedDates.includes(todayKey),
-  );
+  const achievementChildrenByParent = planner.achievementTasks.reduce<
+    Record<string, AchievementTask[]>
+  >((groups, task) => {
+    if (!task.parentId) return groups;
+    return {
+      ...groups,
+      [task.parentId]: [...(groups[task.parentId] || []), task],
+    };
+  }, {});
+
+  function addAchievementTask(parentId?: string) {
+    const title = parentId
+      ? newAchievementChildTitles[parentId]?.trim()
+      : newAchievementTitle.trim();
+    if (!title) return;
+
+    setPlanner((current) => ({
+      ...current,
+      achievementTasks: [
+        ...current.achievementTasks,
+        { id: createId("achievement-task"), title, done: false, parentId },
+      ],
+    }));
+
+    if (parentId) {
+      setNewAchievementChildTitles((current) => ({
+        ...current,
+        [parentId]: "",
+      }));
+      return;
+    }
+
+    setNewAchievementTitle("");
+  }
+
+  function updateAchievementTaskTitle(id: string, title: string) {
+    setPlanner((current) => ({
+      ...current,
+      achievementTasks: current.achievementTasks.map((task) =>
+        task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function toggleAchievementTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      achievementTasks: current.achievementTasks.map((task) =>
+        task.id === id ? { ...task, done: !task.done } : task,
+      ),
+    }));
+  }
+
+  function removeAchievementTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      achievementTasks: current.achievementTasks.filter(
+        (task) => task.id !== id && task.parentId !== id,
+      ),
+    }));
+    setNewAchievementChildTitles((current) => {
+      const { [id]: _removed, ...rest } = current;
+      return rest;
+    });
+  }
+
+  function updateNewAchievementChildTitle(parentId: string, title: string) {
+    setNewAchievementChildTitles((current) => ({
+      ...current,
+      [parentId]: title,
+    }));
+  }
+
+  function renderAchievementTask(task: AchievementTask, isChild = false) {
+    return (
+      <article
+        className={
+          task.done ? "taskItem achievementItem done" : "taskItem achievementItem"
+        }
+        key={task.id}
+      >
+        <button
+          className="checkButton"
+          type="button"
+          onClick={() => toggleAchievementTask(task.id)}
+          aria-label={`${task.title || "無題の達成項目"}の完了を切り替え`}
+        >
+          ✓
+        </button>
+        <input
+          aria-label={isChild ? "達成リストの子項目" : "達成リスト"}
+          value={task.title}
+          onChange={(event) =>
+            updateAchievementTaskTitle(task.id, event.target.value)
+          }
+        />
+        <button
+          className="iconButton"
+          type="button"
+          onClick={() => removeAchievementTask(task.id)}
+          aria-label={`${task.title || "無題の達成項目"}を削除`}
+        >
+          ×
+        </button>
+      </article>
+    );
+  }
+
+  function renderAchievementGroup(task: AchievementTask) {
+    const children = achievementChildrenByParent[task.id] || [];
+    return (
+      <div className="achievementGroup" key={task.id}>
+        {renderAchievementTask(task)}
+        {children.length > 0 && (
+          <div className="achievementChildren">
+            {children.map((child) => renderAchievementTask(child, true))}
+          </div>
+        )}
+        <form
+          className="taskForm achievementChildForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addAchievementTask(task.id);
+          }}
+        >
+          <input
+            aria-label={`${task.title || "達成項目"}の子項目を追加`}
+            placeholder="子項目"
+            value={newAchievementChildTitles[task.id] || ""}
+            onChange={(event) =>
+              updateNewAchievementChildTitle(task.id, event.target.value)
+            }
+          />
+          <button type="submit" aria-label="子項目を追加">
+            +
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   function updateGoal(key: GoalKey, value: string) {
     const periodKey = periodKeys[key];
@@ -704,6 +864,33 @@ export default function HomeClient({
           </div>
         </section>
 
+        <section className="homeColumn achievementColumn" aria-label="達成リスト">
+          <h2>達成リスト</h2>
+          <form
+            className="taskForm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addAchievementTask();
+            }}
+          >
+            <input
+              aria-label="達成リストを追加"
+              placeholder="達成したいこと"
+              value={newAchievementTitle}
+              onChange={(event) => setNewAchievementTitle(event.target.value)}
+            />
+            <button type="submit" aria-label="達成リストを追加">
+              +
+            </button>
+          </form>
+          <div className="taskList">
+            {achievementParents.length === 0 && (
+              <p className="emptyText">達成リストはありません。</p>
+            )}
+            {achievementParents.map(renderAchievementGroup)}
+          </div>
+        </section>
+
         <section className="homeColumn taskColumn" aria-label="今日やることリスト">
           <h2>今日やることリスト</h2>
           <form
@@ -787,65 +974,39 @@ export default function HomeClient({
             {planner.dailyTasks.length === 0 && (
               <p className="emptyText">毎日やることはありません。</p>
             )}
-            {incompleteDailyTasks.map((task) => (
-              <article className="taskItem" key={task.id}>
-                <button
-                  className="checkButton"
-                  type="button"
-                  onClick={() => toggleDailyTask(task.id)}
-                  aria-label={`${task.title || "無題のタスク"}を完了`}
+            {planner.dailyTasks.map((task) => {
+              const isCompleted = task.completedDates.includes(todayKey);
+              return (
+                <article
+                  className={isCompleted ? "taskItem done" : "taskItem"}
+                  key={task.id}
                 >
-                  ✓
-                </button>
-                <input
-                  aria-label="毎日やること"
-                  value={task.title}
-                  onChange={(event) =>
-                    updateDailyTaskTitle(task.id, event.target.value)
-                  }
-                />
-                <button
-                  className="iconButton"
-                  type="button"
-                  onClick={() => removeDailyTask(task.id)}
-                  aria-label={`${task.title || "無題のタスク"}を削除`}
-                >
-                  ×
-                </button>
-              </article>
-            ))}
-            {completedDailyTasks.length > 0 && (
-              <div className="completedTaskGroup">
-                <span className="completedTaskGroupLabel">完了済み</span>
-                {completedDailyTasks.map((task) => (
-                  <article className="taskItem done" key={task.id}>
-                    <button
-                      className="checkButton"
-                      type="button"
-                      onClick={() => toggleDailyTask(task.id)}
-                      aria-label={`${task.title || "無題のタスク"}の完了を戻す`}
-                    >
-                      ✓
-                    </button>
-                    <input
-                      aria-label="毎日やること"
-                      value={task.title}
-                      onChange={(event) =>
-                        updateDailyTaskTitle(task.id, event.target.value)
-                      }
-                    />
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => removeDailyTask(task.id)}
-                      aria-label={`${task.title || "無題のタスク"}を削除`}
-                    >
-                      ×
-                    </button>
-                  </article>
-                ))}
-              </div>
-            )}
+                  <button
+                    className="checkButton"
+                    type="button"
+                    onClick={() => toggleDailyTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+                  >
+                    ✓
+                  </button>
+                  <input
+                    aria-label="毎日やること"
+                    value={task.title}
+                    onChange={(event) =>
+                      updateDailyTaskTitle(task.id, event.target.value)
+                    }
+                  />
+                  <button
+                    className="iconButton"
+                    type="button"
+                    onClick={() => removeDailyTask(task.id)}
+                    aria-label={`${task.title || "無題のタスク"}を削除`}
+                  >
+                    ×
+                  </button>
+                </article>
+              );
+            })}
           </div>
         </section>
       </section>
