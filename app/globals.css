@@ -533,21 +533,48 @@ h2 {
 
 .goalYearPanel > .goalHeading > span:first-child,
 .goalYearPanel > .goalHeading > .periodSwitcher,
+.goalYearPanel > .goalLineInput,
 .goalMonthPanel > .goalHeading > span:first-child,
-.goalMonthPanel > .goalHeading > .periodSwitcher {
+.goalMonthPanel > .goalHeading > .periodSwitcher,
+.goalMonthPanel > .goalLineInput {
   opacity: 0.38;
   transition: opacity 140ms ease;
 }
 
 .goalYearPanel:hover > .goalHeading > span:first-child,
 .goalYearPanel:hover > .goalHeading > .periodSwitcher,
+.goalYearPanel:hover > .goalLineInput,
 .goalYearPanel:focus-within > .goalHeading > span:first-child,
 .goalYearPanel:focus-within > .goalHeading > .periodSwitcher,
+.goalYearPanel:focus-within > .goalLineInput,
 .goalMonthPanel:hover > .goalHeading > span:first-child,
 .goalMonthPanel:hover > .goalHeading > .periodSwitcher,
+.goalMonthPanel:hover > .goalLineInput,
 .goalMonthPanel:focus-within > .goalHeading > span:first-child,
-.goalMonthPanel:focus-within > .goalHeading > .periodSwitcher {
+.goalMonthPanel:focus-within > .goalHeading > .periodSwitcher,
+.goalMonthPanel:focus-within > .goalLineInput {
   opacity: 1;
+}
+
+.goalYearPanel:has(.goalMonthPanel:hover) > .goalHeading > span:first-child,
+.goalYearPanel:has(.goalMonthPanel:hover) > .goalHeading > .periodSwitcher,
+.goalYearPanel:has(.goalMonthPanel:hover) > .goalLineInput,
+.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > span:first-child,
+.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > .periodSwitcher,
+.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalLineInput,
+.goalYearPanel:has(.goalWeekPanel:hover) > .goalHeading > span:first-child,
+.goalYearPanel:has(.goalWeekPanel:hover) > .goalHeading > .periodSwitcher,
+.goalYearPanel:has(.goalWeekPanel:hover) > .goalLineInput,
+.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalHeading > span:first-child,
+.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalHeading > .periodSwitcher,
+.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalLineInput,
+.goalMonthPanel:has(.goalWeekPanel:hover) > .goalHeading > span:first-child,
+.goalMonthPanel:has(.goalWeekPanel:hover) > .goalHeading > .periodSwitcher,
+.goalMonthPanel:has(.goalWeekPanel:hover) > .goalLineInput,
+.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalHeading > span:first-child,
+.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalHeading > .periodSwitcher,
+.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalLineInput {
+  opacity: 0.38;
 }
 
 .goalWeekPanel > .goalWeekInput {
