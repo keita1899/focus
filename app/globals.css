@@ -2124,18 +2124,19 @@ select {
 }
 
 .notesFolderItem .notesFolderButton {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 1;
 }
 
 .notesFolderItem .notesFolderButton strong {
-  visibility: hidden;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notesFolderItem input {
   grid-column: 1;
   grid-row: 1;
-  position: relative;
   min-height: 34px;
   border-color: transparent;
   background: transparent;
@@ -2159,8 +2160,16 @@ select {
   border-radius: 6px;
   color: var(--danger);
   font-size: 1.05rem;
+  justify-self: center;
   opacity: 0;
   pointer-events: none;
+}
+
+.notesFolderButton span {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .notesFolderItem:hover .notesFolderDelete,

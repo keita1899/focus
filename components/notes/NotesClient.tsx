@@ -172,6 +172,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   const [notes, setNotes] = useState<Note[]>(() => initialNotesState.notes);
   const [activeFolderId, setActiveFolderId] = useState(allFoldersId);
   const [newFolderName, setNewFolderName] = useState("");
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
 
@@ -270,6 +271,18 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       .forEach((textarea) => resizeMemoTextarea(textarea));
   }, [notes]);
 
+  useEffect(() => {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        addNote();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeFolderId, notes, addNote]);
+
   function updateActiveNote(
     value: Partial<Pick<Note, "folderId" | "title" | "markdown">>,
   ) {
@@ -311,6 +324,10 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     );
   }
 
+  function finishFolderEdit() {
+    setEditingFolderId(null);
+  }
+
   function moveActiveNote(folderId: string) {
     updateActiveNote({ folderId });
     setActiveFolderId(folderId);
@@ -332,6 +349,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       );
       setActiveNoteId(nextNote?.id || "");
     }
+    setEditingFolderId((current) => (current === folderId ? null : current));
   }
 
   function handleMarkdownKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -542,6 +560,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
               const noteCount = notes.filter(
                 (note) => note.folderId === folder.id,
               ).length;
+              const isEditing = editingFolderId === folder.id;
               return (
                 <div
                   className={
@@ -551,22 +570,35 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   }
                   key={folder.id}
                 >
-                  <button
-                    className="notesFolderButton"
-                    type="button"
-                    onClick={() => selectFolder(folder.id)}
-                  >
-                    <strong>{folder.name}</strong>
-                    <span>{noteCount}</span>
-                  </button>
-                  <input
-                    aria-label={`${folder.name}のフォルダ名`}
-                    value={folder.name}
-                    onFocus={() => selectFolder(folder.id)}
-                    onChange={(event) =>
-                      updateFolderName(folder.id, event.target.value)
-                    }
-                  />
+                  {isEditing ? (
+                    <input
+                      aria-label={`${folder.name}のフォルダ名`}
+                      autoFocus
+                      value={folder.name}
+                      onBlur={finishFolderEdit}
+                      onChange={(event) =>
+                        updateFolderName(folder.id, event.target.value)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === "Escape") {
+                          event.currentTarget.blur();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <button
+                      className="notesFolderButton"
+                      type="button"
+                      onClick={() => selectFolder(folder.id)}
+                      onDoubleClick={() => {
+                        selectFolder(folder.id);
+                        setEditingFolderId(folder.id);
+                      }}
+                    >
+                      <strong>{folder.name}</strong>
+                      <span>{noteCount}</span>
+                    </button>
+                  )}
                   {folder.id !== defaultFolderId && (
                     <button
                       className="notesFolderDelete"
