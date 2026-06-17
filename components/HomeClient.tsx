@@ -541,6 +541,15 @@ export default function HomeClient({
     );
   }
 
+  function handleTaskEditKeyDown(
+    event: { key: string; preventDefault: () => void; currentTarget: { blur: () => void } },
+  ) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+  }
+
   function addAchievementTask(parentId?: string) {
     const title = parentId
       ? newAchievementChildTitles[parentId]?.trim()
@@ -668,6 +677,7 @@ export default function HomeClient({
           }
           readOnly={!isEditing}
           onDoubleClick={() => beginTaskEdit(editTarget)}
+          onKeyDown={handleTaskEditKeyDown}
           onBlur={() => finishTaskEdit(editTarget)}
           rows={1}
         />
@@ -1101,6 +1111,7 @@ export default function HomeClient({
                       }
                       readOnly={!isImportantEditing}
                       onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
+                      onKeyDown={handleTaskEditKeyDown}
                       onBlur={() => finishTaskEdit(importantEditTarget!)}
                       rows={1}
                     />
@@ -1185,17 +1196,18 @@ export default function HomeClient({
                         >
                           ✓
                         </button>
-                        <textarea
-                          aria-label="Inboxタスク"
-                          value={task.title}
-                          onChange={(event) =>
-                            updateTodayTaskTitle(task.id, event.target.value)
-                          }
-                          readOnly={!isEditing}
-                          onDoubleClick={() => beginTaskEdit(editTarget)}
-                          onBlur={() => finishTaskEdit(editTarget)}
-                          rows={1}
-                        />
+                          <textarea
+                            aria-label="Inboxタスク"
+                            value={task.title}
+                            onChange={(event) =>
+                              updateTodayTaskTitle(task.id, event.target.value)
+                            }
+                            readOnly={!isEditing}
+                            onDoubleClick={() => beginTaskEdit(editTarget)}
+                            onKeyDown={handleTaskEditKeyDown}
+                            onBlur={() => finishTaskEdit(editTarget)}
+                            rows={1}
+                          />
                         <div className="priorityActions">
                           <button
                             className="focusButton"
@@ -1265,6 +1277,7 @@ export default function HomeClient({
                     }
                     readOnly={!isEditing}
                     onDoubleClick={() => beginTaskEdit(editTarget)}
+                    onKeyDown={handleTaskEditKeyDown}
                     onBlur={() => finishTaskEdit(editTarget)}
                     rows={1}
                   />
