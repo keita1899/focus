@@ -339,6 +339,16 @@ h2 {
   gap: 8px;
 }
 
+.achievementToggle {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0;
+}
+
 .achievementChildren {
   display: grid;
   gap: 8px;
@@ -479,10 +489,6 @@ h2 {
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
-}
-
-.goalColumn .goalWeekPanel > .goalWeekInput {
-  text-align: left;
 }
 
 .priorityGoalPanel {
@@ -1701,9 +1707,26 @@ select {
   cursor: text;
 }
 
-.taskItem > input,
-.taskItem > div > input {
+.taskItem textarea {
+  min-width: 0;
   min-height: 38px;
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.45;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.taskItem textarea:focus {
+  border-color: var(--accent);
+  background: white;
+  padding: 0 10px;
 }
 
 .taskItem p {
