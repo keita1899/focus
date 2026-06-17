@@ -38,6 +38,7 @@ type AchievementTask = {
   title: string;
   done: boolean;
   parentId?: string;
+  year: number;
 };
 
 type PlannerState = {
@@ -82,6 +83,7 @@ type HomeClientProps = {
 const plannerStorageKey = "focus-planner-state-v1";
 const diaryStorageKey = "diary-v1";
 const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
+const currentYear = new Date().getFullYear();
 const weekdayOrder = [1, 2, 3, 4, 5, 6, 0] as const;
 const weekdayLabels: Record<number, string> = {
   0: "日",
@@ -111,6 +113,10 @@ const initialState: PlannerState = {
   dailyTasks: [],
   weeklyTasks: [],
 };
+
+function getAchievementYearLabel(offset: number) {
+  return `${currentYear + offset}年`;
+}
 
 const goalLabels: Record<GoalKey, string> = {
   year: "今年の目標",
@@ -347,6 +353,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
       title: task.title || "",
       done: Boolean(task.done),
       parentId: task.parentId || undefined,
+      year: typeof task.year === "number" ? task.year : currentYear,
     })),
     importantTodayTask: rawImportantTask
       ? {
@@ -430,6 +437,7 @@ export default function HomeClient({
       return {};
     }
   });
+  const [achievementYearOffset, setAchievementYearOffset] = useState(0);
   const [newImportantTaskTitle, setNewImportantTaskTitle] = useState("");
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
@@ -449,6 +457,7 @@ export default function HomeClient({
   const todayWeekday = new Date().getDay();
   const currentWeekKey = getCurrentWeekKey();
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, todayWeekday);
+  const achievementYear = currentYear + achievementYearOffset;
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -589,12 +598,12 @@ export default function HomeClient({
     return planner.todayTasks.find((task) => task.id === focusTarget.id) || null;
   }, [focusTarget, planner.importantTodayTask, planner.todayTasks]);
   const achievementParents = planner.achievementTasks.filter(
-    (task) => !task.parentId,
+    (task) => !task.parentId && task.year === achievementYear,
   );
   const achievementChildrenByParent = planner.achievementTasks.reduce<
     Record<string, AchievementTask[]>
   >((groups, task) => {
-    if (!task.parentId) return groups;
+    if (!task.parentId || task.year !== achievementYear) return groups;
     return {
       ...groups,
       [task.parentId]: [...(groups[task.parentId] || []), task],
@@ -643,7 +652,13 @@ export default function HomeClient({
       ...current,
       achievementTasks: [
         ...current.achievementTasks,
-        { id: createId("achievement-task"), title, done: false, parentId },
+        {
+          id: createId("achievement-task"),
+          title,
+          done: false,
+          parentId,
+          year: achievementYear,
+        },
       ],
     }));
 
@@ -660,6 +675,10 @@ export default function HomeClient({
     }
 
     setNewAchievementTitle("");
+  }
+
+  function changeAchievementYear(direction: -1 | 1) {
+    setAchievementYearOffset((current) => current + direction);
   }
 
   function updateAchievementTaskTitle(id: string, title: string) {
@@ -1176,6 +1195,11 @@ export default function HomeClient({
           )}
         </div>
         <div className="topbarLinks">
+          {session?.user && (
+            <span className="userBadge">
+              {session.user.name || session.user.email || "ログイン中"}
+            </span>
+          )}
           <nav className="topbarNav" aria-label="ナビゲーション">
             <a className="navLink" href="/roadmap">
               roadmap
@@ -1188,11 +1212,6 @@ export default function HomeClient({
             </a>
           </nav>
           <div className="topbarAuth">
-            {session?.user && (
-              <span className="userBadge">
-                {session.user.name || session.user.email || "ログイン中"}
-              </span>
-            )}
             <a className="settingsLink" href="/settings" aria-label="設定">
               ⚙
             </a>
@@ -1318,7 +1337,28 @@ export default function HomeClient({
         </section>
 
         <section className="homeColumn achievementColumn" aria-label="達成リスト">
-          <h2>達成リスト</h2>
+          <div className="sectionHeader achievementSectionHeader">
+            <h2>達成リスト</h2>
+            <span className="periodSwitcher achievementYearSwitcher">
+              <button
+                type="button"
+                onClick={() => changeAchievementYear(-1)}
+                aria-label="達成リストの年を前へ"
+              >
+                &lt;
+              </button>
+              <span className="periodMeta">
+                <time>{getAchievementYearLabel(achievementYearOffset)}</time>
+              </span>
+              <button
+                type="button"
+                onClick={() => changeAchievementYear(1)}
+                aria-label="達成リストの年を次へ"
+              >
+                &gt;
+              </button>
+            </span>
+          </div>
           <form
             className="taskForm"
             onSubmit={(event) => {
