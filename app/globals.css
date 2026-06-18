@@ -520,10 +520,19 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
+  margin-left: clamp(10px, 2vw, 22px);
   border-color: rgba(23, 107, 85, 0.48);
   background: linear-gradient(180deg, #ffffff, var(--surface-strong));
   padding: 8px 10px;
   box-shadow: none;
+}
+
+.goalMonthPanel > .goalWeekPanel {
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .goalYearPanel > .goalHeading > span:first-child,
@@ -584,6 +593,19 @@ h2 {
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
+}
+
+.goalTodayPanel {
+  grid-column: 1 / -1;
+  margin-left: clamp(10px, 2vw, 22px);
+  border-color: rgba(23, 107, 85, 0.22);
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
+  background: #fffdf9;
+  box-shadow: none;
 }
 
 .dailyColumn {
