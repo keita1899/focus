@@ -493,9 +493,16 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
+  margin-left: clamp(10px, 2vw, 22px);
   border-color: rgba(183, 116, 34, 0.32);
+  border-right: 0;
+  border-bottom: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0;
   background: #fffdf8;
   padding: 8px 10px;
+  box-shadow: none;
 }
 
 .goalMonthPanel {
@@ -535,44 +542,6 @@ h2 {
   border-top-right-radius: 0;
 }
 
-.goalYearPanel > .goalHeading > span:first-child,
-.goalYearPanel > .goalHeading > .periodSwitcher,
-.goalYearPanel > .goalLineInput,
-.goalMonthPanel > .goalHeading > span:first-child,
-.goalMonthPanel > .goalHeading > .periodSwitcher,
-.goalMonthPanel > .goalLineInput {
-  opacity: 0.38;
-  transition: opacity 140ms ease;
-}
-
-.goalYearPanel:hover > .goalHeading > span:first-child,
-.goalYearPanel:hover > .goalHeading > .periodSwitcher,
-.goalYearPanel:hover > .goalLineInput,
-.goalYearPanel:focus-within > .goalHeading > span:first-child,
-.goalYearPanel:focus-within > .goalHeading > .periodSwitcher,
-.goalYearPanel:focus-within > .goalLineInput,
-.goalMonthPanel:hover > .goalHeading > span:first-child,
-.goalMonthPanel:hover > .goalHeading > .periodSwitcher,
-.goalMonthPanel:hover > .goalLineInput,
-.goalMonthPanel:focus-within > .goalHeading > span:first-child,
-.goalMonthPanel:focus-within > .goalHeading > .periodSwitcher,
-.goalMonthPanel:focus-within > .goalLineInput {
-  opacity: 1;
-}
-
-.goalYearPanel:has(.goalMonthPanel:hover) > .goalHeading > span:first-child,
-.goalYearPanel:has(.goalMonthPanel:hover) > .goalHeading > .periodSwitcher,
-.goalYearPanel:has(.goalMonthPanel:hover) > .goalLineInput,
-.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > span:first-child,
-.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > .periodSwitcher,
-.goalYearPanel:has(.goalMonthPanel:focus-within) > .goalLineInput,
-.goalWeekPanel > .goalHeading > span:first-child,
-.goalWeekPanel > .goalHeading > .periodSwitcher,
-.goalWeekPanel > .goalWeekInput {
-  opacity: 1;
-  transition: opacity 140ms ease;
-}
-
 .goalWeekPanel > .goalHeading {
   display: contents;
 }
@@ -592,7 +561,7 @@ h2 {
   min-height: 34px;
   font-size: 1.18rem;
   font-weight: 800;
-  text-align: center;
+  text-align: left;
 }
 
 .dailyColumn {
@@ -645,7 +614,7 @@ h2 {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
-  background: #ffe1dd;
+  background: #ffe9e7;
   padding: 12px;
   box-shadow: none;
 }
@@ -1795,8 +1764,8 @@ select {
 }
 
 .taskItemImportant {
-  border-color: rgba(183, 116, 34, 0.45);
-  background: #fff8e8;
+  border-color: rgba(198, 50, 50, 0.36);
+  background: #ffe9e7;
 }
 
 .achievedTitle {
