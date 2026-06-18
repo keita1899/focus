@@ -604,6 +604,15 @@ h2 {
   min-height: 0;
 }
 
+.taskColumn {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  gap: 12px;
+  min-height: 0;
+}
+
 .dailySectionCard,
 .weeklySection,
 .todayTaskSection,
