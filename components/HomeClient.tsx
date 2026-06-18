@@ -33,6 +33,13 @@ type WeeklyTask = {
   completedWeeks: string[];
 };
 
+type MonthlyTask = {
+  id: string;
+  title: string;
+  dayOfMonth: number;
+  completedMonths: string[];
+};
+
 type AchievementTask = {
   id: string;
   title: string;
@@ -50,6 +57,7 @@ type PlannerState = {
   todayTasks: PriorityTask[];
   dailyTasks: DailyTask[];
   weeklyTasks: WeeklyTask[];
+  monthlyTasks: MonthlyTask[];
 };
 
 type StoredPlannerState = Partial<PlannerState>;
@@ -72,6 +80,7 @@ type TaskEditTarget =
   | { kind: "important"; id: string }
   | { kind: "today"; id: string }
   | { kind: "weekly"; id: string }
+  | { kind: "monthly"; id: string }
   | { kind: "daily"; id: string }
   | null;
 
@@ -112,6 +121,7 @@ const initialState: PlannerState = {
   todayTasks: [],
   dailyTasks: [],
   weeklyTasks: [],
+  monthlyTasks: [],
 };
 
 function getAchievementYearLabel(offset: number) {
@@ -213,6 +223,17 @@ function getWeeklySlotKey(weekKey: string, weekday: number) {
   return `${weekKey}-${weekday}`;
 }
 
+function getCurrentMonthKey() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function getMonthlySlotKey(monthKey: string, dayOfMonth: number) {
+  return `${monthKey}-${dayOfMonth}`;
+}
+
 function getPeriodInfo(offsets: PeriodOffsets) {
   const today = new Date();
   const yearDate = new Date(today);
@@ -301,6 +322,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     importantTodayTask?: PriorityTask | null;
     dailyTasks?: DailyTask[];
     weeklyTasks?: WeeklyTask[];
+    monthlyTasks?: MonthlyTask[];
   };
   const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
     ? legacyValue.achievementTasks
@@ -322,7 +344,11 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const rawWeeklyTasks = Array.isArray(legacyValue.weeklyTasks)
     ? legacyValue.weeklyTasks
     : initialState.weeklyTasks;
+  const rawMonthlyTasks = Array.isArray(legacyValue.monthlyTasks)
+    ? legacyValue.monthlyTasks
+    : initialState.monthlyTasks;
   const fallbackWeekday = new Date().getDay();
+  const fallbackMonthDay = new Date().getDate();
   const currentPeriodInfo = getPeriodInfo({ year: 0, month: 0, week: 0 });
   const storedGoalsByPeriod = value.goalsByPeriod || initialState.goalsByPeriod;
   const goalsByPeriod: PeriodGoalMap = {
@@ -421,6 +447,41 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         return [];
       })(),
     })),
+    monthlyTasks: rawMonthlyTasks.map((task, index) => {
+      const legacyTask = task as {
+        dayOfMonth?: unknown;
+        day?: unknown;
+        completedMonths?: unknown[];
+        completedSlots?: unknown[];
+      };
+      const dayOfMonth =
+        typeof legacyTask.dayOfMonth === "number" &&
+        Number.isInteger(legacyTask.dayOfMonth) &&
+        legacyTask.dayOfMonth >= 1 &&
+        legacyTask.dayOfMonth <= 31
+          ? legacyTask.dayOfMonth
+          : typeof legacyTask.day === "number" &&
+              Number.isInteger(legacyTask.day) &&
+              legacyTask.day >= 1 &&
+              legacyTask.day <= 31
+            ? legacyTask.day
+            : fallbackMonthDay;
+      const completedMonths = Array.isArray(legacyTask.completedMonths)
+        ? legacyTask.completedMonths.filter(
+            (slot): slot is string => typeof slot === "string",
+          )
+        : Array.isArray(legacyTask.completedSlots)
+          ? legacyTask.completedSlots.filter(
+              (slot): slot is string => typeof slot === "string",
+            )
+          : [];
+      return {
+        id: task.id || `monthly-task-${index + 1}`,
+        title: task.title || "",
+        dayOfMonth,
+        completedMonths,
+      };
+    }),
   };
 }
 
@@ -476,6 +537,10 @@ export default function HomeClient({
   const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
     () => new Date().getDay(),
   );
+  const [newMonthlyTaskTitle, setNewMonthlyTaskTitle] = useState("");
+  const [selectedMonthlyDay, setSelectedMonthlyDay] = useState(
+    () => new Date().getDate(),
+  );
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -489,6 +554,8 @@ export default function HomeClient({
   const currentWeekKey = getCurrentWeekKey();
   const achievementYear = currentYear + achievementYearOffset;
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
+  const currentMonthKey = getCurrentMonthKey();
+  const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
   const ageInfo = getAgeInfo(planner.birthday);
 
   useEffect(() => {
@@ -1004,6 +1071,24 @@ export default function HomeClient({
     setNewWeeklyTaskTitle("");
   }
 
+  function addMonthlyTask() {
+    const title = newMonthlyTaskTitle.trim();
+    if (!title) return;
+    setPlanner((current) => ({
+      ...current,
+      monthlyTasks: [
+        ...current.monthlyTasks,
+        {
+          id: createId("monthly-task"),
+          title,
+          dayOfMonth: selectedMonthlyDay,
+          completedMonths: [],
+        },
+      ],
+    }));
+    setNewMonthlyTaskTitle("");
+  }
+
   function updateDailyTaskTitle(id: string, title: string) {
     setPlanner((current) => ({
       ...current,
@@ -1073,6 +1158,43 @@ export default function HomeClient({
     }));
   }
 
+  function updateMonthlyTaskTitle(id: string, title: string) {
+    setPlanner((current) => ({
+      ...current,
+      monthlyTasks: current.monthlyTasks.map((task) =>
+        task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function toggleSelectedMonthlyDay(dayOfMonth: number) {
+    setSelectedMonthlyDay(dayOfMonth);
+  }
+
+  function toggleMonthlyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      monthlyTasks: current.monthlyTasks.map((task) => {
+        if (task.id !== id) return task;
+        if (task.dayOfMonth !== selectedMonthlyDay) return task;
+        const isCompleted = task.completedMonths.includes(currentMonthlySlotKey);
+        return {
+          ...task,
+          completedMonths: isCompleted
+            ? task.completedMonths.filter((slot) => slot !== currentMonthlySlotKey)
+            : [...task.completedMonths, currentMonthlySlotKey],
+        };
+      }),
+    }));
+  }
+
+  function removeMonthlyTask(id: string) {
+    setPlanner((current) => ({
+      ...current,
+      monthlyTasks: current.monthlyTasks.filter((task) => task.id !== id),
+    }));
+  }
+
   function renderWeekdayToggles(
     selectedWeekday: number,
     onToggle: (weekday: number) => void,
@@ -1091,6 +1213,32 @@ export default function HomeClient({
               aria-label={getWeekdayLabel(weekday)}
             >
               {weekdayLabels[weekday]}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function renderMonthdayToggles(
+    selectedDay: number,
+    onToggle: (dayOfMonth: number) => void,
+  ) {
+    const monthDays = Array.from({ length: 31 }, (_, index) => index + 1);
+    return (
+      <div className="monthdayToggleRow">
+        {monthDays.map((day) => {
+          const isActive = selectedDay === day;
+          return (
+            <button
+              key={day}
+              className={isActive ? "monthdayToggle active" : "monthdayToggle"}
+              type="button"
+              onClick={() => onToggle(day)}
+              aria-pressed={isActive}
+              aria-label={`${day}日`}
+            >
+              {day}
             </button>
           );
         })}
@@ -1154,6 +1302,67 @@ export default function HomeClient({
         </button>
         <div className="weeklyItemWeekdays">
           <span className="weeklyItemDayBadge">{getWeekdayLabel(task.weekday)}</span>
+        </div>
+      </article>
+    );
+  }
+
+  function renderMonthlyTask(task: MonthlyTask) {
+    const editTarget = { kind: "monthly", id: task.id } as const;
+    const isEditing = isTaskBeingEdited(editTarget);
+    const isTodayScheduled = task.dayOfMonth === selectedMonthlyDay;
+    const isCompleted = task.completedMonths.includes(currentMonthlySlotKey);
+    return (
+      <article
+        className={isCompleted ? "taskItem done monthlyItem" : "taskItem monthlyItem"}
+        key={task.id}
+      >
+        <button
+          className="checkButton"
+          type="button"
+          onClick={() => toggleMonthlyTask(task.id)}
+          disabled={!isTodayScheduled}
+          aria-label={
+            isTodayScheduled
+              ? `${task.title || "無題のタスク"}を今月分完了`
+              : `${task.title || "無題のタスク"}は選択中の日付の対象外`
+          }
+        >
+          ✓
+        </button>
+        {isEditing ? (
+          <textarea
+            aria-label="毎月やること"
+            value={task.title}
+            onChange={(event) =>
+              updateMonthlyTaskTitle(task.id, event.target.value)
+            }
+            onKeyDown={handleTaskEditKeyDown}
+            onBlur={() => finishTaskEdit(editTarget)}
+            rows={1}
+          />
+        ) : (
+          <div
+            className="taskTitleView"
+            role="textbox"
+            aria-label="毎月やること"
+            aria-readonly="true"
+            tabIndex={0}
+            onDoubleClick={() => beginTaskEdit(editTarget)}
+          >
+            {task.title || " "}
+          </div>
+        )}
+        <button
+          className="iconButton"
+          type="button"
+          onClick={() => removeMonthlyTask(task.id)}
+          aria-label={`${task.title || "無題のタスク"}を削除`}
+        >
+          ×
+        </button>
+        <div className="monthlyItemDays">
+          <span className="monthlyItemDayBadge">{task.dayOfMonth}日</span>
         </div>
       </article>
     );
@@ -1673,6 +1882,43 @@ export default function HomeClient({
               {planner.weeklyTasks
                 .filter((task) => task.weekday === selectedWeeklyWeekday)
                 .map(renderWeeklyTask)}
+            </div>
+          </section>
+
+          <section className="monthlySection" aria-label="毎月やることリスト">
+            <div className="sectionHeader">
+              <h3>毎月やることリスト</h3>
+            </div>
+            <form
+              className="monthlyTaskForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addMonthlyTask();
+              }}
+            >
+              <input
+                aria-label="毎月やることを追加"
+                placeholder="毎月やること"
+                value={newMonthlyTaskTitle}
+                onChange={(event) => setNewMonthlyTaskTitle(event.target.value)}
+              />
+              <button type="submit" aria-label="毎月やることを追加">
+                +
+              </button>
+              <div className="monthlyTaskFormDays">
+                {renderMonthdayToggles(
+                  selectedMonthlyDay,
+                  toggleSelectedMonthlyDay,
+                )}
+              </div>
+            </form>
+            <div className="taskList">
+              {planner.monthlyTasks.filter((task) => task.dayOfMonth === selectedMonthlyDay).length === 0 && (
+                <p className="emptyText">毎月やることはありません。</p>
+              )}
+              {planner.monthlyTasks
+                .filter((task) => task.dayOfMonth === selectedMonthlyDay)
+                .map(renderMonthlyTask)}
             </div>
           </section>
         </section>
