@@ -378,16 +378,18 @@ h2 {
 .achievementDisclosure {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(23, 107, 85, 0.18);
-  border-radius: 8px;
-  background: rgba(23, 107, 85, 0.06);
+  justify-self: end;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--accent-strong);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 900;
   line-height: 1;
   transition: transform 140ms ease;
+  padding: 0;
 }
 
 .achievementDisclosure.expanded {
@@ -515,16 +517,12 @@ h2 {
 
 .goalWeekPanel {
   grid-column: 1 / -1;
-  grid-template-columns: 1fr;
-  margin-left: clamp(10px, 2vw, 22px);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
   border-color: rgba(23, 107, 85, 0.48);
-  border-right: 0;
-  border-bottom: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 0;
   background: linear-gradient(180deg, #ffffff, var(--surface-strong));
-  padding: 16px;
+  padding: 8px 10px;
   box-shadow: none;
 }
 
@@ -559,23 +557,30 @@ h2 {
 .goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > span:first-child,
 .goalYearPanel:has(.goalMonthPanel:focus-within) > .goalHeading > .periodSwitcher,
 .goalYearPanel:has(.goalMonthPanel:focus-within) > .goalLineInput,
-.goalYearPanel:has(.goalWeekPanel:hover) > .goalHeading > span:first-child,
-.goalYearPanel:has(.goalWeekPanel:hover) > .goalHeading > .periodSwitcher,
-.goalYearPanel:has(.goalWeekPanel:hover) > .goalLineInput,
-.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalHeading > span:first-child,
-.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalHeading > .periodSwitcher,
-.goalYearPanel:has(.goalWeekPanel:focus-within) > .goalLineInput,
-.goalMonthPanel:has(.goalWeekPanel:hover) > .goalHeading > span:first-child,
-.goalMonthPanel:has(.goalWeekPanel:hover) > .goalHeading > .periodSwitcher,
-.goalMonthPanel:has(.goalWeekPanel:hover) > .goalLineInput,
-.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalHeading > span:first-child,
-.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalHeading > .periodSwitcher,
-.goalMonthPanel:has(.goalWeekPanel:focus-within) > .goalLineInput {
-  opacity: 0.38;
+.goalWeekPanel > .goalHeading > span:first-child,
+.goalWeekPanel > .goalHeading > .periodSwitcher,
+.goalWeekPanel > .goalWeekInput {
+  opacity: 1;
+  transition: opacity 140ms ease;
+}
+
+.goalWeekPanel > .goalHeading {
+  display: contents;
+}
+
+.goalWeekPanel > .goalHeading > span:first-child {
+  white-space: nowrap;
+}
+
+.goalWeekPanel > .goalHeading > .periodSwitcher {
+  grid-column: 3;
+  grid-row: 1;
 }
 
 .goalWeekPanel > .goalWeekInput {
-  min-height: 64px;
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 34px;
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
