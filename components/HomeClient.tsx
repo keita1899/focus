@@ -1445,61 +1445,6 @@ export default function HomeClient({
       <section className="homeColumns" aria-label="今日の管理">
         <section className="homeColumn goalColumn" aria-label="目標">
           <div className="goalNest">
-            {importantTask && (
-              <section className="goalPanel priorityGoalPanel" aria-label="重要なタスク">
-                <div className="goalHeading">
-                  <span>重要なタスク</span>
-                </div>
-                <article className="taskItem taskItemImportant">
-                  <button
-                    className="checkButton"
-                    type="button"
-                    onClick={() => completeImportantTask(importantTask.id)}
-                    aria-label={`${importantTask.title || "重要なタスク"}を完了`}
-                  >
-                    ✓
-                  </button>
-                  {isImportantEditing ? (
-                    <textarea
-                      aria-label="重要なタスク"
-                      value={importantTask.title}
-                      onChange={(event) =>
-                        updateImportantTaskTitle(event.target.value)
-                      }
-                      onKeyDown={handleTaskEditKeyDown}
-                      onBlur={() => finishTaskEdit(importantEditTarget!)}
-                      rows={1}
-                    />
-                  ) : (
-                    <div
-                      className="taskTitleView"
-                      role="textbox"
-                      aria-label="重要なタスク"
-                      aria-readonly="true"
-                      tabIndex={0}
-                      onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
-                    >
-                      {importantTask.title || " "}
-                    </div>
-                  )}
-                  <div className="priorityActions">
-                    <button
-                      className="focusButton"
-                      type="button"
-                      onClick={() =>
-                        setFocusTarget({
-                          kind: "priority",
-                          id: importantTask.id,
-                        })
-                      }
-                      aria-label={`${importantTask.title || "重要なタスク"}に集中する`}
-                    >
-                      focus
-                    </button>
-                  </div>
-                </article>
-              </section>
-            )}
             <section className="goalPanel goalYearPanel">
               <div className="goalHeading">
                 <span>
@@ -1605,6 +1550,61 @@ export default function HomeClient({
                   value={planner.goalsByPeriod.week[periodKeys.week] || ""}
                   onChange={(event) => updateGoal("week", event.target.value)}
                 />
+                {importantTask && (
+                  <section className="goalPanel priorityGoalPanel" aria-label="重要なタスク">
+                    <div className="goalHeading">
+                      <span>重要なタスク</span>
+                    </div>
+                    <article className="taskItem taskItemImportant">
+                      <button
+                        className="checkButton"
+                        type="button"
+                        onClick={() => completeImportantTask(importantTask.id)}
+                        aria-label={`${importantTask.title || "重要なタスク"}を完了`}
+                      >
+                        ✓
+                      </button>
+                      {isImportantEditing ? (
+                        <textarea
+                          aria-label="重要なタスク"
+                          value={importantTask.title}
+                          onChange={(event) =>
+                            updateImportantTaskTitle(event.target.value)
+                          }
+                          onKeyDown={handleTaskEditKeyDown}
+                          onBlur={() => finishTaskEdit(importantEditTarget!)}
+                          rows={1}
+                        />
+                      ) : (
+                        <div
+                          className="taskTitleView"
+                          role="textbox"
+                          aria-label="重要なタスク"
+                          aria-readonly="true"
+                          tabIndex={0}
+                          onDoubleClick={() => beginTaskEdit(importantEditTarget!)}
+                        >
+                          {importantTask.title || " "}
+                        </div>
+                      )}
+                      <div className="priorityActions">
+                        <button
+                          className="focusButton"
+                          type="button"
+                          onClick={() =>
+                            setFocusTarget({
+                              kind: "priority",
+                              id: importantTask.id,
+                            })
+                          }
+                          aria-label={`${importantTask.title || "重要なタスク"}に集中する`}
+                        >
+                          focus
+                        </button>
+                      </div>
+                    </article>
+                  </section>
+                )}
               </section>
             </section>
           </div>
