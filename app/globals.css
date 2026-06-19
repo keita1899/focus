@@ -1820,15 +1820,16 @@ select {
   min-height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
+  background: rgba(255, 255, 255, 0.78);
   color: var(--muted);
+  font-size: 0.75rem;
   font-weight: 900;
 }
 
 .monthdayToggle.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: white;
+  border-color: rgba(23, 107, 85, 0.34);
+  background: rgba(23, 107, 85, 0.08);
+  color: var(--accent-strong);
 }
 
 .monthlyItem {
@@ -3669,28 +3670,24 @@ select {
 .weekdayToggleRow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0;
+  gap: 4px;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
 }
 
 .weekdayToggle {
   min-height: 38px;
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
   color: var(--muted);
+  font-size: 0.78rem;
   font-weight: 900;
 }
 
-.weekdayToggle:last-child {
-  border-right: 0;
-}
-
 .weekdayToggle.active {
-  background: var(--accent);
-  color: white;
+  border-color: rgba(23, 107, 85, 0.34);
+  background: rgba(23, 107, 85, 0.08);
+  color: var(--accent-strong);
 }
 
 .scheduleEntryList {
