@@ -12,6 +12,13 @@ type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
 type PeriodGoalMap = Record<GoalKey, Record<string, string>>;
 type PeriodOffsets = Record<GoalKey, number>;
+type HomeTab =
+  | "achievement"
+  | "today"
+  | "inbox"
+  | "daily"
+  | "weekly"
+  | "monthly";
 
 type PriorityTask = {
   id: string;
@@ -331,22 +338,17 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
     ? legacyValue.achievementTasks
     : initialState.achievementTasks;
-  const rawLegacyTodayTasks = Array.isArray(value.todayTasks)
+  const rawTodayTasks = Array.isArray(value.todayTasks)
     ? value.todayTasks
     : Array.isArray(legacyValue.priorities)
       ? legacyValue.priorities
       : initialState.todayTasks;
-  const rawTodayTasks = Array.isArray(legacyValue.inboxTasks)
-    ? Array.isArray(value.todayTasks)
-      ? value.todayTasks
-      : initialState.todayTasks
-    : initialState.todayTasks;
   const rawInboxTasks = Array.isArray(legacyValue.inboxTasks)
     ? legacyValue.inboxTasks
-    : rawLegacyTodayTasks;
+    : initialState.inboxTasks;
   const rawImportantTask =
     legacyValue.importantTodayTask ||
-    (rawInboxTasks.length > 0 ? rawInboxTasks[0] : null);
+    (rawTodayTasks.length > 0 ? rawTodayTasks[0] : null);
   const rawDailyTasks = Array.isArray(value.dailyTasks)
     ? value.dailyTasks
     : initialState.dailyTasks;
@@ -559,12 +561,8 @@ export default function HomeClient({
   const [selectedMonthlyDay, setSelectedMonthlyDay] = useState(
     () => new Date().getDate(),
   );
-  const [selectedTaskTab, setSelectedTaskTab] = useState<"today" | "inbox">(
-    "today",
-  );
-  const [selectedRecurringTab, setSelectedRecurringTab] = useState<
-    "daily" | "weekly" | "monthly"
-  >("daily");
+  const [selectedHomeTab, setSelectedHomeTab] =
+    useState<HomeTab>("today");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -581,6 +579,14 @@ export default function HomeClient({
   const currentMonthKey = getCurrentMonthKey();
   const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
   const ageInfo = getAgeInfo(planner.birthday);
+  const homeTabs: Array<{ key: HomeTab; label: string }> = [
+    { key: "achievement", label: "達成リスト" },
+    { key: "today", label: "今日のタスク" },
+    { key: "inbox", label: "Inboxタスク" },
+    { key: "daily", label: "毎日のタスク" },
+    { key: "weekly", label: "毎週のタスク" },
+    { key: "monthly", label: "毎月のタスク" },
+  ];
 
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -743,11 +749,6 @@ export default function HomeClient({
       [task.parentId]: [...(groups[task.parentId] || []), task],
     };
   }, {});
-  const achievementYearTabs = [
-    achievementYear - 1,
-    achievementYear,
-    achievementYear + 1,
-  ];
 
   function taskEditKey(target: Exclude<TaskEditTarget, null>) {
     return `${target.kind}:${target.id}`;
@@ -1679,81 +1680,77 @@ export default function HomeClient({
           </div>
         </section>
 
-        <section className="homeColumn achievementColumn" aria-label="達成リスト">
-          <div className="sectionHeader achievementSectionHeader">
-            <h2>達成リスト</h2>
-          </div>
-          <div className="tabList achievementYearTabs" role="tablist" aria-label="達成リストの年切り替え">
-            {achievementYearTabs.map((year, index) => {
-              const offset = year - currentYear;
-              const isActive = achievementYearOffset === offset;
+        <section className="homeColumn homeTabWorkspace" aria-label="タスクの切り替え">
+          <div className="tabList homeTabList" role="tablist" aria-label="タブ切り替え">
+            {homeTabs.map((tab) => {
+              const isActive = selectedHomeTab === tab.key;
               return (
                 <button
-                  key={year}
+                  key={tab.key}
                   className={isActive ? "tabButton active" : "tabButton"}
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setAchievementYearOffset(offset)}
+                  onClick={() => setSelectedHomeTab(tab.key)}
                 >
-                  {index === 1 ? "今年" : `${year}年`}
+                  {tab.label}
                 </button>
               );
             })}
           </div>
-          <form
-            className="taskForm"
-            onSubmit={(event) => {
-              event.preventDefault();
-              addAchievementTask();
-            }}
-          >
-            <input
-              aria-label="達成リストを追加"
-              placeholder="達成したいこと"
-              value={newAchievementTitle}
-              onChange={(event) => setNewAchievementTitle(event.target.value)}
-            />
-            <button type="submit" aria-label="達成リストを追加">
-              +
-            </button>
-          </form>
-          <div className="taskList">
-            {achievementParents.length === 0 && (
-              <p className="emptyText">達成リストはありません。</p>
-            )}
-            {achievementParents.map(renderAchievementGroup)}
-          </div>
-        </section>
 
-        <section className="homeColumn taskColumn" aria-label="今日のタスクとInboxのタスク">
-          <div className="tabList taskTabList" role="tablist" aria-label="タスクの表示切り替え">
-            <button
-              className={
-                selectedTaskTab === "today" ? "tabButton active" : "tabButton"
-              }
-              type="button"
-              role="tab"
-              aria-selected={selectedTaskTab === "today"}
-              onClick={() => setSelectedTaskTab("today")}
-            >
-              今日のタスク
-            </button>
-            <button
-              className={
-                selectedTaskTab === "inbox" ? "tabButton active" : "tabButton"
-              }
-              type="button"
-              role="tab"
-              aria-selected={selectedTaskTab === "inbox"}
-              onClick={() => setSelectedTaskTab("inbox")}
-            >
-              Inboxのタスク
-            </button>
-          </div>
+          {selectedHomeTab === "achievement" && (
+            <section className="homeTabPanel achievementColumn" aria-label="達成リスト">
+              <div className="sectionHeader achievementSectionHeader">
+                <h2>達成リスト</h2>
+                <div className="periodSwitcher achievementPeriodSwitcher">
+                  <button
+                    type="button"
+                    onClick={() => changeAchievementYear(-1)}
+                    aria-label="達成リストの年を前へ"
+                  >
+                    &lt;
+                  </button>
+                  <span className="periodMeta">
+                    <time>{achievementYear}年</time>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => changeAchievementYear(1)}
+                    aria-label="達成リストの年を次へ"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+              <form
+                className="taskForm"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addAchievementTask();
+                }}
+              >
+                <input
+                  aria-label="達成リストを追加"
+                  placeholder="達成したいこと"
+                  value={newAchievementTitle}
+                  onChange={(event) => setNewAchievementTitle(event.target.value)}
+                />
+                <button type="submit" aria-label="達成リストを追加">
+                  +
+                </button>
+              </form>
+              <div className="taskList">
+                {achievementParents.length === 0 && (
+                  <p className="emptyText">達成リストはありません。</p>
+                )}
+                {achievementParents.map(renderAchievementGroup)}
+              </div>
+            </section>
+          )}
 
-          {selectedTaskTab === "today" ? (
-            <section className="todayTaskSection" aria-label="今日のタスク">
+          {selectedHomeTab === "today" && (
+            <section className="homeTabPanel todayTaskSection" aria-label="今日のタスク">
               <div className="sectionHeader">
                 <h2>今日のタスク</h2>
               </div>
@@ -1835,10 +1832,12 @@ export default function HomeClient({
                 ))}
               </div>
             </section>
-          ) : (
-            <section className="todayInboxSection" aria-label="Inboxのタスク">
+          )}
+
+          {selectedHomeTab === "inbox" && (
+            <section className="homeTabPanel todayInboxSection" aria-label="Inboxのタスク">
               <div className="sectionHeader">
-                <h2>Inboxのタスク</h2>
+                <h2>Inboxタスク</h2>
               </div>
               <form
                 className="taskForm"
@@ -1849,7 +1848,7 @@ export default function HomeClient({
               >
                 <input
                   aria-label="Inboxのタスクを追加"
-                  placeholder="Inboxのタスク"
+                  placeholder="Inboxタスク"
                   value={newInboxTaskTitle}
                   onChange={(event) => setNewInboxTaskTitle(event.target.value)}
                 />
@@ -1878,7 +1877,7 @@ export default function HomeClient({
                           </button>
                           {isEditing ? (
                             <textarea
-                              aria-label="Inboxのタスク"
+                              aria-label="Inboxタスク"
                               value={task.title}
                               onChange={(event) =>
                                 updateInboxTaskTitle(task.id, event.target.value)
@@ -1891,7 +1890,7 @@ export default function HomeClient({
                             <div
                               className="taskTitleView"
                               role="textbox"
-                              aria-label="Inboxのタスク"
+                              aria-label="Inboxタスク"
                               aria-readonly="true"
                               tabIndex={0}
                               onDoubleClick={() => beginTaskEdit(editTarget)}
@@ -1919,42 +1918,9 @@ export default function HomeClient({
               </div>
             </section>
           )}
-        </section>
 
-
-        <section className="homeColumn dailyColumn" aria-label="日次と週次">
-          <div className="tabList recurringTabList" role="tablist" aria-label="繰り返しタスクの表示切り替え">
-            <button
-              className={selectedRecurringTab === "daily" ? "tabButton active" : "tabButton"}
-              type="button"
-              role="tab"
-              aria-selected={selectedRecurringTab === "daily"}
-              onClick={() => setSelectedRecurringTab("daily")}
-            >
-              毎日
-            </button>
-            <button
-              className={selectedRecurringTab === "weekly" ? "tabButton active" : "tabButton"}
-              type="button"
-              role="tab"
-              aria-selected={selectedRecurringTab === "weekly"}
-              onClick={() => setSelectedRecurringTab("weekly")}
-            >
-              毎週
-            </button>
-            <button
-              className={selectedRecurringTab === "monthly" ? "tabButton active" : "tabButton"}
-              type="button"
-              role="tab"
-              aria-selected={selectedRecurringTab === "monthly"}
-              onClick={() => setSelectedRecurringTab("monthly")}
-            >
-              毎月
-            </button>
-          </div>
-
-          {selectedRecurringTab === "daily" && (
-            <section className="dailySectionCard" aria-label="毎日のタスク">
+          {selectedHomeTab === "daily" && (
+            <section className="homeTabPanel dailySectionCard" aria-label="毎日のタスク">
               <h2>毎日のタスク</h2>
               <form
                 className="taskForm"
@@ -2032,8 +1998,8 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedRecurringTab === "weekly" && (
-            <section className="weeklySection" aria-label="毎週のタスク">
+          {selectedHomeTab === "weekly" && (
+            <section className="homeTabPanel weeklySection" aria-label="毎週のタスク">
               <div className="sectionHeader">
                 <h3>毎週のタスク</h3>
               </div>
@@ -2071,8 +2037,8 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedRecurringTab === "monthly" && (
-            <section className="monthlySection" aria-label="毎月のタスク">
+          {selectedHomeTab === "monthly" && (
+            <section className="homeTabPanel monthlySection" aria-label="毎月のタスク">
               <div className="sectionHeader">
                 <h3>毎月のタスク</h3>
               </div>
