@@ -35,6 +35,7 @@ type NotesClientProps = {
 type NotesViewMode = "editor" | "preview" | "split";
 
 const storageKey = "simple-notes-v1";
+const notesViewModeStorageKey = "simple-notes-view-mode-v1";
 const allFoldersId = "all";
 const defaultFolderId = "folder-default";
 const defaultMarkdown = `# 新しいメモ
@@ -194,6 +195,29 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       null,
     [activeNoteId, visibleNotes],
   );
+
+  useEffect(() => {
+    try {
+      const storedMode = window.localStorage.getItem(notesViewModeStorageKey);
+      if (
+        storedMode === "editor" ||
+        storedMode === "preview" ||
+        storedMode === "split"
+      ) {
+        setViewMode(storedMode);
+      }
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(notesViewModeStorageKey, viewMode);
+    } catch {
+      return;
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     if (initialValue !== null) return;

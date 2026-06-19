@@ -100,6 +100,7 @@ type HomeClientProps = {
 const plannerStorageKey = "focus-planner-state-v1";
 const diaryStorageKey = "diary-v1";
 const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
+const homeTabStorageKey = "focus-home-tab-v1";
 const currentYear = new Date().getFullYear();
 const weekdayOrder = [1, 2, 3, 4, 5, 6, 0] as const;
 const weekdayLabels: Record<number, string> = {
@@ -591,6 +592,31 @@ export default function HomeClient({
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
+
+  useEffect(() => {
+    try {
+      const storedTab = window.localStorage.getItem(homeTabStorageKey);
+      if (
+        storedTab === "achievement" ||
+        storedTab === "today" ||
+        storedTab === "recurring" ||
+        storedTab === "inbox" ||
+        storedTab === "diary"
+      ) {
+        setSelectedHomeTab(storedTab);
+      }
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(homeTabStorageKey, selectedHomeTab);
+    } catch {
+      return;
+    }
+  }, [selectedHomeTab]);
 
   useEffect(() => {
     let timeoutId: number | null = null;
