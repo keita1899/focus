@@ -268,9 +268,11 @@ h2 {
 
 .homeColumns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   align-items: start;
-  gap: 12px;
+  gap: 18px;
+  width: min(760px, 100%);
+  margin: 0 auto;
 }
 
 .homeDiaryPanel {
@@ -673,6 +675,10 @@ h2 {
 .homeTabPanel {
   display: grid;
   gap: 10px;
+}
+
+.tabSectionHidden {
+  display: none;
 }
 
 .achievementColumn {

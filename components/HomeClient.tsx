@@ -15,10 +15,12 @@ type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "achievement"
   | "today"
+  | "bundle"
   | "inbox"
   | "daily"
   | "weekly"
-  | "monthly";
+  | "monthly"
+  | "diary";
 
 type PriorityTask = {
   id: string;
@@ -582,11 +584,21 @@ export default function HomeClient({
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "achievement", label: "達成リスト" },
     { key: "today", label: "今日のタスク" },
+    { key: "bundle", label: "今日まとめ" },
     { key: "inbox", label: "Inboxタスク" },
     { key: "daily", label: "毎日のタスク" },
     { key: "weekly", label: "毎週のタスク" },
     { key: "monthly", label: "毎月のタスク" },
+    { key: "diary", label: "diary" },
   ];
+  const showTaskBundle = selectedHomeTab === "bundle";
+  const showAchievementTab = selectedHomeTab === "achievement";
+  const showTodayTab = selectedHomeTab === "today" || showTaskBundle;
+  const showInboxTab = selectedHomeTab === "inbox";
+  const showDailyTab = selectedHomeTab === "daily" || showTaskBundle;
+  const showWeeklyTab = selectedHomeTab === "weekly" || showTaskBundle;
+  const showMonthlyTab = selectedHomeTab === "monthly" || showTaskBundle;
+  const showDiaryTab = selectedHomeTab === "diary";
 
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -1644,7 +1656,7 @@ export default function HomeClient({
             })}
           </div>
 
-          {selectedHomeTab === "achievement" && (
+          {showAchievementTab && (
             <section className="homeTabPanel achievementColumn" aria-label="達成リスト">
               <div className="sectionHeader achievementSectionHeader">
                 <h2>達成リスト</h2>
@@ -1694,7 +1706,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedHomeTab === "today" && (
+          {showTodayTab && (
             <section className="homeTabPanel todayTaskSection" aria-label="今日のタスク">
               <div className="sectionHeader">
                 <h2>今日のタスク</h2>
@@ -1779,7 +1791,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedHomeTab === "inbox" && (
+          {showInboxTab && (
             <section className="homeTabPanel todayInboxSection" aria-label="Inboxのタスク">
               <div className="sectionHeader">
                 <h2>Inboxタスク</h2>
@@ -1864,7 +1876,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedHomeTab === "daily" && (
+          {showDailyTab && (
             <section className="homeTabPanel dailySectionCard" aria-label="毎日のタスク">
               <h2>毎日のタスク</h2>
               <form
@@ -1943,7 +1955,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedHomeTab === "weekly" && (
+          {showWeeklyTab && (
             <section className="homeTabPanel weeklySection" aria-label="毎週のタスク">
               <div className="sectionHeader">
                 <h3>毎週のタスク</h3>
@@ -1982,7 +1994,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {selectedHomeTab === "monthly" && (
+          {showMonthlyTab && (
             <section className="homeTabPanel monthlySection" aria-label="毎月のタスク">
               <div className="sectionHeader">
                 <h3>毎月のタスク</h3>
@@ -2020,20 +2032,21 @@ export default function HomeClient({
               </div>
             </section>
           )}
+          {showDiaryTab && (
+            <section className="homeDiaryPanel" aria-label="今日の日記">
+              <div className="homeDiaryHeader">
+                <h2>今日の日記</h2>
+                <time dateTime={todayKey}>{todayLabel}</time>
+              </div>
+              <textarea
+                aria-label="今日の日記本文"
+                placeholder="今日の記録"
+                value={todayDiaryBody}
+                onChange={(event) => updateTodayDiary(event.target.value)}
+              />
+            </section>
+          )}
         </section>
-      </section>
-
-      <section className="homeDiaryPanel" aria-label="今日の日記">
-        <div className="homeDiaryHeader">
-          <h2>今日の日記</h2>
-          <time dateTime={todayKey}>{todayLabel}</time>
-        </div>
-        <textarea
-          aria-label="今日の日記本文"
-          placeholder="今日の記録"
-          value={todayDiaryBody}
-          onChange={(event) => updateTodayDiary(event.target.value)}
-        />
       </section>
 
       {focusedTask && (
