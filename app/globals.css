@@ -577,6 +577,22 @@ h2 {
   gap: 12px;
 }
 
+.recurringGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.recurringDailySection {
+  min-height: 0;
+}
+
+.recurringStack {
+  display: grid;
+  gap: 12px;
+}
+
 .dailyColumn {
   border: 0;
   background: transparent;
@@ -1730,6 +1746,20 @@ select {
 .monthlyTaskFormDays,
 .monthlyItemDays {
   grid-column: 1 / -1;
+}
+
+.weeklyTaskForm button,
+.monthlyTaskForm button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
 }
 
 .weeklyItem {
