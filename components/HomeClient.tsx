@@ -562,6 +562,9 @@ export default function HomeClient({
   const [selectedTaskTab, setSelectedTaskTab] = useState<"today" | "inbox">(
     "today",
   );
+  const [selectedRecurringTab, setSelectedRecurringTab] = useState<
+    "daily" | "weekly" | "monthly"
+  >("daily");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -740,6 +743,11 @@ export default function HomeClient({
       [task.parentId]: [...(groups[task.parentId] || []), task],
     };
   }, {});
+  const achievementYearTabs = [
+    achievementYear - 1,
+    achievementYear,
+    achievementYear + 1,
+  ];
 
   function taskEditKey(target: Exclude<TaskEditTarget, null>) {
     return `${target.kind}:${target.id}`;
@@ -1674,25 +1682,24 @@ export default function HomeClient({
         <section className="homeColumn achievementColumn" aria-label="達成リスト">
           <div className="sectionHeader achievementSectionHeader">
             <h2>達成リスト</h2>
-            <span className="periodSwitcher achievementYearSwitcher">
-              <button
-                type="button"
-                onClick={() => changeAchievementYear(-1)}
-                aria-label="達成リストの年を前へ"
-              >
-                &lt;
-              </button>
-              <span className="periodMeta">
-                <time>{getAchievementYearLabel(achievementYearOffset)}</time>
-              </span>
-              <button
-                type="button"
-                onClick={() => changeAchievementYear(1)}
-                aria-label="達成リストの年を次へ"
-              >
-                &gt;
-              </button>
-            </span>
+          </div>
+          <div className="tabList achievementYearTabs" role="tablist" aria-label="達成リストの年切り替え">
+            {achievementYearTabs.map((year, index) => {
+              const offset = year - currentYear;
+              const isActive = achievementYearOffset === offset;
+              return (
+                <button
+                  key={year}
+                  className={isActive ? "tabButton active" : "tabButton"}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setAchievementYearOffset(offset)}
+                >
+                  {index === 1 ? "今年" : `${year}年`}
+                </button>
+              );
+            })}
           </div>
           <form
             className="taskForm"
@@ -1916,156 +1923,192 @@ export default function HomeClient({
 
 
         <section className="homeColumn dailyColumn" aria-label="日次と週次">
-          <section className="dailySectionCard" aria-label="毎日のタスク">
-            <h2>毎日のタスク</h2>
-            <form
-              className="taskForm"
-              onSubmit={(event) => {
-                event.preventDefault();
-                addDailyTask();
-              }}
+          <div className="tabList recurringTabList" role="tablist" aria-label="繰り返しタスクの表示切り替え">
+            <button
+              className={selectedRecurringTab === "daily" ? "tabButton active" : "tabButton"}
+              type="button"
+              role="tab"
+              aria-selected={selectedRecurringTab === "daily"}
+              onClick={() => setSelectedRecurringTab("daily")}
             >
-              <input
-                aria-label="毎日のタスクを追加"
-                placeholder="毎日のタスク"
-                value={newDailyTaskTitle}
-                onChange={(event) => setNewDailyTaskTitle(event.target.value)}
-              />
-              <button type="submit" aria-label="毎日のタスクを追加">
-                +
-              </button>
-            </form>
-            <div className="taskList">
-              {planner.dailyTasks.length === 0 && (
-                <p className="emptyText">毎日のタスクはありません。</p>
-              )}
-              {planner.dailyTasks.map((task) => {
-                const isCompleted = task.completedDates.includes(todayKey);
-                const editTarget = { kind: "daily", id: task.id } as const;
-                const isEditing = isTaskBeingEdited(editTarget);
-                return (
-                  <article
-                    className={isCompleted ? "taskItem done" : "taskItem"}
-                    key={task.id}
-                  >
-                    <button
-                      className="checkButton"
-                      type="button"
-                      onClick={() => toggleDailyTask(task.id)}
-                      aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+              毎日
+            </button>
+            <button
+              className={selectedRecurringTab === "weekly" ? "tabButton active" : "tabButton"}
+              type="button"
+              role="tab"
+              aria-selected={selectedRecurringTab === "weekly"}
+              onClick={() => setSelectedRecurringTab("weekly")}
+            >
+              毎週
+            </button>
+            <button
+              className={selectedRecurringTab === "monthly" ? "tabButton active" : "tabButton"}
+              type="button"
+              role="tab"
+              aria-selected={selectedRecurringTab === "monthly"}
+              onClick={() => setSelectedRecurringTab("monthly")}
+            >
+              毎月
+            </button>
+          </div>
+
+          {selectedRecurringTab === "daily" && (
+            <section className="dailySectionCard" aria-label="毎日のタスク">
+              <h2>毎日のタスク</h2>
+              <form
+                className="taskForm"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addDailyTask();
+                }}
+              >
+                <input
+                  aria-label="毎日のタスクを追加"
+                  placeholder="毎日のタスク"
+                  value={newDailyTaskTitle}
+                  onChange={(event) => setNewDailyTaskTitle(event.target.value)}
+                />
+                <button type="submit" aria-label="毎日のタスクを追加">
+                  +
+                </button>
+              </form>
+              <div className="taskList">
+                {planner.dailyTasks.length === 0 && (
+                  <p className="emptyText">毎日のタスクはありません。</p>
+                )}
+                {planner.dailyTasks.map((task) => {
+                  const isCompleted = task.completedDates.includes(todayKey);
+                  const editTarget = { kind: "daily", id: task.id } as const;
+                  const isEditing = isTaskBeingEdited(editTarget);
+                  return (
+                    <article
+                      className={isCompleted ? "taskItem done" : "taskItem"}
+                      key={task.id}
                     >
-                      ✓
-                    </button>
-                    {isEditing ? (
-                      <textarea
-                        aria-label="毎日のタスク"
-                        value={task.title}
-                        onChange={(event) =>
-                          updateDailyTaskTitle(task.id, event.target.value)
-                        }
-                        onKeyDown={handleTaskEditKeyDown}
-                        onBlur={() => finishTaskEdit(editTarget)}
-                        rows={1}
-                      />
-                    ) : (
-                      <div
-                        className="taskTitleView"
-                        role="textbox"
-                        aria-label="毎日のタスク"
-                        aria-readonly="true"
-                        tabIndex={0}
-                        onDoubleClick={() => beginTaskEdit(editTarget)}
+                      <button
+                        className="checkButton"
+                        type="button"
+                        onClick={() => toggleDailyTask(task.id)}
+                        aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
                       >
-                        {task.title || " "}
-                      </div>
-                    )}
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => removeDailyTask(task.id)}
-                      aria-label={`${task.title || "無題のタスク"}を削除`}
-                    >
-                      ×
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="weeklySection" aria-label="毎週のタスク">
-            <div className="sectionHeader">
-              <h3>毎週のタスク</h3>
-            </div>
-            <form
-              className="weeklyTaskForm"
-              onSubmit={(event) => {
-                event.preventDefault();
-                addWeeklyTask();
-              }}
-            >
-              <input
-                aria-label="毎週のタスクを追加"
-                placeholder="毎週のタスク"
-                value={newWeeklyTaskTitle}
-                onChange={(event) => setNewWeeklyTaskTitle(event.target.value)}
-              />
-              <button type="submit" aria-label="毎週のタスクを追加">
-                +
-              </button>
-              <div className="weeklyTaskFormWeekdays">
-                {renderWeekdayToggles(
-                  selectedWeeklyWeekday,
-                  toggleSelectedWeeklyWeekday,
-                )}
+                        ✓
+                      </button>
+                      {isEditing ? (
+                        <textarea
+                          aria-label="毎日のタスク"
+                          value={task.title}
+                          onChange={(event) =>
+                            updateDailyTaskTitle(task.id, event.target.value)
+                          }
+                          onKeyDown={handleTaskEditKeyDown}
+                          onBlur={() => finishTaskEdit(editTarget)}
+                          rows={1}
+                        />
+                      ) : (
+                        <div
+                          className="taskTitleView"
+                          role="textbox"
+                          aria-label="毎日のタスク"
+                          aria-readonly="true"
+                          tabIndex={0}
+                          onDoubleClick={() => beginTaskEdit(editTarget)}
+                        >
+                          {task.title || " "}
+                        </div>
+                      )}
+                      <button
+                        className="iconButton"
+                        type="button"
+                        onClick={() => removeDailyTask(task.id)}
+                        aria-label={`${task.title || "無題のタスク"}を削除`}
+                      >
+                        ×
+                      </button>
+                    </article>
+                  );
+                })}
               </div>
-            </form>
-            <div className="taskList">
-              {planner.weeklyTasks.filter((task) => task.weekday === selectedWeeklyWeekday).length === 0 && (
-                <p className="emptyText">毎週のタスクはありません。</p>
-              )}
-              {planner.weeklyTasks
-                .filter((task) => task.weekday === selectedWeeklyWeekday)
-                .map(renderWeeklyTask)}
-            </div>
-          </section>
+            </section>
+          )}
 
-          <section className="monthlySection" aria-label="毎月のタスク">
-            <div className="sectionHeader">
-              <h3>毎月のタスク</h3>
-            </div>
-            <form
-              className="monthlyTaskForm"
-              onSubmit={(event) => {
-                event.preventDefault();
-                addMonthlyTask();
-              }}
-            >
-              <input
-                aria-label="毎月のタスクを追加"
-                placeholder="毎月のタスク"
-                value={newMonthlyTaskTitle}
-                onChange={(event) => setNewMonthlyTaskTitle(event.target.value)}
-              />
-              <button type="submit" aria-label="毎月のタスクを追加">
-                +
-              </button>
-              <div className="monthlyTaskFormDays">
-                {renderMonthdayToggles(
-                  selectedMonthlyDay,
-                  toggleSelectedMonthlyDay,
-                )}
+          {selectedRecurringTab === "weekly" && (
+            <section className="weeklySection" aria-label="毎週のタスク">
+              <div className="sectionHeader">
+                <h3>毎週のタスク</h3>
               </div>
-            </form>
-            <div className="taskList">
-              {planner.monthlyTasks.filter((task) => task.dayOfMonth === selectedMonthlyDay).length === 0 && (
-                <p className="emptyText">毎月のタスクはありません。</p>
-              )}
-              {planner.monthlyTasks
-                .filter((task) => task.dayOfMonth === selectedMonthlyDay)
-                .map(renderMonthlyTask)}
-            </div>
-          </section>
+              <form
+                className="weeklyTaskForm"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addWeeklyTask();
+                }}
+              >
+                <input
+                  aria-label="毎週のタスクを追加"
+                  placeholder="毎週のタスク"
+                  value={newWeeklyTaskTitle}
+                  onChange={(event) => setNewWeeklyTaskTitle(event.target.value)}
+                />
+                <button type="submit" aria-label="毎週のタスクを追加">
+                  +
+                </button>
+                <div className="weeklyTaskFormWeekdays">
+                  {renderWeekdayToggles(
+                    selectedWeeklyWeekday,
+                    toggleSelectedWeeklyWeekday,
+                  )}
+                </div>
+              </form>
+              <div className="taskList">
+                {planner.weeklyTasks.filter((task) => task.weekday === selectedWeeklyWeekday).length === 0 && (
+                  <p className="emptyText">毎週のタスクはありません。</p>
+                )}
+                {planner.weeklyTasks
+                  .filter((task) => task.weekday === selectedWeeklyWeekday)
+                  .map(renderWeeklyTask)}
+              </div>
+            </section>
+          )}
+
+          {selectedRecurringTab === "monthly" && (
+            <section className="monthlySection" aria-label="毎月のタスク">
+              <div className="sectionHeader">
+                <h3>毎月のタスク</h3>
+              </div>
+              <form
+                className="monthlyTaskForm"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addMonthlyTask();
+                }}
+              >
+                <input
+                  aria-label="毎月のタスクを追加"
+                  placeholder="毎月のタスク"
+                  value={newMonthlyTaskTitle}
+                  onChange={(event) => setNewMonthlyTaskTitle(event.target.value)}
+                />
+                <button type="submit" aria-label="毎月のタスクを追加">
+                  +
+                </button>
+                <div className="monthlyTaskFormDays">
+                  {renderMonthdayToggles(
+                    selectedMonthlyDay,
+                    toggleSelectedMonthlyDay,
+                  )}
+                </div>
+              </form>
+              <div className="taskList">
+                {planner.monthlyTasks.filter((task) => task.dayOfMonth === selectedMonthlyDay).length === 0 && (
+                  <p className="emptyText">毎月のタスクはありません。</p>
+                )}
+                {planner.monthlyTasks
+                  .filter((task) => task.dayOfMonth === selectedMonthlyDay)
+                  .map(renderMonthlyTask)}
+              </div>
+            </section>
+          )}
         </section>
       </section>
 
