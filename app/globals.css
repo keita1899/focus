@@ -493,7 +493,7 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
-  margin-left: clamp(10px, 2vw, 22px);
+  margin-left: 0;
   border-color: rgba(183, 116, 34, 0.32);
   border-right: 0;
   border-bottom: 0;
@@ -527,7 +527,7 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
-  margin-left: clamp(10px, 2vw, 22px);
+  margin-left: clamp(20px, 4vw, 42px);
   border-color: rgba(23, 107, 85, 0.48);
   background: linear-gradient(180deg, #ffffff, var(--surface-strong));
   padding: 8px 10px;
@@ -561,7 +561,7 @@ h2 {
   min-height: 34px;
   font-size: 1.18rem;
   font-weight: 800;
-  text-align: left;
+  text-align: center;
 }
 
 .dailyColumn {
@@ -607,7 +607,7 @@ h2 {
 
 .priorityGoalPanel {
   grid-column: 1 / -1;
-  margin-left: clamp(10px, 2vw, 22px);
+  margin-left: clamp(30px, 6vw, 64px);
   border-color: var(--line);
   border-right: 0;
   border-bottom: 0;
@@ -642,6 +642,11 @@ h2 {
   min-width: 0;
 }
 
+.goalPanel {
+  justify-items: center;
+  text-align: center;
+}
+
 .goalYearPanel > input {
   font-size: 0.9rem;
 }
@@ -649,6 +654,7 @@ h2 {
 .goalMonthPanel > input {
   font-size: 0.98rem;
   font-weight: 700;
+  text-align: center;
 }
 
 .goalHeading {
@@ -690,6 +696,11 @@ h2 {
 
 .goalWeekPanel > .goalHeading span:first-child {
   font-size: 0.98rem;
+}
+
+.goalYearPanel > input,
+.goalMonthPanel > input {
+  text-align: center;
 }
 
 .goalHeading time {
