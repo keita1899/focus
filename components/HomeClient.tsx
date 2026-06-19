@@ -582,11 +582,13 @@ export default function HomeClient({
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
     { key: "achievement", label: "達成" },
+    { key: "recurring", label: "繰り返し" },
     { key: "diary", label: "日記" },
   ];
   const showAchievementTab = selectedHomeTab === "achievement";
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
+  const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
 
   useEffect(() => {
@@ -1548,79 +1550,79 @@ export default function HomeClient({
                 value={planner.goalsByPeriod.year[periodKeys.year] || ""}
                 onChange={(event) => updateGoal("year", event.target.value)}
               />
-            </section>
-            <section className="goalPanel goalMonthPanel">
-              <div className="goalHeading">
-                <span>
-                  {getGoalLabel(
-                    "month",
-                    periodOffsets.month,
-                    periodLabels.month,
-                  )}
-                </span>
-                <span className="periodSwitcher">
-                  <button
-                    type="button"
-                    onClick={() => changePeriod("month", -1)}
-                    aria-label="月の目標を前へ"
-                  >
-                    &lt;
-                  </button>
-                  <span className="periodMeta">
-                    <time>{periodLabels.month}</time>
-                    <span>残り{remainingDays.month}日</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => changePeriod("month", 1)}
-                    aria-label="月の目標を次へ"
-                  >
-                    &gt;
-                  </button>
-                </span>
-              </div>
-              <input
-                className="goalLineInput"
-                aria-label="月の目標"
-                value={planner.goalsByPeriod.month[periodKeys.month] || ""}
-                onChange={(event) => updateGoal("month", event.target.value)}
-              />
-              <section className="goalPanel goalWeekPanel">
+              <section className="goalPanel goalMonthPanel">
                 <div className="goalHeading">
                   <span>
                     {getGoalLabel(
-                      "week",
-                      periodOffsets.week,
-                      periodLabels.week,
+                      "month",
+                      periodOffsets.month,
+                      periodLabels.month,
                     )}
                   </span>
                   <span className="periodSwitcher">
                     <button
                       type="button"
-                      onClick={() => changePeriod("week", -1)}
-                      aria-label="週の目標を前へ"
+                      onClick={() => changePeriod("month", -1)}
+                      aria-label="月の目標を前へ"
                     >
                       &lt;
                     </button>
                     <span className="periodMeta">
-                      <time>{periodLabels.week}</time>
-                      <span>残り{remainingDays.week}日</span>
+                      <time>{periodLabels.month}</time>
+                      <span>残り{remainingDays.month}日</span>
                     </span>
                     <button
                       type="button"
-                      onClick={() => changePeriod("week", 1)}
-                      aria-label="週の目標を次へ"
+                      onClick={() => changePeriod("month", 1)}
+                      aria-label="月の目標を次へ"
                     >
                       &gt;
                     </button>
                   </span>
                 </div>
                 <input
-                  className="goalWeekInput"
-                  aria-label="週の目標"
-                  value={planner.goalsByPeriod.week[periodKeys.week] || ""}
-                  onChange={(event) => updateGoal("week", event.target.value)}
+                  className="goalLineInput"
+                  aria-label="月の目標"
+                  value={planner.goalsByPeriod.month[periodKeys.month] || ""}
+                  onChange={(event) => updateGoal("month", event.target.value)}
                 />
+                <section className="goalPanel goalWeekPanel">
+                  <div className="goalHeading">
+                    <span>
+                      {getGoalLabel(
+                        "week",
+                        periodOffsets.week,
+                        periodLabels.week,
+                      )}
+                    </span>
+                    <span className="periodSwitcher">
+                      <button
+                        type="button"
+                        onClick={() => changePeriod("week", -1)}
+                        aria-label="週の目標を前へ"
+                      >
+                        &lt;
+                      </button>
+                      <span className="periodMeta">
+                        <time>{periodLabels.week}</time>
+                        <span>残り{remainingDays.week}日</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => changePeriod("week", 1)}
+                        aria-label="週の目標を次へ"
+                      >
+                        &gt;
+                      </button>
+                    </span>
+                  </div>
+                  <input
+                    className="goalWeekInput"
+                    aria-label="週の目標"
+                    value={planner.goalsByPeriod.week[periodKeys.week] || ""}
+                    onChange={(event) => updateGoal("week", event.target.value)}
+                  />
+                </section>
               </section>
             </section>
           </div>
@@ -1698,7 +1700,7 @@ export default function HomeClient({
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
               <section className="todayTaskSection todayTaskFullWidth" aria-label="今日のタスク">
-                <div className="sectionHeader">
+                <div className="goalHeading">
                   <h2>今日のタスク</h2>
                 </div>
                 <form
@@ -1781,6 +1783,116 @@ export default function HomeClient({
               </section>
 
               <div className="recurringGrid" aria-label="繰り返しタスク">
+                <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
+                  <div className="sectionHeader">
+                    <h3>毎日のタスク</h3>
+                  </div>
+                  <div className="taskList">
+                    {planner.dailyTasks.length === 0 && (
+                      <p className="emptyText">毎日のタスクはありません。</p>
+                    )}
+                    {planner.dailyTasks.map((task) => {
+                      const isCompleted = task.completedDates.includes(todayKey);
+                      const editTarget = { kind: "daily", id: task.id } as const;
+                      const isEditing = isTaskBeingEdited(editTarget);
+                      return (
+                        <article
+                          className={isCompleted ? "taskItem done" : "taskItem"}
+                          key={task.id}
+                        >
+                          <button
+                            className="checkButton"
+                            type="button"
+                            onClick={() => toggleDailyTask(task.id)}
+                            aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+                          >
+                            ✓
+                          </button>
+                          {isEditing ? (
+                            <textarea
+                              aria-label="毎日のタスク"
+                              value={task.title}
+                              onChange={(event) =>
+                                updateDailyTaskTitle(task.id, event.target.value)
+                              }
+                              onKeyDown={handleTaskEditKeyDown}
+                              onBlur={() => finishTaskEdit(editTarget)}
+                              rows={1}
+                            />
+                          ) : (
+                            <div
+                              className="taskTitleView"
+                              role="textbox"
+                              aria-label="毎日のタスク"
+                              aria-readonly="true"
+                              tabIndex={0}
+                              onDoubleClick={() => beginTaskEdit(editTarget)}
+                            >
+                              {task.title || " "}
+                            </div>
+                          )}
+                          <button
+                            className="iconButton"
+                            type="button"
+                            onClick={() => removeDailyTask(task.id)}
+                            aria-label={`${task.title || "無題のタスク"}を削除`}
+                          >
+                            ×
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <div className="recurringStack">
+                  <section className="weeklySection" aria-label="毎週のタスク">
+                    <div className="sectionHeader">
+                      <h3>毎週のタスク</h3>
+                    </div>
+                    <div className="weeklyTaskFormWeekdays">
+                      {renderWeekdayToggles(
+                        selectedWeeklyWeekday,
+                        toggleSelectedWeeklyWeekday,
+                      )}
+                    </div>
+                    <div className="taskList">
+                      {planner.weeklyTasks.filter((task) => task.weekday === selectedWeeklyWeekday).length === 0 && (
+                        <p className="emptyText">毎週のタスクはありません。</p>
+                      )}
+                      {planner.weeklyTasks
+                        .filter((task) => task.weekday === selectedWeeklyWeekday)
+                        .map(renderWeeklyTask)}
+                    </div>
+                  </section>
+
+                  <section className="monthlySection" aria-label="毎月のタスク">
+                    <div className="sectionHeader">
+                      <h3>毎月のタスク</h3>
+                    </div>
+                    <div className="monthlyTaskFormDays">
+                      {renderMonthdayToggles(
+                        selectedMonthlyDay,
+                        toggleSelectedMonthlyDay,
+                      )}
+                    </div>
+                    <div className="taskList">
+                      {planner.monthlyTasks.filter((task) => task.dayOfMonth === selectedMonthlyDay).length === 0 && (
+                        <p className="emptyText">毎月のタスクはありません。</p>
+                      )}
+                      {planner.monthlyTasks
+                        .filter((task) => task.dayOfMonth === selectedMonthlyDay)
+                        .map(renderMonthlyTask)}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {showRecurringTab && (
+            <section className="homeTabPanel recurringColumn" aria-label="繰り返しタスク">
+              <div className="recurringGrid" aria-label="繰り返しタスクの編集">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
                     <h3>毎日のタスク</h3>
