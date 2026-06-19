@@ -475,7 +475,7 @@ h2 {
 .goalNest {
   display: grid;
   width: 100%;
-  gap: 10px;
+  gap: 6px;
 }
 
 .goalPanel,
@@ -533,8 +533,8 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
-  width: calc(100% - clamp(18px, 3vw, 32px));
-  margin-left: clamp(18px, 3vw, 32px);
+  width: calc(100% - clamp(36px, 6vw, 64px));
+  margin-left: clamp(36px, 6vw, 64px);
   margin-right: 0;
   border-color: rgba(23, 107, 85, 0.48);
   background: linear-gradient(180deg, #ffffff, var(--surface-strong));
@@ -570,6 +570,11 @@ h2 {
   font-size: 1.18rem;
   font-weight: 800;
   text-align: center;
+}
+
+.recurringColumn {
+  display: grid;
+  gap: 12px;
 }
 
 .dailyColumn {
@@ -611,22 +616,6 @@ h2 {
   background: rgba(255, 255, 255, 0.88);
   box-shadow: none;
   padding: 16px;
-}
-
-.priorityGoalPanel {
-  grid-column: 1 / -1;
-  width: calc(100% - clamp(18px, 3vw, 32px));
-  margin-left: clamp(18px, 3vw, 32px);
-  margin-right: 0;
-  border-color: var(--line);
-  border-right: 0;
-  border-bottom: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 0;
-  background: #ffe9e7;
-  padding: 12px;
-  box-shadow: none;
 }
 
 .goalPanel input {
