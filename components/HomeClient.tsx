@@ -572,6 +572,7 @@ export default function HomeClient({
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
   const todayWeekday = new Date().getDay();
+  const todayDayOfMonth = new Date().getDate();
   const currentWeekKey = getCurrentWeekKey();
   const achievementYear = currentYear + achievementYearOffset;
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
@@ -1327,11 +1328,12 @@ export default function HomeClient({
     );
   }
 
-  function renderWeeklyTask(task: WeeklyTask) {
+  function renderWeeklyTask(task: WeeklyTask, activeWeekday = selectedWeeklyWeekday) {
     const editTarget = { kind: "weekly", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
-    const isTodayScheduled = task.weekday === selectedWeeklyWeekday;
-    const isCompleted = task.completedWeeks.includes(currentWeeklySlotKey);
+    const activeWeeklySlotKey = getWeeklySlotKey(currentWeekKey, activeWeekday);
+    const isTodayScheduled = task.weekday === activeWeekday;
+    const isCompleted = task.completedWeeks.includes(activeWeeklySlotKey);
     return (
       <article
         className={isCompleted ? "taskItem done weeklyItem" : "taskItem weeklyItem"}
@@ -1388,11 +1390,12 @@ export default function HomeClient({
     );
   }
 
-  function renderMonthlyTask(task: MonthlyTask) {
+  function renderMonthlyTask(task: MonthlyTask, activeDayOfMonth = selectedMonthlyDay) {
     const editTarget = { kind: "monthly", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
-    const isTodayScheduled = task.dayOfMonth === selectedMonthlyDay;
-    const isCompleted = task.completedMonths.includes(currentMonthlySlotKey);
+    const activeMonthlySlotKey = getMonthlySlotKey(currentMonthKey, activeDayOfMonth);
+    const isTodayScheduled = task.dayOfMonth === activeDayOfMonth;
+    const isCompleted = task.completedMonths.includes(activeMonthlySlotKey);
     return (
       <article
         className={isCompleted ? "taskItem done monthlyItem" : "taskItem monthlyItem"}
@@ -1849,40 +1852,30 @@ export default function HomeClient({
                   <section className="weeklySection" aria-label="毎週のタスク">
                     <div className="sectionHeader">
                       <h3>毎週のタスク</h3>
-                    </div>
-                    <div className="weeklyTaskFormWeekdays">
-                      {renderWeekdayToggles(
-                        selectedWeeklyWeekday,
-                        toggleSelectedWeeklyWeekday,
-                      )}
+                      <span className="sectionMeta">{getWeekdayLabel(todayWeekday)}</span>
                     </div>
                     <div className="taskList">
-                      {planner.weeklyTasks.filter((task) => task.weekday === selectedWeeklyWeekday).length === 0 && (
+                      {planner.weeklyTasks.filter((task) => task.weekday === todayWeekday).length === 0 && (
                         <p className="emptyText">毎週のタスクはありません。</p>
                       )}
                       {planner.weeklyTasks
-                        .filter((task) => task.weekday === selectedWeeklyWeekday)
-                        .map(renderWeeklyTask)}
+                        .filter((task) => task.weekday === todayWeekday)
+                        .map((task) => renderWeeklyTask(task, todayWeekday))}
                     </div>
                   </section>
 
                   <section className="monthlySection" aria-label="毎月のタスク">
                     <div className="sectionHeader">
                       <h3>毎月のタスク</h3>
-                    </div>
-                    <div className="monthlyTaskFormDays">
-                      {renderMonthdayToggles(
-                        selectedMonthlyDay,
-                        toggleSelectedMonthlyDay,
-                      )}
+                      <span className="sectionMeta">{todayDayOfMonth}日</span>
                     </div>
                     <div className="taskList">
-                      {planner.monthlyTasks.filter((task) => task.dayOfMonth === selectedMonthlyDay).length === 0 && (
+                      {planner.monthlyTasks.filter((task) => task.dayOfMonth === todayDayOfMonth).length === 0 && (
                         <p className="emptyText">毎月のタスクはありません。</p>
                       )}
                       {planner.monthlyTasks
-                        .filter((task) => task.dayOfMonth === selectedMonthlyDay)
-                        .map(renderMonthlyTask)}
+                        .filter((task) => task.dayOfMonth === todayDayOfMonth)
+                        .map((task) => renderMonthlyTask(task, todayDayOfMonth))}
                     </div>
                   </section>
                 </div>
@@ -1910,7 +1903,11 @@ export default function HomeClient({
                       value={newDailyTaskTitle}
                       onChange={(event) => setNewDailyTaskTitle(event.target.value)}
                     />
-                    <button type="submit" aria-label="毎日のタスクを追加">
+                    <button
+                      className="recurringAddButton"
+                      type="submit"
+                      aria-label="毎日のタスクを追加"
+                    >
                       +
                     </button>
                   </form>
@@ -1990,7 +1987,11 @@ export default function HomeClient({
                         value={newWeeklyTaskTitle}
                         onChange={(event) => setNewWeeklyTaskTitle(event.target.value)}
                       />
-                      <button type="submit" aria-label="毎週のタスクを追加">
+                      <button
+                        className="recurringAddButton"
+                        type="submit"
+                        aria-label="毎週のタスクを追加"
+                      >
                         +
                       </button>
                       <div className="weeklyTaskFormWeekdays">
@@ -2027,7 +2028,11 @@ export default function HomeClient({
                         value={newMonthlyTaskTitle}
                         onChange={(event) => setNewMonthlyTaskTitle(event.target.value)}
                       />
-                      <button type="submit" aria-label="毎月のタスクを追加">
+                      <button
+                        className="recurringAddButton"
+                        type="submit"
+                        aria-label="毎月のタスクを追加"
+                      >
                         +
                       </button>
                       <div className="monthlyTaskFormDays">

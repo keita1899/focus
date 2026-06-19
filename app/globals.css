@@ -1697,26 +1697,36 @@ select {
   font-weight: 900;
 }
 
+.sectionMeta {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .weeklyTaskForm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 42px;
   gap: 8px;
+  min-width: 0;
 }
 
 .monthlyTaskForm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 42px;
   gap: 8px;
+  min-width: 0;
 }
 
 .weeklyTaskFormWeekdays,
 .weeklyItemWeekdays {
   grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .monthlyTaskFormDays,
 .monthlyItemDays {
   grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .weeklyTaskForm button,
@@ -1731,6 +1741,13 @@ select {
   color: white;
   font-size: 1.25rem;
   font-weight: 900;
+}
+
+.recurringAddButton {
+  border: 1px solid rgba(23, 107, 85, 0.22);
+  background: #eef6f1;
+  color: var(--accent-strong);
+  box-shadow: none;
 }
 
 .weeklyItem {
@@ -1760,14 +1777,15 @@ select {
 }
 
 .monthdayToggleRow {
-  display: grid;
-  grid-template-columns: repeat(31, minmax(30px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  width: 100%;
+  min-width: 0;
 }
 
 .monthdayToggle {
+  flex: 0 0 30px;
   min-height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -3620,9 +3638,10 @@ select {
 
 .weekdayToggleRow {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
-  overflow: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 .weekdayToggle {
