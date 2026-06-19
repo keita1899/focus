@@ -2529,7 +2529,7 @@ select {
 
 .notesEditorHeader {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px 42px;
+  grid-template-columns: minmax(0, 1fr) auto 180px 42px;
   gap: 8px;
   border-bottom: 1px solid var(--line);
   padding: 10px;
@@ -2552,10 +2552,42 @@ select {
   background: #fbfcfa;
 }
 
+.notesViewTabs {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(64px, auto));
+  gap: 3px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #eef4ef;
+  padding: 3px;
+}
+
+.notesViewTabs button {
+  min-width: 0;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.notesViewTabs button.active {
+  background: white;
+  box-shadow: 0 2px 8px rgba(35, 53, 43, 0.08);
+}
+
 .notesEditorGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
+}
+
+.notesEditorGrid-editor,
+.notesEditorGrid-preview {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .notesEditorGrid textarea {
@@ -3897,6 +3929,15 @@ select {
   .notesEditorHeader select {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .notesViewTabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .notesEditorHeader select {
+    grid-row: 3;
   }
 
   .notesEditorGrid textarea {

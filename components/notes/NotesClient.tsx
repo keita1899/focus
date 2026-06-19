@@ -32,6 +32,8 @@ type NotesClientProps = {
   initialValue: unknown;
 };
 
+type NotesViewMode = "editor" | "preview" | "split";
+
 const storageKey = "simple-notes-v1";
 const allFoldersId = "all";
 const defaultFolderId = "folder-default";
@@ -175,6 +177,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
+  const [viewMode, setViewMode] = useState<NotesViewMode>("split");
 
   const visibleNotes = useMemo(
     () =>
@@ -662,6 +665,35 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                     updateActiveNote({ title: event.target.value })
                   }
                 />
+                <div className="notesViewTabs" role="tablist" aria-label="表示モード">
+                  <button
+                    className={viewMode === "editor" ? "active" : ""}
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === "editor"}
+                    onClick={() => setViewMode("editor")}
+                  >
+                    フォーム
+                  </button>
+                  <button
+                    className={viewMode === "preview" ? "active" : ""}
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === "preview"}
+                    onClick={() => setViewMode("preview")}
+                  >
+                    プレビュー
+                  </button>
+                  <button
+                    className={viewMode === "split" ? "active" : ""}
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === "split"}
+                    onClick={() => setViewMode("split")}
+                  >
+                    両方
+                  </button>
+                </div>
                 <select
                   aria-label="メモのフォルダ"
                   value={activeNote.folderId}
@@ -684,29 +716,33 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 </button>
               </div>
 
-              <div className="notesEditorGrid">
-                <textarea
-                  aria-label="メモ本文"
-                  ref={resizeMemoTextarea}
-                  value={activeNote.markdown}
-                  onKeyDown={handleMarkdownKeyDown}
-                  onChange={(event) => {
-                    resizeMemoTextarea(event.currentTarget, true);
-                    updateActiveNote({
-                      markdown: normalizeOrderedListAfterDeletion(
-                        activeNote.markdown,
-                        event.target.value,
-                        event.currentTarget.selectionStart,
-                      ),
-                    });
-                  }}
-                />
-                <article className="notesPreview" aria-label="プレビュー">
-                  <MarkdownPreview
-                    markdown={activeNote.markdown}
-                    onToggleChecklist={toggleChecklist}
+              <div className={`notesEditorGrid notesEditorGrid-${viewMode}`}>
+                {viewMode !== "preview" && (
+                  <textarea
+                    aria-label="メモ本文"
+                    ref={resizeMemoTextarea}
+                    value={activeNote.markdown}
+                    onKeyDown={handleMarkdownKeyDown}
+                    onChange={(event) => {
+                      resizeMemoTextarea(event.currentTarget, true);
+                      updateActiveNote({
+                        markdown: normalizeOrderedListAfterDeletion(
+                          activeNote.markdown,
+                          event.target.value,
+                          event.currentTarget.selectionStart,
+                        ),
+                      });
+                    }}
                   />
-                </article>
+                )}
+                {viewMode !== "editor" && (
+                  <article className="notesPreview" aria-label="プレビュー">
+                    <MarkdownPreview
+                      markdown={activeNote.markdown}
+                      onToggleChecklist={toggleChecklist}
+                    />
+                  </article>
+                )}
               </div>
             </>
           )}
