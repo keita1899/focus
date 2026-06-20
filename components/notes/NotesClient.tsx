@@ -300,7 +300,12 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
   useEffect(() => {
     function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.metaKey && !event.ctrlKey && event.key.toLowerCase() === "n") {
+      if (
+        event.metaKey &&
+        event.altKey &&
+        !event.ctrlKey &&
+        event.key.toLowerCase() === "n"
+      ) {
         event.preventDefault();
         addNote();
       }
