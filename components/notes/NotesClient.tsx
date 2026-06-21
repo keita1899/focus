@@ -36,6 +36,8 @@ type NotesViewMode = "editor" | "preview" | "split";
 
 const storageKey = "simple-notes-v1";
 const notesViewModeStorageKey = "simple-notes-view-mode-v1";
+const notesActiveFolderStorageKey = "simple-notes-active-folder-v1";
+const notesActiveNoteStorageKey = "simple-notes-active-note-v1";
 const allFoldersId = "all";
 const defaultFolderId = "folder-default";
 const defaultMarkdown = `# 新しいメモ
@@ -164,6 +166,17 @@ function formatUpdatedAt(value: string) {
   }).format(date);
 }
 
+function getStoredNotesSelection() {
+  try {
+    return {
+      folderId: window.localStorage.getItem(notesActiveFolderStorageKey),
+      noteId: window.localStorage.getItem(notesActiveNoteStorageKey),
+    };
+  } catch {
+    return { folderId: null, noteId: null };
+  }
+}
+
 export default function NotesClient({ initialValue }: NotesClientProps) {
   const initialNotesState = useMemo(
     () => normalizeNotesState(initialValue),
@@ -220,18 +233,49 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   }, [viewMode]);
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem(notesActiveFolderStorageKey, activeFolderId);
+      window.localStorage.setItem(notesActiveNoteStorageKey, activeNoteId);
+    } catch {
+      return;
+    }
+  }, [activeFolderId, activeNoteId]);
+
+  useEffect(() => {
     if (initialValue !== null) return;
 
     async function loadNotes() {
+      const storedSelection = getStoredNotesSelection();
+
+      function applyLoadedState(loadedState: NotesState) {
+        const nextFolderId =
+          storedSelection.folderId === allFoldersId ||
+          loadedState.folders.some((folder) => folder.id === storedSelection.folderId)
+            ? storedSelection.folderId || allFoldersId
+            : allFoldersId;
+        const nextVisibleNotes =
+          nextFolderId === allFoldersId
+            ? loadedState.notes
+            : loadedState.notes.filter((note) => note.folderId === nextFolderId);
+        const preferredNote =
+          loadedState.notes.find((note) => note.id === storedSelection.noteId) || null;
+        const nextNoteId =
+          preferredNote &&
+          (nextFolderId === allFoldersId || preferredNote.folderId === nextFolderId)
+            ? preferredNote.id
+            : nextVisibleNotes[0]?.id || loadedState.notes[0]?.id || "";
+
+        setFolders(loadedState.folders);
+        setNotes(loadedState.notes);
+        setActiveFolderId(nextFolderId);
+        setActiveNoteId(nextNoteId);
+      }
+
       try {
         const response = await fetch("/api/notes", { cache: "no-store" });
         const data = (await response.json()) as { value: unknown };
         if (data.value) {
-          const loadedState = normalizeNotesState(data.value);
-          setFolders(loadedState.folders);
-          setNotes(loadedState.notes);
-          setActiveFolderId(allFoldersId);
-          setActiveNoteId(loadedState.notes[0]?.id || "");
+          applyLoadedState(normalizeNotesState(data.value));
           return;
         }
 
@@ -239,10 +283,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         if (!stored) return;
 
         const loadedState = normalizeNotesState(JSON.parse(stored));
-        setFolders(loadedState.folders);
-        setNotes(loadedState.notes);
-        setActiveFolderId(allFoldersId);
-        setActiveNoteId(loadedState.notes[0]?.id || "");
+        applyLoadedState(loadedState);
         await fetch("/api/notes", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -253,11 +294,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         const stored = window.localStorage.getItem(storageKey);
         if (!stored) return;
         try {
-          const loadedState = normalizeNotesState(JSON.parse(stored));
-          setFolders(loadedState.folders);
-          setNotes(loadedState.notes);
-          setActiveFolderId(allFoldersId);
-          setActiveNoteId(loadedState.notes[0]?.id || "");
+          applyLoadedState(normalizeNotesState(JSON.parse(stored)));
         } catch {
           setNotes([createNote()]);
         }
@@ -297,6 +334,19 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       .querySelectorAll<HTMLTextAreaElement>(".notesEditorGrid textarea")
       .forEach((textarea) => resizeMemoTextarea(textarea));
   }, [notes]);
+
+  useEffect(() => {
+    if (!activeNoteId || activeNote) return;
+    const fallbackNote = visibleNotes[0] || notes[0] || null;
+    if (!fallbackNote) return;
+    setActiveNoteId(fallbackNote.id);
+    if (
+      activeFolderId !== allFoldersId &&
+      fallbackNote.folderId !== activeFolderId
+    ) {
+      setActiveFolderId(allFoldersId);
+    }
+  }, [activeFolderId, activeNote, activeNoteId, notes, visibleNotes]);
 
   useEffect(() => {
     function handleKeyDown(event: globalThis.KeyboardEvent) {
