@@ -85,9 +85,6 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
     <main className="shell settingsPage">
       <section className="settingsHeader" aria-label="設定">
         <div>
-          <a className="backLink" href="/">
-            ← メイン
-          </a>
           <h1>Settings</h1>
         </div>
       </section>

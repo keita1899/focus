@@ -47,6 +47,16 @@ button {
   padding: 28px 0 40px;
 }
 
+body > .topbar {
+  width: calc(100% - 32px);
+  margin: 0 auto;
+  padding-top: 28px;
+}
+
+body > .topbar + .shell {
+  padding-top: 0;
+}
+
 .homeShell {
   display: grid;
   gap: 18px;

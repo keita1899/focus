@@ -613,9 +613,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     <main className="shell notesPage">
       <section className="notesHeader" aria-label="メモ">
         <div>
-          <a className="backLink" href="/">
-            ← メイン
-          </a>
           <h1>Notes</h1>
         </div>
         <button className="notesAddButton" type="button" onClick={addNote}>

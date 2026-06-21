@@ -5,8 +5,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useSession } from "next-auth/react";
-import { SignOutButton } from "./AuthControls";
 
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
@@ -508,7 +506,6 @@ export default function HomeClient({
   initialPlannerValue,
   initialDiaryValue,
 }: HomeClientProps) {
-  const { data: session } = useSession();
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
   const initialDiaryEntries = useMemo(
@@ -579,7 +576,6 @@ export default function HomeClient({
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
   const currentMonthKey = getCurrentMonthKey();
   const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
-  const ageInfo = getAgeInfo(planner.birthday);
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -1506,44 +1502,6 @@ export default function HomeClient({
 
   return (
     <main className="shell homeShell">
-      <header className="topbar">
-        <div className="headerDateBlock">
-          <time className="todayLabel" dateTime={todayLabel}>
-            {todayLabel}
-          </time>
-          {ageInfo && (
-            <span className="ageLabel">
-              {ageInfo.age}歳 {ageInfo.nextAge}歳まであと
-              {ageInfo.daysUntilNextAge}日
-            </span>
-          )}
-        </div>
-        <div className="topbarLinks">
-          {session?.user && (
-            <span className="userBadge">
-              {session.user.name || session.user.email || "ログイン中"}
-            </span>
-          )}
-          <nav className="topbarNav" aria-label="ナビゲーション">
-            <a className="navLink" href="/roadmap">
-              ロードマップ
-            </a>
-            <a className="navLink" href="/notes">
-              メモ
-            </a>
-            <a className="navLink" href="/diary">
-              日記
-            </a>
-          </nav>
-          <div className="topbarAuth">
-            <a className="settingsLink" href="/settings" aria-label="設定">
-              ⚙
-            </a>
-            <SignOutButton className="navLink authNavButton" />
-          </div>
-        </div>
-      </header>
-
       <section className="homeColumns" aria-label="今日の管理">
         <section className="homeColumn goalColumn" aria-label="目標">
           <div className="goalNest">

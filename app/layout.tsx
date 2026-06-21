@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "../components/AuthProvider";
+import AppHeader from "../components/AppHeader";
 import { ServiceWorkerRegistration } from "../components/ServiceWorkerRegistration";
 import { auth } from "../auth";
 import "./globals.css";
@@ -35,7 +36,10 @@ export default async function RootLayout({
     <html lang="ja">
       <body>
         <ServiceWorkerRegistration />
-        <AuthProvider session={session}>{children}</AuthProvider>
+        <AuthProvider session={session}>
+          <AppHeader />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

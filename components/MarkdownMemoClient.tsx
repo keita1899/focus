@@ -890,9 +890,6 @@ export function MarkdownMemoPage({
     <main className="shell roadmapPage">
       <section className="roadmapHeader" aria-label={ariaLabel}>
         <div>
-          <a className="backLink" href="/">
-            ← メイン
-          </a>
           <h1>{pageTitle}</h1>
         </div>
         <button className="roadmapAddButton" type="button" onClick={addRoadmapBlock}>

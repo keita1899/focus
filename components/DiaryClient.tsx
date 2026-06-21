@@ -204,9 +204,6 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
     <main className="shell diaryPage">
       <section className="diaryHeader" aria-label="日記">
         <div>
-          <a className="backLink" href="/">
-            ← メイン
-          </a>
           <h1>Diary</h1>
         </div>
         <button className="roadmapAddButton" type="button" onClick={resetForm}>
