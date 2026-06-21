@@ -163,13 +163,57 @@ export function normalizeOrderedListAt(markdown: string, position: number) {
   return nextLines.join("\n");
 }
 
+function getLineStart(markdown: string, lineIndex: number) {
+  if (lineIndex <= 0) return 0;
+  let currentIndex = 0;
+  let currentLine = 0;
+
+  while (currentLine < lineIndex && currentIndex < markdown.length) {
+    const nextBreak = markdown.indexOf("\n", currentIndex);
+    if (nextBreak === -1) return markdown.length;
+    currentIndex = nextBreak + 1;
+    currentLine += 1;
+  }
+
+  return currentIndex;
+}
+
+function getCursorPositionForLine(
+  markdown: string,
+  lineIndex: number,
+  columnOffset: number,
+) {
+  const lineStart = getLineStart(markdown, lineIndex);
+  const nextBreak = markdown.indexOf("\n", lineStart);
+  const lineEnd = nextBreak === -1 ? markdown.length : nextBreak;
+  return Math.max(lineStart, Math.min(lineStart + columnOffset, lineEnd));
+}
+
 export function normalizeOrderedListAfterDeletion(
   previousMarkdown: string,
   nextMarkdown: string,
   cursorPosition: number,
 ) {
-  if (nextMarkdown.length >= previousMarkdown.length) return nextMarkdown;
-  return normalizeOrderedListAt(nextMarkdown, cursorPosition);
+  if (nextMarkdown.length >= previousMarkdown.length) {
+    return {
+      markdown: nextMarkdown,
+      cursorPosition,
+    };
+  }
+
+  const nextLineIndex = findLineIndexAt(nextMarkdown, cursorPosition);
+  const nextLineStart = nextMarkdown.lastIndexOf("\n", cursorPosition - 1) + 1;
+  const columnOffset = cursorPosition - nextLineStart;
+  const normalizedMarkdown = normalizeOrderedListAt(nextMarkdown, cursorPosition);
+
+  return {
+    markdown: normalizedMarkdown,
+    cursorPosition: getCursorPositionForLine(
+      normalizedMarkdown,
+      nextLineIndex,
+      columnOffset,
+    ),
+  };
 }
 
 function createRoadmapBlock(
@@ -970,14 +1014,21 @@ export function MarkdownMemoPage({
                     }
                     onChange={(event) => {
                       resizeMemoTextarea(event.currentTarget, true);
+                      const normalized = normalizeOrderedListAfterDeletion(
+                        block.markdown,
+                        event.target.value,
+                        event.currentTarget.selectionStart,
+                      );
                       updateRoadmapMarkdown(
                         block.id,
-                        normalizeOrderedListAfterDeletion(
-                          block.markdown,
-                          event.target.value,
-                          event.currentTarget.selectionStart,
-                        ),
+                        normalized.markdown,
                       );
+                      requestAnimationFrame(() => {
+                        event.currentTarget.setSelectionRange(
+                          normalized.cursorPosition,
+                          normalized.cursorPosition,
+                        );
+                      });
                     }}
                   />
                 </div>

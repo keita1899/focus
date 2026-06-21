@@ -801,12 +801,19 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                     onKeyDown={handleMarkdownKeyDown}
                     onChange={(event) => {
                       resizeMemoTextarea(event.currentTarget, true);
+                      const normalized = normalizeOrderedListAfterDeletion(
+                        activeNote.markdown,
+                        event.target.value,
+                        event.currentTarget.selectionStart,
+                      );
                       updateActiveNote({
-                        markdown: normalizeOrderedListAfterDeletion(
-                          activeNote.markdown,
-                          event.target.value,
-                          event.currentTarget.selectionStart,
-                        ),
+                        markdown: normalized.markdown,
+                      });
+                      requestAnimationFrame(() => {
+                        event.currentTarget.setSelectionRange(
+                          normalized.cursorPosition,
+                          normalized.cursorPosition,
+                        );
                       });
                     }}
                   />
