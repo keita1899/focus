@@ -284,6 +284,8 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
   const [viewMode, setViewMode] = useState<NotesViewMode>("split");
+  const [isFolderColumnOpen, setIsFolderColumnOpen] = useState(true);
+  const [isListColumnOpen, setIsListColumnOpen] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const noteCounts = useMemo(() => {
@@ -723,131 +725,166 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         <div>
           <h1>Notes</h1>
         </div>
+        <div className="notesHeaderActions">
+          <button
+            className={isFolderColumnOpen ? "notesPanelToggle active" : "notesPanelToggle"}
+            type="button"
+            aria-pressed={isFolderColumnOpen}
+            onClick={() => setIsFolderColumnOpen((current) => !current)}
+          >
+            フォルダ
+          </button>
+          <button
+            className={isListColumnOpen ? "notesPanelToggle active" : "notesPanelToggle"}
+            type="button"
+            aria-pressed={isListColumnOpen}
+            onClick={() => setIsListColumnOpen((current) => !current)}
+          >
+            メモ
+          </button>
+        </div>
       </section>
 
-      <section className="notesWorkspace" aria-label="メモ一覧と編集">
-        <aside className="notesFolderColumn" aria-label="フォルダ">
-          <section className="notesFolderPanel" aria-label="フォルダ">
-            <button
-              className={
-                activeFolderId === allFoldersId
-                  ? "notesFolderButton active"
-                  : "notesFolderButton"
-              }
-              type="button"
-              onClick={() => selectFolder(allFoldersId)}
-            >
-              <strong>すべて</strong>
-              <span>{noteCounts.get(allFoldersId) || 0}</span>
-            </button>
-            {folders.map((folder) => {
-              const isEditing = editingFolderId === folder.id;
-              return (
-                <div
-                  className={
-                    activeFolderId === folder.id
-                      ? "notesFolderItem active"
-                      : "notesFolderItem"
-                  }
-                  key={folder.id}
-                >
-                  {isEditing ? (
-                    <input
-                      aria-label={`${folder.name}のフォルダ名`}
-                      autoFocus
-                      value={folder.name}
-                      onBlur={finishFolderEdit}
-                      onChange={(event) =>
-                        updateFolderName(folder.id, event.target.value)
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === "Escape") {
-                          event.currentTarget.blur();
+      <section
+        className={[
+          "notesWorkspace",
+          !isFolderColumnOpen ? "notesWorkspace-foldersHidden" : "",
+          !isListColumnOpen ? "notesWorkspace-listHidden" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label="メモ一覧と編集"
+      >
+        {isFolderColumnOpen && (
+          <aside className="notesFolderColumn" aria-label="フォルダ">
+            <section className="notesFolderPanel" aria-label="フォルダ">
+              <button
+                className={
+                  activeFolderId === allFoldersId
+                    ? "notesFolderButton active"
+                    : "notesFolderButton"
+                }
+                type="button"
+                onClick={() => selectFolder(allFoldersId)}
+              >
+                <strong>すべて</strong>
+                <span>{noteCounts.get(allFoldersId) || 0}</span>
+              </button>
+              {folders.map((folder) => {
+                const isEditing = editingFolderId === folder.id;
+                return (
+                  <div
+                    className={
+                      activeFolderId === folder.id
+                        ? "notesFolderItem active"
+                        : "notesFolderItem"
+                    }
+                    key={folder.id}
+                  >
+                    {isEditing ? (
+                      <input
+                        aria-label={`${folder.name}のフォルダ名`}
+                        autoFocus
+                        value={folder.name}
+                        onBlur={finishFolderEdit}
+                        onChange={(event) =>
+                          updateFolderName(folder.id, event.target.value)
                         }
-                      }}
-                    />
-                  ) : (
-                    <button
-                      className="notesFolderButton"
-                      type="button"
-                      onClick={() => selectFolder(folder.id)}
-                      onDoubleClick={() => {
-                        selectFolder(folder.id);
-                        setEditingFolderId(folder.id);
-                      }}
-                    >
-                      <strong>{folder.name}</strong>
-                      <span>{noteCounts.get(folder.id) || 0}</span>
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === "Escape") {
+                            event.currentTarget.blur();
+                          }
+                        }}
+                      />
+                    ) : (
+                      <button
+                        className="notesFolderButton"
+                        type="button"
+                        onClick={() => selectFolder(folder.id)}
+                        onDoubleClick={() => {
+                          selectFolder(folder.id);
+                          setEditingFolderId(folder.id);
+                        }}
+                      >
+                        <strong>{folder.name}</strong>
+                        <span>{noteCounts.get(folder.id) || 0}</span>
+                      </button>
+                    )}
+                    {folder.id !== defaultFolderId && (
+                      <button
+                        className="notesFolderDelete"
+                        type="button"
+                        onClick={() => deleteFolder(folder.id)}
+                        aria-label={`${folder.name || "フォルダ"}を削除`}
+                        title="削除"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <form
+                className="notesFolderForm"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addFolder();
+                }}
+              >
+                <input
+                  aria-label="新しいフォルダ名"
+                  placeholder="新しいフォルダ"
+                  value={newFolderName}
+                  onChange={(event) => setNewFolderName(event.target.value)}
+                />
+                <button type="submit" aria-label="フォルダを追加">
+                  +
+                </button>
+              </form>
+            </section>
+          </aside>
+        )}
+
+        {isListColumnOpen && (
+          <aside className="notesListColumn" aria-label="メモ一覧">
+            <div className="notesListHeader">
+              <h2>メモ</h2>
+              <button className="notesAddButton" type="button" onClick={addNote}>
+                新規作成
+              </button>
+            </div>
+            <section className="notesListPanel" aria-label="メモ">
+              {visibleNotes.length === 0 ? (
+                <p className="emptyText compact">メモがありません。</p>
+              ) : (
+                visibleNotes.map((note) => (
+                  <div
+                    className={
+                      note.id === activeNote?.id
+                        ? "notesListItem active"
+                        : "notesListItem"
+                    }
+                    key={note.id}
+                  >
+                    <button type="button" onClick={() => setActiveNoteId(note.id)}>
+                      <strong>{note.title || "無題のメモ"}</strong>
+                      <span>{formatUpdatedAt(note.updatedAt)}</span>
                     </button>
-                  )}
-                  {folder.id !== defaultFolderId && (
                     <button
-                      className="notesFolderDelete"
+                      className="notesListDelete"
                       type="button"
-                      onClick={() => deleteFolder(folder.id)}
-                      aria-label={`${folder.name || "フォルダ"}を削除`}
+                      onClick={() => deleteNote(note.id)}
+                      aria-label={`${note.title || "メモ"}を削除`}
                       title="削除"
                     >
                       ×
                     </button>
-                  )}
-                </div>
-              );
-            })}
-            <form
-              className="notesFolderForm"
-              onSubmit={(event) => {
-                event.preventDefault();
-                addFolder();
-              }}
-            >
-              <input
-                aria-label="新しいフォルダ名"
-                placeholder="新しいフォルダ"
-                value={newFolderName}
-                onChange={(event) => setNewFolderName(event.target.value)}
-              />
-              <button type="submit" aria-label="フォルダを追加">
-                +
-              </button>
-            </form>
-          </section>
-        </aside>
-
-        <aside className="notesListColumn" aria-label="メモ一覧">
-          <div className="notesListHeader">
-            <h2>メモ</h2>
-            <button className="notesAddButton" type="button" onClick={addNote}>
-              新規作成
-            </button>
-          </div>
-          <section className="notesListPanel" aria-label="メモ">
-            {visibleNotes.length === 0 ? (
-              <p className="emptyText compact">メモがありません。</p>
-            ) : (
-              visibleNotes.map((note) => (
-                <div
-                  className={note.id === activeNote?.id ? "notesListItem active" : "notesListItem"}
-                  key={note.id}
-                >
-                  <button type="button" onClick={() => setActiveNoteId(note.id)}>
-                    <strong>{note.title || "無題のメモ"}</strong>
-                    <span>{formatUpdatedAt(note.updatedAt)}</span>
-                  </button>
-                  <button
-                    className="notesListDelete"
-                    type="button"
-                    onClick={() => deleteNote(note.id)}
-                    aria-label={`${note.title || "メモ"}を削除`}
-                    title="削除"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))
-            )}
-          </section>
-        </aside>
+                  </div>
+                ))
+              )}
+            </section>
+          </aside>
+        )}
 
         <section className="notesEditorPanel" aria-label="メモ編集">
           {activeNote && (
