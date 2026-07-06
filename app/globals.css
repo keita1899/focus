@@ -2371,37 +2371,17 @@ select {
 .notesHeader,
 .roadmapHeader {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
   gap: 18px;
 }
 
-.notesHeaderActions {
-  display: inline-grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 8px;
-}
-
-.notesPanelToggle {
-  min-height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: white;
-  color: var(--ink);
-  padding: 0 12px;
-  font-size: 0.88rem;
-  font-weight: 900;
-}
-
-.notesPanelToggle.active {
-  border-color: rgba(23, 107, 85, 0.28);
-  background: #e7f2ec;
-  color: var(--accent-strong);
-}
-
 .notesWorkspace {
   display: grid;
-  grid-template-columns: 240px 240px minmax(0, 1fr);
+  grid-template-columns:
+    var(--notes-folder-column, 240px)
+    var(--notes-list-column, 240px)
+    minmax(0, 1fr);
   min-height: 640px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -2410,25 +2390,20 @@ select {
   box-shadow: var(--shadow);
 }
 
-.notesWorkspace.notesWorkspace-foldersHidden {
-  grid-template-columns: 240px minmax(0, 1fr);
-}
-
-.notesWorkspace.notesWorkspace-listHidden {
-  grid-template-columns: 240px minmax(0, 1fr);
-}
-
-.notesWorkspace.notesWorkspace-foldersHidden.notesWorkspace-listHidden {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .notesFolderColumn,
 .notesListColumn {
   display: grid;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: auto;
   background: #fbfcfa;
   padding: 10px;
+}
+
+.notesFolderColumn.notesFolderColumn-collapsed,
+.notesListColumn.notesListColumn-collapsed {
+  width: 56px;
+  min-width: 56px;
+  padding-inline: 8px;
 }
 
 .notesFolderColumn,
@@ -2436,6 +2411,7 @@ select {
   border-right: 1px solid var(--line);
 }
 
+.notesColumnHeader,
 .notesFolderPanel,
 .notesListPanel {
   display: grid;
@@ -2444,19 +2420,53 @@ select {
   min-height: 0;
 }
 
-.notesListHeader {
-  display: grid;
+.notesColumnHeader {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
   padding: 4px 0 10px;
 }
 
-.notesListHeader h2 {
+.notesColumnHeader h2 {
   margin: 0;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.notesIconToggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: var(--ink);
+  padding: 0;
+}
+
+.notesIconToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.notesFolderColumn-collapsed .notesColumnHeader,
+.notesListColumn-collapsed .notesColumnHeader {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.notesFolderColumn-collapsed .notesColumnHeader h2,
+.notesListColumn-collapsed .notesColumnHeader h2 {
+  display: none;
+}
+
+.notesListHeader {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 10px;
 }
 
 .notesFolderPanel {
@@ -4008,12 +4018,6 @@ select {
   }
 
   .notesWorkspace {
-    grid-template-columns: 1fr;
-  }
-
-  .notesWorkspace.notesWorkspace-foldersHidden,
-  .notesWorkspace.notesWorkspace-listHidden,
-  .notesWorkspace.notesWorkspace-foldersHidden.notesWorkspace-listHidden {
     grid-template-columns: 1fr;
   }
 

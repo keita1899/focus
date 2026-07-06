@@ -129,6 +129,21 @@ const viewModeOptions: ViewModeOption[] = [
   },
 ];
 
+function PanelToggleIcon({ isOpen }: { isOpen: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+      <path
+        d={isOpen ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"}
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 function createNoteId() {
   return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -725,38 +740,38 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         <div>
           <h1>Notes</h1>
         </div>
-        <div className="notesHeaderActions">
-          <button
-            className={isFolderColumnOpen ? "notesPanelToggle active" : "notesPanelToggle"}
-            type="button"
-            aria-pressed={isFolderColumnOpen}
-            onClick={() => setIsFolderColumnOpen((current) => !current)}
-          >
-            フォルダ
-          </button>
-          <button
-            className={isListColumnOpen ? "notesPanelToggle active" : "notesPanelToggle"}
-            type="button"
-            aria-pressed={isListColumnOpen}
-            onClick={() => setIsListColumnOpen((current) => !current)}
-          >
-            メモ
-          </button>
-        </div>
       </section>
 
       <section
-        className={[
-          "notesWorkspace",
-          !isFolderColumnOpen ? "notesWorkspace-foldersHidden" : "",
-          !isListColumnOpen ? "notesWorkspace-listHidden" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className="notesWorkspace"
         aria-label="メモ一覧と編集"
+        style={{
+          ["--notes-folder-column" as string]: `${isFolderColumnOpen ? 240 : 56}px`,
+          ["--notes-list-column" as string]: `${isListColumnOpen ? 240 : 56}px`,
+        }}
       >
-        {isFolderColumnOpen && (
-          <aside className="notesFolderColumn" aria-label="フォルダ">
+        <aside
+          className={
+            isFolderColumnOpen
+              ? "notesFolderColumn"
+              : "notesFolderColumn notesFolderColumn-collapsed"
+          }
+          aria-label="フォルダ"
+        >
+          <div className="notesColumnHeader">
+            <h2>フォルダ</h2>
+            <button
+              className="notesIconToggle"
+              type="button"
+              aria-label={isFolderColumnOpen ? "フォルダリストを閉じる" : "フォルダリストを開く"}
+              aria-pressed={isFolderColumnOpen}
+              onClick={() => setIsFolderColumnOpen((current) => !current)}
+              title={isFolderColumnOpen ? "閉じる" : "開く"}
+            >
+              <PanelToggleIcon isOpen={isFolderColumnOpen} />
+            </button>
+          </div>
+          {isFolderColumnOpen && (
             <section className="notesFolderPanel" aria-label="フォルダ">
               <button
                 className={
@@ -842,17 +857,38 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 </button>
               </form>
             </section>
-          </aside>
-        )}
+          )}
+        </aside>
 
-        {isListColumnOpen && (
-          <aside className="notesListColumn" aria-label="メモ一覧">
+        <aside
+          className={
+            isListColumnOpen
+              ? "notesListColumn"
+              : "notesListColumn notesListColumn-collapsed"
+          }
+          aria-label="メモ一覧"
+        >
+          <div className="notesColumnHeader">
+            <h2>メモ</h2>
+            <button
+              className="notesIconToggle"
+              type="button"
+              aria-label={isListColumnOpen ? "メモリストを閉じる" : "メモリストを開く"}
+              aria-pressed={isListColumnOpen}
+              onClick={() => setIsListColumnOpen((current) => !current)}
+              title={isListColumnOpen ? "閉じる" : "開く"}
+            >
+              <PanelToggleIcon isOpen={isListColumnOpen} />
+            </button>
+          </div>
+          {isListColumnOpen && (
             <div className="notesListHeader">
-              <h2>メモ</h2>
               <button className="notesAddButton" type="button" onClick={addNote}>
                 新規作成
               </button>
             </div>
+          )}
+          {isListColumnOpen && (
             <section className="notesListPanel" aria-label="メモ">
               {visibleNotes.length === 0 ? (
                 <p className="emptyText compact">メモがありません。</p>
@@ -883,8 +919,8 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 ))
               )}
             </section>
-          </aside>
-        )}
+          )}
+        </aside>
 
         <section className="notesEditorPanel" aria-label="メモ編集">
           {activeNote && (
