@@ -1,6 +1,13 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import {
+  KeyboardEvent,
+  ReactElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   ChecklistItem,
@@ -34,6 +41,12 @@ type NotesClientProps = {
 
 type NotesViewMode = "editor" | "preview" | "split";
 
+type ViewModeOption = {
+  mode: NotesViewMode;
+  label: string;
+  icon: ReactElement;
+};
+
 const storageKey = "simple-notes-v1";
 const notesViewModeStorageKey = "simple-notes-view-mode-v1";
 const notesActiveFolderStorageKey = "simple-notes-active-folder-v1";
@@ -44,6 +57,77 @@ const defaultMarkdown = `# 新しいメモ
 
 - 
 `;
+
+const viewModeOptions: ViewModeOption[] = [
+  {
+    mode: "editor",
+    label: "フォーム",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M5 6.75A1.75 1.75 0 0 1 6.75 5h10.5A1.75 1.75 0 0 1 19 6.75v10.5A1.75 1.75 0 0 1 17.25 19H6.75A1.75 1.75 0 0 1 5 17.25z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M8 9.25h8M8 12h8M8 14.75h5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    ),
+  },
+  {
+    mode: "preview",
+    label: "プレビュー",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M3.75 12s3.25-5.25 8.25-5.25S20.25 12 20.25 12s-3.25 5.25-8.25 5.25S3.75 12 3.75 12Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="2.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+      </svg>
+    ),
+  },
+  {
+    mode: "split",
+    label: "両方",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <rect
+          x="4.5"
+          y="5"
+          width="15"
+          height="14"
+          rx="2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M12 5v14M7.75 9.25h1.75M7.75 12h1.75M7.75 14.75h1.75"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    ),
+  },
+];
 
 function createNoteId() {
   return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -166,6 +250,14 @@ function formatUpdatedAt(value: string) {
   }).format(date);
 }
 
+function sortNotesByUpdatedAtDesc(items: Note[]) {
+  return [...items].sort((left, right) => {
+    const leftTime = new Date(left.updatedAt).getTime();
+    const rightTime = new Date(right.updatedAt).getTime();
+    return rightTime - leftTime;
+  });
+}
+
 function getStoredNotesSelection() {
   try {
     return {
@@ -192,12 +284,26 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   const [activeNoteId, setActiveNoteId] = useState(() => notes[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
   const [viewMode, setViewMode] = useState<NotesViewMode>("split");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const noteCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    folders.forEach((folder) => counts.set(folder.id, 0));
+    notes.forEach((note) => {
+      counts.set(note.folderId, (counts.get(note.folderId) || 0) + 1);
+    });
+    counts.set(allFoldersId, notes.length);
+    return counts;
+  }, [folders, notes]);
 
   const visibleNotes = useMemo(
-    () =>
-      activeFolderId === allFoldersId
-        ? notes
-        : notes.filter((note) => note.folderId === activeFolderId),
+    () => {
+      const filtered =
+        activeFolderId === allFoldersId
+          ? notes
+          : notes.filter((note) => note.folderId === activeFolderId);
+      return sortNotesByUpdatedAtDesc(filtered);
+    },
     [activeFolderId, notes],
   );
 
@@ -370,11 +476,15 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   ) {
     if (!activeNote) return;
 
+    const nextUpdatedAt = new Date().toISOString();
+
     setNotes((current) =>
-      current.map((note) =>
-        note.id === activeNote.id
-          ? { ...note, ...value, updatedAt: new Date().toISOString() }
-          : note,
+      sortNotesByUpdatedAtDesc(
+        current.map((note) =>
+          note.id === activeNote.id
+            ? { ...note, ...value, updatedAt: nextUpdatedAt }
+            : note,
+        ),
       ),
     );
   }
@@ -621,7 +731,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       </section>
 
       <section className="notesWorkspace" aria-label="メモ一覧と編集">
-        <aside className="notesSidebar" aria-label="メモ一覧">
+        <aside className="notesFolderColumn" aria-label="フォルダ">
           <section className="notesFolderPanel" aria-label="フォルダ">
             <button
               className={
@@ -633,12 +743,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
               onClick={() => selectFolder(allFoldersId)}
             >
               <strong>すべて</strong>
-              <span>{notes.length}</span>
+              <span>{noteCounts.get(allFoldersId) || 0}</span>
             </button>
             {folders.map((folder) => {
-              const noteCount = notes.filter(
-                (note) => note.folderId === folder.id,
-              ).length;
               const isEditing = editingFolderId === folder.id;
               return (
                 <div
@@ -675,7 +782,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                       }}
                     >
                       <strong>{folder.name}</strong>
-                      <span>{noteCount}</span>
+                      <span>{noteCounts.get(folder.id) || 0}</span>
                     </button>
                   )}
                   {folder.id !== defaultFolderId && (
@@ -710,7 +817,9 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
               </button>
             </form>
           </section>
+        </aside>
 
+        <aside className="notesListColumn" aria-label="メモ一覧">
           <section className="notesListPanel" aria-label="メモ">
             {visibleNotes.length === 0 ? (
               <p className="emptyText compact">メモがありません。</p>
@@ -740,35 +849,27 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   onChange={(event) =>
                     updateActiveNote({ title: event.target.value })
                   }
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    textareaRef.current?.focus();
+                  }}
                 />
                 <div className="notesViewTabs" role="tablist" aria-label="表示モード">
-                  <button
-                    className={viewMode === "editor" ? "active" : ""}
-                    type="button"
-                    role="tab"
-                    aria-selected={viewMode === "editor"}
-                    onClick={() => setViewMode("editor")}
-                  >
-                    フォーム
-                  </button>
-                  <button
-                    className={viewMode === "preview" ? "active" : ""}
-                    type="button"
-                    role="tab"
-                    aria-selected={viewMode === "preview"}
-                    onClick={() => setViewMode("preview")}
-                  >
-                    プレビュー
-                  </button>
-                  <button
-                    className={viewMode === "split" ? "active" : ""}
-                    type="button"
-                    role="tab"
-                    aria-selected={viewMode === "split"}
-                    onClick={() => setViewMode("split")}
-                  >
-                    両方
-                  </button>
+                  {viewModeOptions.map((option) => (
+                    <button
+                      className={viewMode === option.mode ? "active" : ""}
+                      type="button"
+                      role="tab"
+                      aria-label={option.label}
+                      aria-selected={viewMode === option.mode}
+                      key={option.mode}
+                      onClick={() => setViewMode(option.mode)}
+                      title={option.label}
+                    >
+                      {option.icon}
+                    </button>
+                  ))}
                 </div>
                 <select
                   aria-label="メモのフォルダ"
@@ -796,7 +897,10 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 {viewMode !== "preview" && (
                   <textarea
                     aria-label="メモ本文"
-                    ref={resizeMemoTextarea}
+                    ref={(node) => {
+                      textareaRef.current = node;
+                      resizeMemoTextarea(node);
+                    }}
                     value={activeNote.markdown}
                     onKeyDown={handleMarkdownKeyDown}
                     onChange={(event) => {
