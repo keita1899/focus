@@ -2344,7 +2344,10 @@ select {
   gap: 18px;
 }
 
-.notesPage,
+.notesPage {
+  width: calc(100% - 32px);
+}
+
 .roadmapPage {
   width: min(1180px, calc(100% - 32px));
 }
@@ -2375,7 +2378,7 @@ select {
 
 .notesWorkspace {
   display: grid;
-  grid-template-columns: 240px 280px minmax(0, 1fr);
+  grid-template-columns: 240px 240px minmax(0, 1fr);
   min-height: 640px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -2406,6 +2409,21 @@ select {
   min-height: 0;
 }
 
+.notesListHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 10px;
+}
+
+.notesListHeader h2 {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .notesFolderPanel {
   gap: 8px;
 }
@@ -2422,6 +2440,23 @@ select {
   color: var(--ink);
   padding: 9px 10px;
   text-align: left;
+}
+
+.notesListItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 4px;
+}
+
+.notesListItem > button:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.notesListItem.active > button:first-child {
+  border-color: rgba(23, 107, 85, 0.28);
+  background: #e7f2ec;
 }
 
 .notesFolderColumn button.active,
@@ -2486,6 +2521,19 @@ select {
   pointer-events: none;
 }
 
+.notesListDelete {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--danger);
+  font-size: 1.05rem;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0;
+}
+
 .notesFolderButton span {
   justify-self: end;
   color: var(--muted);
@@ -2494,7 +2542,9 @@ select {
 }
 
 .notesFolderItem:hover .notesFolderDelete,
-.notesFolderItem:focus-within .notesFolderDelete {
+.notesFolderItem:focus-within .notesFolderDelete,
+.notesListItem:hover .notesListDelete,
+.notesListItem:focus-within .notesListDelete {
   opacity: 1;
   pointer-events: auto;
 }
@@ -2547,27 +2597,19 @@ select {
 
 .notesEditorHeader {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 180px 42px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   border-bottom: 1px solid var(--line);
   padding: 10px;
 }
 
-.notesEditorHeader input,
-.notesEditorHeader select {
+.notesEditorHeader input {
+  width: 100%;
   border-color: transparent;
   background: transparent;
   color: var(--ink);
-  font-weight: 900;
-}
-
-.notesEditorHeader input {
   font-size: 1.15rem;
-}
-
-.notesEditorHeader select {
-  min-height: 42px;
-  background: #fbfcfa;
+  font-weight: 900;
 }
 
 .notesViewTabs {
@@ -2675,12 +2717,13 @@ select {
 }
 
 .notesAddButton {
-  min-height: 42px;
+  min-height: 38px;
   border: 0;
   border-radius: 8px;
   background: var(--ink);
   color: white;
-  padding: 0 14px;
+  padding: 0 12px;
+  font-size: 0.9rem;
   font-weight: 900;
 }
 
@@ -3953,17 +3996,12 @@ select {
   }
 
   .notesEditorHeader {
-    grid-template-columns: minmax(0, 1fr) auto 42px;
-  }
-
-  .notesEditorHeader select {
-    grid-column: 1 / -1;
-    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .notesViewTabs {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
   }
 
   .notesEditorGrid textarea {

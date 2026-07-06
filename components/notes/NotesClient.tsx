@@ -520,11 +520,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     setEditingFolderId(null);
   }
 
-  function moveActiveNote(folderId: string) {
-    updateActiveNote({ folderId });
-    setActiveFolderId(folderId);
-  }
-
   function deleteFolder(folderId: string) {
     if (folderId === defaultFolderId) return;
 
@@ -707,16 +702,19 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     setActiveNoteId(note.id);
   }
 
-  function deleteActiveNote() {
-    if (!activeNote) return;
-
+  function deleteNote(noteId: string) {
     setNotes((current) => {
-      const nextNotes = current.filter((note) => note.id !== activeNote.id);
+      const nextNotes = current.filter((note) => note.id !== noteId);
       const normalizedNotes = nextNotes.length > 0 ? nextNotes : [createNote()];
       setActiveNoteId(normalizedNotes[0].id);
       setActiveFolderId(allFoldersId);
       return normalizedNotes;
     });
+  }
+
+  function deleteActiveNote() {
+    if (!activeNote) return;
+    deleteNote(activeNote.id);
   }
 
   return (
@@ -725,9 +723,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         <div>
           <h1>Notes</h1>
         </div>
-        <button className="notesAddButton" type="button" onClick={addNote}>
-          追加
-        </button>
       </section>
 
       <section className="notesWorkspace" aria-label="メモ一覧と編集">
@@ -820,20 +815,35 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
         </aside>
 
         <aside className="notesListColumn" aria-label="メモ一覧">
+          <div className="notesListHeader">
+            <h2>メモ</h2>
+            <button className="notesAddButton" type="button" onClick={addNote}>
+              新規作成
+            </button>
+          </div>
           <section className="notesListPanel" aria-label="メモ">
             {visibleNotes.length === 0 ? (
               <p className="emptyText compact">メモがありません。</p>
             ) : (
               visibleNotes.map((note) => (
-                <button
-                  className={note.id === activeNote?.id ? "active" : ""}
+                <div
+                  className={note.id === activeNote?.id ? "notesListItem active" : "notesListItem"}
                   key={note.id}
-                  type="button"
-                  onClick={() => setActiveNoteId(note.id)}
                 >
-                  <strong>{note.title || "無題のメモ"}</strong>
-                  <span>{formatUpdatedAt(note.updatedAt)}</span>
-                </button>
+                  <button type="button" onClick={() => setActiveNoteId(note.id)}>
+                    <strong>{note.title || "無題のメモ"}</strong>
+                    <span>{formatUpdatedAt(note.updatedAt)}</span>
+                  </button>
+                  <button
+                    className="notesListDelete"
+                    type="button"
+                    onClick={() => deleteNote(note.id)}
+                    aria-label={`${note.title || "メモ"}を削除`}
+                    title="削除"
+                  >
+                    ×
+                  </button>
+                </div>
               ))
             )}
           </section>
@@ -871,26 +881,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                     </button>
                   ))}
                 </div>
-                <select
-                  aria-label="メモのフォルダ"
-                  value={activeNote.folderId}
-                  onChange={(event) => moveActiveNote(event.target.value)}
-                >
-                  {folders.map((folder) => (
-                    <option key={folder.id} value={folder.id}>
-                      {folder.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  className="memoDeleteButton"
-                  type="button"
-                  onClick={deleteActiveNote}
-                  aria-label={`${activeNote.title || "メモ"}を削除`}
-                  title="削除"
-                >
-                  ×
-                </button>
               </div>
 
               <div className={`notesEditorGrid notesEditorGrid-${viewMode}`}>
