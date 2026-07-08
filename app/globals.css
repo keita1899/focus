@@ -2487,6 +2487,19 @@ select {
   text-align: left;
 }
 
+.notesFolderButton,
+.notesAddButton {
+  border-color: var(--line);
+  background: white;
+  box-shadow: 0 1px 2px rgba(35, 53, 43, 0.05);
+}
+
+.notesFolderButton:hover,
+.notesAddButton:hover {
+  border-color: rgba(23, 107, 85, 0.22);
+  background: #f7fbf8;
+}
+
 .notesListItem {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 32px;
@@ -2509,6 +2522,7 @@ select {
 .notesFolderItem.active .notesFolderButton {
   border-color: rgba(23, 107, 85, 0.28);
   background: #e7f2ec;
+  box-shadow: none;
 }
 
 .notesFolderButton {
@@ -2762,16 +2776,19 @@ select {
 }
 
 .notesAddButton {
+  display: inline-grid;
+  place-items: center;
   width: auto;
   min-height: 38px;
-  border: 0;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--ink);
-  color: white;
+  background: white;
+  color: var(--ink);
   justify-self: start;
   padding: 0 12px;
   font-size: 0.9rem;
   font-weight: 900;
+  text-align: center;
 }
 
 .inboxTodoLayout {
