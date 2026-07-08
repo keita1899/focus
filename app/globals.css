@@ -2762,11 +2762,13 @@ select {
 }
 
 .notesAddButton {
+  width: auto;
   min-height: 38px;
   border: 0;
   border-radius: 8px;
   background: var(--ink);
   color: white;
+  justify-self: start;
   padding: 0 12px;
   font-size: 0.9rem;
   font-weight: 900;
