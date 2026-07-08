@@ -2762,7 +2762,7 @@ select {
   padding: 0;
 }
 
-.notesAddButton {
+.notesListHeader .notesAddButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
