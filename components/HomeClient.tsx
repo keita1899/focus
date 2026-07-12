@@ -27,6 +27,7 @@ type PriorityTask = {
 type DailyTask = {
   id: string;
   title: string;
+  time: string;
   completedDates: string[];
 };
 
@@ -163,6 +164,28 @@ function formatDateKey(date: Date) {
 function getTodayLabel() {
   const today = new Date();
   return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+}
+
+function isValidTimeValue(value: unknown): value is string {
+  return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+function sortDailyTasksByTime(tasks: DailyTask[]) {
+  return [...tasks].sort((left, right) => {
+    const leftHasTime = isValidTimeValue(left.time);
+    const rightHasTime = isValidTimeValue(right.time);
+
+    if (leftHasTime && rightHasTime) {
+      const timeCompare = left.time.localeCompare(right.time);
+      if (timeCompare !== 0) return timeCompare;
+    } else if (leftHasTime) {
+      return -1;
+    } else if (rightHasTime) {
+      return 1;
+    }
+
+    return left.title.localeCompare(right.title, "ja");
+  });
 }
 
 function normalizeDiaryEntries(value: unknown): DiaryEntry[] {
@@ -415,6 +438,9 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     dailyTasks: rawDailyTasks.map((task, index) => ({
       id: task.id || `daily-task-${index + 1}`,
       title: task.title || "",
+      time: isValidTimeValue((task as { time?: unknown }).time)
+        ? (task as { time: string }).time
+        : "",
       completedDates: Array.isArray(task.completedDates)
         ? task.completedDates
         : [],
@@ -550,6 +576,7 @@ export default function HomeClient({
   const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newInboxTaskTitle, setNewInboxTaskTitle] = useState("");
   const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
+  const [newDailyTaskTime, setNewDailyTaskTime] = useState("");
   const [newWeeklyTaskTitle, setNewWeeklyTaskTitle] = useState("");
   const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
     () => new Date().getDay(),
@@ -588,6 +615,10 @@ export default function HomeClient({
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
+  const sortedDailyTasks = useMemo(
+    () => sortDailyTasksByTime(planner.dailyTasks),
+    [planner.dailyTasks],
+  );
 
   useEffect(() => {
     try {
@@ -1151,10 +1182,16 @@ export default function HomeClient({
       ...current,
       dailyTasks: [
         ...current.dailyTasks,
-        { id: createId("daily-task"), title, completedDates: [] },
+        {
+          id: createId("daily-task"),
+          title,
+          time: newDailyTaskTime,
+          completedDates: [],
+        },
       ],
     }));
     setNewDailyTaskTitle("");
+    setNewDailyTaskTime("");
   }
 
   function addWeeklyTask() {
@@ -1198,6 +1235,15 @@ export default function HomeClient({
       ...current,
       dailyTasks: current.dailyTasks.map((task) =>
         task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function updateDailyTaskTime(id: string, time: string) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTasks: current.dailyTasks.map((task) =>
+        task.id === id ? { ...task, time } : task,
       ),
     }));
   }
@@ -1775,16 +1821,16 @@ export default function HomeClient({
                     <h3>毎日のタスク</h3>
                   </div>
                   <div className="taskList">
-                    {planner.dailyTasks.length === 0 && (
+                    {sortedDailyTasks.length === 0 && (
                       <p className="emptyText">毎日のタスクはありません。</p>
                     )}
-                    {planner.dailyTasks.map((task) => {
+                    {sortedDailyTasks.map((task) => {
                       const isCompleted = task.completedDates.includes(todayKey);
                       const editTarget = { kind: "daily", id: task.id } as const;
                       const isEditing = isTaskBeingEdited(editTarget);
                       return (
                         <article
-                          className={isCompleted ? "taskItem done" : "taskItem"}
+                          className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
                           key={task.id}
                         >
                           <button
@@ -1826,6 +1872,11 @@ export default function HomeClient({
                           >
                             ×
                           </button>
+                          {task.time && (
+                            <div className="dailyItemMeta">
+                              <span className="dailyItemTimeBadge">{task.time}</span>
+                            </div>
+                          )}
                         </article>
                       );
                     })}
@@ -1875,7 +1926,7 @@ export default function HomeClient({
                     <h3>毎日のタスク</h3>
                   </div>
                   <form
-                    className="taskForm"
+                    className="taskForm dailyTaskForm"
                     onSubmit={(event) => {
                       event.preventDefault();
                       addDailyTask();
@@ -1887,6 +1938,13 @@ export default function HomeClient({
                       value={newDailyTaskTitle}
                       onChange={(event) => setNewDailyTaskTitle(event.target.value)}
                     />
+                    <input
+                      aria-label="毎日のタスクの時間"
+                      className="recurringTimeInput"
+                      type="time"
+                      value={newDailyTaskTime}
+                      onChange={(event) => setNewDailyTaskTime(event.target.value)}
+                    />
                     <button
                       className="recurringAddButton"
                       type="submit"
@@ -1896,16 +1954,16 @@ export default function HomeClient({
                     </button>
                   </form>
                   <div className="taskList">
-                    {planner.dailyTasks.length === 0 && (
+                    {sortedDailyTasks.length === 0 && (
                       <p className="emptyText">毎日のタスクはありません。</p>
                     )}
-                    {planner.dailyTasks.map((task) => {
+                    {sortedDailyTasks.map((task) => {
                       const isCompleted = task.completedDates.includes(todayKey);
                       const editTarget = { kind: "daily", id: task.id } as const;
                       const isEditing = isTaskBeingEdited(editTarget);
                       return (
                         <article
-                          className={isCompleted ? "taskItem done" : "taskItem"}
+                          className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
                           key={task.id}
                         >
                           <button
@@ -1947,6 +2005,17 @@ export default function HomeClient({
                           >
                             ×
                           </button>
+                          <div className="dailyItemMeta">
+                            <input
+                              aria-label={`${task.title || "毎日のタスク"}の時間`}
+                              className="recurringTimeInput"
+                              type="time"
+                              value={task.time}
+                              onChange={(event) =>
+                                updateDailyTaskTime(task.id, event.target.value)
+                              }
+                            />
+                          </div>
                         </article>
                       );
                     })}
