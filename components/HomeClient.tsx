@@ -1864,6 +1864,11 @@ export default function HomeClient({
                               {task.title || " "}
                             </div>
                           )}
+                          {task.time && (
+                            <div className="dailyItemMeta">
+                              <span className="dailyItemTimeBadge">{task.time}</span>
+                            </div>
+                          )}
                           <button
                             className="iconButton"
                             type="button"
@@ -1872,11 +1877,6 @@ export default function HomeClient({
                           >
                             ×
                           </button>
-                          {task.time && (
-                            <div className="dailyItemMeta">
-                              <span className="dailyItemTimeBadge">{task.time}</span>
-                            </div>
-                          )}
                         </article>
                       );
                     })}
@@ -1997,14 +1997,6 @@ export default function HomeClient({
                               {task.title || " "}
                             </div>
                           )}
-                          <button
-                            className="iconButton"
-                            type="button"
-                            onClick={() => removeDailyTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}を削除`}
-                          >
-                            ×
-                          </button>
                           <div className="dailyItemMeta">
                             <input
                               aria-label={`${task.title || "毎日のタスク"}の時間`}
@@ -2016,6 +2008,14 @@ export default function HomeClient({
                               }
                             />
                           </div>
+                          <button
+                            className="iconButton"
+                            type="button"
+                            onClick={() => removeDailyTask(task.id)}
+                            aria-label={`${task.title || "無題のタスク"}を削除`}
+                          >
+                            ×
+                          </button>
                         </article>
                       );
                     })}
