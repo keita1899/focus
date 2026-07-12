@@ -1768,7 +1768,7 @@ select {
 }
 
 .dailyItem {
-  grid-template-columns: 38px minmax(0, 1fr) auto auto;
+  grid-template-columns: 38px auto minmax(0, 1fr) auto;
   grid-template-rows: auto;
   align-items: center;
 }

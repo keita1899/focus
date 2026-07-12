@@ -1841,6 +1841,11 @@ export default function HomeClient({
                           >
                             ✓
                           </button>
+                          {task.time && (
+                            <div className="dailyItemMeta">
+                              <span className="dailyItemTimeBadge">{task.time}</span>
+                            </div>
+                          )}
                           {isEditing ? (
                             <textarea
                               aria-label="毎日のタスク"
@@ -1862,11 +1867,6 @@ export default function HomeClient({
                               onDoubleClick={() => beginTaskEdit(editTarget)}
                             >
                               {task.title || " "}
-                            </div>
-                          )}
-                          {task.time && (
-                            <div className="dailyItemMeta">
-                              <span className="dailyItemTimeBadge">{task.time}</span>
                             </div>
                           )}
                           <button
@@ -1974,6 +1974,17 @@ export default function HomeClient({
                           >
                             ✓
                           </button>
+                          <div className="dailyItemMeta">
+                            <input
+                              aria-label={`${task.title || "毎日のタスク"}の時間`}
+                              className="recurringTimeInput"
+                              type="time"
+                              value={task.time}
+                              onChange={(event) =>
+                                updateDailyTaskTime(task.id, event.target.value)
+                              }
+                            />
+                          </div>
                           {isEditing ? (
                             <textarea
                               aria-label="毎日のタスク"
@@ -1997,17 +2008,6 @@ export default function HomeClient({
                               {task.title || " "}
                             </div>
                           )}
-                          <div className="dailyItemMeta">
-                            <input
-                              aria-label={`${task.title || "毎日のタスク"}の時間`}
-                              className="recurringTimeInput"
-                              type="time"
-                              value={task.time}
-                              onChange={(event) =>
-                                updateDailyTaskTime(task.id, event.target.value)
-                              }
-                            />
-                          </div>
                           <button
                             className="iconButton"
                             type="button"
