@@ -2517,8 +2517,8 @@ select {
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  gap: 8px;
-  padding: 0 0 10px;
+  gap: 0;
+  padding: 0;
 }
 
 .notesFolderPanel {
