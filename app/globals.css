@@ -2832,6 +2832,12 @@ select {
   text-align: center;
 }
 
+.notesListPanel .emptyText.compact {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
 .inboxTodoLayout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
