@@ -53,6 +53,7 @@ const notesActiveFolderStorageKey = "simple-notes-active-folder-v1";
 const notesActiveNoteStorageKey = "simple-notes-active-note-v1";
 const allFoldersId = "all";
 const defaultFolderId = "folder-default";
+const trashFolderId = "folder-trash";
 const defaultMarkdown = `# 新しいメモ
 
 - 
@@ -178,24 +179,32 @@ function getDefaultFolder(): NoteFolder {
   };
 }
 
+function getTrashFolder(): NoteFolder {
+  return {
+    id: trashFolderId,
+    name: "ゴミ箱",
+    createdAt: new Date(1).toISOString(),
+  };
+}
+
 function normalizeNotesState(value: unknown): NotesState {
   if (typeof value === "string") {
     try {
       return normalizeNotesState(JSON.parse(value) as unknown);
     } catch {
-      return { folders: [getDefaultFolder()], notes: [createNote()] };
+      return { folders: [getDefaultFolder(), getTrashFolder()], notes: [createNote()] };
     }
   }
 
   const source = Array.isArray(value)
-    ? { folders: [getDefaultFolder()], notes: value }
+    ? { folders: [getDefaultFolder(), getTrashFolder()], notes: value }
     : value && typeof value === "object"
       ? (value as Partial<NotesState>)
-      : { folders: [getDefaultFolder()], notes: [createNote()] };
+      : { folders: [getDefaultFolder(), getTrashFolder()], notes: [createNote()] };
 
   const rawFolders = Array.isArray(source.folders)
     ? source.folders
-    : [getDefaultFolder()];
+    : [getDefaultFolder(), getTrashFolder()];
   const folders = rawFolders
     .map((item, index) => {
       if (!item || typeof item !== "object") return null;
@@ -216,9 +225,13 @@ function normalizeNotesState(value: unknown): NotesState {
       };
     })
     .filter((folder): folder is NoteFolder => Boolean(folder));
-  const normalizedFolders = folders.some((folder) => folder.id === defaultFolderId)
-    ? folders
-    : [getDefaultFolder(), ...folders];
+  const normalizedFolders = [
+    folders.find((folder) => folder.id === defaultFolderId) || getDefaultFolder(),
+    ...folders.filter(
+      (folder) => folder.id !== defaultFolderId && folder.id !== trashFolderId,
+    ),
+    folders.find((folder) => folder.id === trashFolderId) || getTrashFolder(),
+  ];
   const folderIds = new Set(normalizedFolders.map((folder) => folder.id));
 
   const rawNotes = Array.isArray(source.notes) ? source.notes : [createNote()];
@@ -312,6 +325,22 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     counts.set(allFoldersId, notes.length);
     return counts;
   }, [folders, notes]);
+
+  const regularFolders = useMemo(
+    () =>
+      folders.filter(
+        (folder) => folder.id !== defaultFolderId && folder.id !== trashFolderId,
+      ),
+    [folders],
+  );
+  const defaultFolder = useMemo(
+    () => folders.find((folder) => folder.id === defaultFolderId) || getDefaultFolder(),
+    [folders],
+  );
+  const trashFolder = useMemo(
+    () => folders.find((folder) => folder.id === trashFolderId) || getTrashFolder(),
+    [folders],
+  );
 
   const visibleNotes = useMemo(
     () => {
@@ -538,22 +567,38 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   }
 
   function deleteFolder(folderId: string) {
-    if (folderId === defaultFolderId) return;
+    if (folderId === defaultFolderId || folderId === trashFolderId) return;
 
     setFolders((current) => current.filter((folder) => folder.id !== folderId));
     setNotes((current) =>
       current.map((note) =>
-        note.folderId === folderId ? { ...note, folderId: defaultFolderId } : note,
+        note.folderId === folderId ? { ...note, folderId: trashFolderId } : note,
       ),
     );
     if (activeFolderId === folderId) {
-      setActiveFolderId(defaultFolderId);
+      setActiveFolderId(trashFolderId);
       const nextNote = notes.find(
-        (note) => note.folderId === folderId || note.folderId === defaultFolderId,
+        (note) => note.folderId === folderId || note.folderId === trashFolderId,
       );
       setActiveNoteId(nextNote?.id || "");
     }
     setEditingFolderId((current) => (current === folderId ? null : current));
+  }
+
+  function moveNoteToTrash(noteId: string) {
+    setNotes((current) =>
+      sortNotesByUpdatedAtDesc(
+        current.map((note) =>
+          note.id === noteId
+            ? {
+                ...note,
+                folderId: trashFolderId,
+                updatedAt: new Date().toISOString(),
+              }
+            : note,
+        ),
+      ),
+    );
   }
 
   function handleMarkdownKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -713,13 +758,25 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
   function addNote() {
     const folderId =
-      activeFolderId === allFoldersId ? defaultFolderId : activeFolderId;
+      activeFolderId === allFoldersId || activeFolderId === trashFolderId
+        ? defaultFolderId
+        : activeFolderId;
     const note = createNote("新しいメモ", folderId);
     setNotes((current) => [note, ...current]);
     setActiveNoteId(note.id);
   }
 
   function deleteNote(noteId: string) {
+    const targetNote = notes.find((note) => note.id === noteId);
+    if (!targetNote) return;
+
+    if (targetNote.folderId !== trashFolderId) {
+      moveNoteToTrash(noteId);
+      setActiveFolderId(trashFolderId);
+      setActiveNoteId(noteId);
+      return;
+    }
+
     setNotes((current) => {
       const nextNotes = current.filter((note) => note.id !== noteId);
       const normalizedNotes = nextNotes.length > 0 ? nextNotes : [createNote()];
@@ -785,7 +842,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 <strong>すべて</strong>
                 <span>{noteCounts.get(allFoldersId) || 0}</span>
               </button>
-              {folders.map((folder) => {
+              {[defaultFolder, ...regularFolders].map((folder) => {
                 const isEditing = editingFolderId === folder.id;
                 return (
                   <div
@@ -856,6 +913,18 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   +
                 </button>
               </form>
+              <button
+                className={
+                  activeFolderId === trashFolderId
+                    ? "notesFolderButton notesTrashButton active"
+                    : "notesFolderButton notesTrashButton"
+                }
+                type="button"
+                onClick={() => selectFolder(trashFolderId)}
+              >
+                <strong>{trashFolder.name}</strong>
+                <span>{noteCounts.get(trashFolderId) || 0}</span>
+              </button>
             </section>
           )}
         </aside>

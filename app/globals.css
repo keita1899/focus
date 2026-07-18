@@ -2446,9 +2446,17 @@ select {
 .notesListColumn {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  overflow: auto;
   background: #fbfcfa;
   padding: 10px;
+}
+
+.notesFolderColumn {
+  overflow: auto;
+}
+
+.notesListColumn {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .notesFolderColumn.notesFolderColumn-collapsed,
@@ -2519,6 +2527,10 @@ select {
   align-items: center;
   gap: 0;
   padding: 0;
+}
+
+.notesListPanel {
+  overflow: auto;
 }
 
 .notesFolderPanel {
@@ -2669,6 +2681,12 @@ select {
   font-size: 1.2rem;
   font-weight: 900;
   text-align: center;
+}
+
+.notesTrashButton {
+  margin-top: 4px;
+  border-top: 1px dashed var(--line);
+  padding-top: 14px;
 }
 
 .notesFolderColumn strong,
