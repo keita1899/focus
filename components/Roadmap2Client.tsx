@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 
 type Roadmap2ListKey = "focusItems" | "choreItems" | "seasonalItems";
 
@@ -26,7 +26,10 @@ type Roadmap2ClientProps = {
   initialValue: unknown;
 };
 
+type Roadmap2SectionVisibility = Record<string, boolean>;
+
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
+const roadmap2SectionsStorageKey = "roadmap2-sections-v1";
 
 const listMeta: Array<{
   key: Roadmap2ListKey;
@@ -133,6 +136,9 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
   const [roadmap, setRoadmap] = useState<Roadmap2State>(() =>
     normalizeRoadmap2State(initialValue),
   );
+  const [collapsedSections, setCollapsedSections] = useState<Roadmap2SectionVisibility>(
+    {},
+  );
 
   const activeYearKey = String(roadmap.selectedYear);
   const activeYear = useMemo(
@@ -146,11 +152,52 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
   );
 
   useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(roadmap2SectionsStorageKey);
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as unknown;
+      if (!parsed || typeof parsed !== "object") return;
+      setCollapsedSections(
+        Object.fromEntries(
+          Object.entries(parsed as Record<string, unknown>).filter(
+            ([, value]) => typeof value === "boolean",
+          ),
+        ) as Roadmap2SectionVisibility,
+      );
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        roadmap2SectionsStorageKey,
+        JSON.stringify(collapsedSections),
+      );
+    } catch {
+      return;
+    }
+  }, [collapsedSections]);
+
+  useEffect(() => {
     fetch("/api/roadmap2", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(roadmap),
     }).catch(() => undefined);
+  }, [roadmap]);
+
+  function resizeGoalTextarea(textarea: HTMLTextAreaElement | null) {
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  useEffect(() => {
+    document
+      .querySelectorAll<HTMLTextAreaElement>(".roadmap2AnnualInput, .roadmap2GoalInput")
+      .forEach((textarea) => resizeGoalTextarea(textarea));
   }, [roadmap]);
 
   function ensureYear(year: number) {
@@ -230,66 +277,132 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
     }));
   }
 
-  function renderMonthSection(month: Roadmap2Month, title?: string) {
+  function handleListItemKeyDown(
+    event: KeyboardEvent<HTMLInputElement>,
+    month: number,
+    listKey: Roadmap2ListKey,
+    index: number,
+  ) {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+
+    const nextIndex = index + 1;
+    const currentItems =
+      activeYear.months.find((item) => item.month === month)?.[listKey] || [];
+
+    if (nextIndex >= currentItems.length) {
+      addListItem(month, listKey);
+    }
+
+    requestAnimationFrame(() => {
+      const nextInput = document.querySelector<HTMLInputElement>(
+        `[data-roadmap2-item="${month}-${listKey}-${nextIndex}"]`,
+      );
+      nextInput?.focus();
+    });
+  }
+
+  function toggleMonthSection(sectionKey: string) {
+    setCollapsedSections((current) => ({
+      ...current,
+      [sectionKey]: !current[sectionKey],
+    }));
+  }
+
+  function renderMonthSection(
+    month: Roadmap2Month,
+    options?: { title?: string; sectionKey?: string },
+  ) {
+    const title = options?.title;
+    const sectionKey = options?.sectionKey || `month-${roadmap.selectedYear}-${month.month}`;
+    const isCollapsed = collapsedSections[sectionKey] === true;
+
     return (
-      <section className="roadmap2MonthCard" key={title ? `${month.month}-${title}` : month.month} aria-label={`${month.month}月`}>
+      <section
+        className={isCollapsed ? "roadmap2MonthCard collapsed" : "roadmap2MonthCard"}
+        key={sectionKey}
+        aria-label={`${month.month}月`}
+      >
         <header className="roadmap2MonthHeader">
           <h2>{title || monthLabels[month.month - 1]}</h2>
+          <button
+            type="button"
+            className="roadmap2CollapseButton"
+            onClick={() => toggleMonthSection(sectionKey)}
+            aria-expanded={!isCollapsed}
+            aria-label={`${title || monthLabels[month.month - 1]}を${isCollapsed ? "開く" : "閉じる"}`}
+          >
+            {isCollapsed ? "＋" : "−"}
+          </button>
         </header>
 
-        <div className="roadmap2GoalRow">
-          <label className="roadmap2GoalLabel" htmlFor={`roadmap2-goal-${title ? `featured-${month.month}` : month.month}`}>
-            月間目標
-          </label>
-          <textarea
-            id={`roadmap2-goal-${title ? `featured-${month.month}` : month.month}`}
-            className="roadmap2GoalInput"
-            placeholder={`${month.month}月の目標`}
-            rows={2}
-            value={month.goal}
-            onChange={(event) => updateMonthGoal(month.month, event.target.value)}
-          />
-        </div>
+        {!isCollapsed && (
+          <>
+            <div className="roadmap2GoalRow">
+              <label className="roadmap2GoalLabel" htmlFor={`roadmap2-goal-${sectionKey}`}>
+                月間目標
+              </label>
+              <textarea
+                id={`roadmap2-goal-${sectionKey}`}
+                className="roadmap2GoalInput"
+                placeholder={`${month.month}月の目標`}
+                rows={2}
+                ref={resizeGoalTextarea}
+                value={month.goal}
+                onChange={(event) => {
+                  resizeGoalTextarea(event.currentTarget);
+                  updateMonthGoal(month.month, event.target.value);
+                }}
+              />
+            </div>
 
-        <div className="roadmap2Columns">
-          {listMeta.map((list) => (
-            <section className="roadmap2ListCard" key={list.key}>
-              <header className="roadmap2ListHeader">
-                <h3>{list.title}</h3>
-                <button
-                  type="button"
-                  className="roadmap2AddButton"
-                  onClick={() => addListItem(month.month, list.key)}
-                  aria-label={`${monthLabels[month.month - 1]}の${list.title}を追加`}
-                >
-                  +
-                </button>
-              </header>
-              <div className="roadmap2ItemList">
-                {month[list.key].map((item, index) => (
-                  <div className="roadmap2ItemRow" key={`${month.month}-${list.key}-${title || "month"}-${index}`}>
-                    <input
-                      aria-label={`${monthLabels[month.month - 1]}の${list.title}`}
-                      placeholder={list.placeholder}
-                      value={item}
-                      onChange={(event) =>
-                        updateListItem(month.month, list.key, index, event.target.value)
-                      }
-                    />
+            <div className="roadmap2Columns">
+              {listMeta.map((list) => (
+                <section className="roadmap2ListCard" key={list.key}>
+                  <header className="roadmap2ListHeader">
+                    <h3>{list.title}</h3>
                     <button
                       type="button"
-                      className="roadmap2RemoveButton"
-                      onClick={() => removeListItem(month.month, list.key, index)}
-                      aria-label={`${monthLabels[month.month - 1]}の${list.title}を削除`}
+                      className="roadmap2AddButton"
+                      onClick={() => addListItem(month.month, list.key)}
+                      aria-label={`${monthLabels[month.month - 1]}の${list.title}を追加`}
                     >
-                      ×
+                      +
                     </button>
+                  </header>
+                  <div className="roadmap2ItemList">
+                    {month[list.key].map((item, index) => (
+                      <div
+                        className="roadmap2ItemRow"
+                        key={`${month.month}-${list.key}-${title || "month"}-${index}`}
+                      >
+                        <input
+                          data-roadmap2-item={`${month.month}-${list.key}-${index}`}
+                          aria-label={`${monthLabels[month.month - 1]}の${list.title}`}
+                          value={item}
+                          onKeyDown={(event) =>
+                            handleListItemKeyDown(event, month.month, list.key, index)
+                          }
+                          onChange={(event) =>
+                            updateListItem(month.month, list.key, index, event.target.value)
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="roadmap2RemoveButton"
+                          onClick={() => removeListItem(month.month, list.key, index)}
+                          aria-label={`${monthLabels[month.month - 1]}の${list.title}を削除`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+                </section>
+              ))}
+            </div>
+          </>
+        )}
       </section>
     );
   }
@@ -328,17 +441,28 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
           aria-label="年間目標"
           placeholder="この年を通して達成したいこと"
           rows={2}
+          ref={resizeGoalTextarea}
           value={activeYear.annualGoal}
-          onChange={(event) => updateAnnualGoal(event.target.value)}
+          onChange={(event) => {
+            resizeGoalTextarea(event.currentTarget);
+            updateAnnualGoal(event.target.value);
+          }}
         />
       </section>
 
       <div className="roadmap2FeaturedMonth">
-        {renderMonthSection(currentMonthPlan, `今月: ${monthLabels[currentMonth - 1]}`)}
+        {renderMonthSection(currentMonthPlan, {
+          title: `今月: ${monthLabels[currentMonth - 1]}`,
+          sectionKey: `featured-${roadmap.selectedYear}-${currentMonth}`,
+        })}
       </div>
 
       <div className="roadmap2MonthList">
-        {activeYear.months.map((month) => renderMonthSection(month))}
+        {activeYear.months.map((month) =>
+          renderMonthSection(month, {
+            sectionKey: `month-${roadmap.selectedYear}-${month.month}`,
+          }),
+        )}
       </div>
     </main>
   );

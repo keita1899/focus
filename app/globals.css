@@ -3240,7 +3240,12 @@ select {
   padding: 10px 12px;
   font: inherit;
   line-height: 1.5;
-  resize: vertical;
+}
+
+.roadmap2AnnualInput,
+.roadmap2GoalInput {
+  overflow: hidden;
+  resize: none;
 }
 
 .roadmap2FeaturedMonth {
@@ -3257,6 +3262,18 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.roadmap2CollapseButton {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
 }
 
 .roadmap2GoalRow {
