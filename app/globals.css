@@ -2391,6 +2391,7 @@ select {
 .inboxPage,
 .diaryPage,
 .notesPage,
+.roadmap2Page,
 .roadmapPage {
   display: grid;
   gap: 18px;
@@ -2400,6 +2401,7 @@ select {
   width: calc(100% - 32px);
 }
 
+.roadmap2Page,
 .roadmapPage {
   width: min(1180px, calc(100% - 32px));
 }
@@ -2413,6 +2415,7 @@ select {
 .inboxHeader h1,
 .diaryHeader h1,
 .notesHeader h1,
+.roadmap2Header h1,
 .roadmapHeader h1 {
   margin-top: 10px;
   font-size: clamp(2rem, 5vw, 4rem);
@@ -2421,6 +2424,7 @@ select {
 .inboxHeader,
 .diaryHeader,
 .notesHeader,
+.roadmap2Header,
 .roadmapHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3180,6 +3184,143 @@ select {
   color: white;
   padding: 0 16px;
   font-weight: 900;
+}
+
+.roadmap2YearSwitcher {
+  display: inline-grid;
+  grid-template-columns: 42px auto 42px;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+}
+
+.roadmap2YearSwitcher button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.roadmap2YearSwitcher strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.roadmap2AnnualCard,
+.roadmap2MonthCard {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.roadmap2AnnualCard h2,
+.roadmap2MonthHeader h2,
+.roadmap2ListHeader h3 {
+  margin: 0;
+}
+
+.roadmap2AnnualInput,
+.roadmap2GoalInput,
+.roadmap2ItemRow textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  padding: 10px 12px;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.roadmap2MonthList {
+  display: grid;
+  gap: 18px;
+}
+
+.roadmap2MonthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roadmap2GoalRow {
+  display: grid;
+  gap: 8px;
+}
+
+.roadmap2GoalLabel {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.roadmap2Columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roadmap2ListCard {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  border: 1px solid rgba(23, 107, 85, 0.12);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 12px;
+}
+
+.roadmap2ListHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap2AddButton,
+.roadmap2RemoveButton {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.roadmap2AddButton {
+  background: #eef6f1;
+  color: var(--accent-strong);
+}
+
+.roadmap2RemoveButton {
+  background: #fff5f3;
+  color: var(--danger);
+}
+
+.roadmap2ItemList {
+  display: grid;
+  gap: 8px;
+}
+
+.roadmap2ItemRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: start;
+  gap: 8px;
 }
 
 .roadmapBlockList {
@@ -4096,6 +4237,7 @@ select {
   .inboxHeader,
   .diaryHeader,
   .notesHeader,
+  .roadmap2Header,
   .roadmapHeader {
     grid-template-columns: 1fr;
     align-items: start;
@@ -4137,6 +4279,10 @@ select {
     min-height: 260px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .roadmap2Columns {
+    grid-template-columns: 1fr;
   }
 
   .homeColumns {
