@@ -12,7 +12,6 @@ type PeriodGoalMap = Record<GoalKey, Record<string, string>>;
 type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "achievement"
-  | "today"
   | "recurring"
   | "inbox"
   | "diary";
@@ -24,11 +23,22 @@ type PriorityTask = {
   projectName?: string;
 };
 
+type DailyGroupKey =
+  | "beforeBreakfast"
+  | "beforeLunch"
+  | "beforeDinner"
+  | "afterDinner";
+
 type DailyTask = {
   id: string;
   title: string;
-  time: string;
   completedDates: string[];
+};
+
+type DailyTaskGroup = {
+  key: DailyGroupKey;
+  theme: string;
+  tasks: DailyTask[];
 };
 
 type WeeklyTask = {
@@ -58,10 +68,8 @@ type PlannerState = {
   goalsByPeriod: PeriodGoalMap;
   birthday: string;
   achievementTasks: AchievementTask[];
-  importantTodayTask: PriorityTask | null;
-  todayTasks: PriorityTask[];
   inboxTasks: PriorityTask[];
-  dailyTasks: DailyTask[];
+  dailyTaskGroups: DailyTaskGroup[];
   weeklyTasks: WeeklyTask[];
   monthlyTasks: MonthlyTask[];
 };
@@ -83,8 +91,6 @@ type FocusTarget = {
 
 type TaskEditTarget =
   | { kind: "achievement"; id: string }
-  | { kind: "important"; id: string }
-  | { kind: "today"; id: string }
   | { kind: "inbox"; id: string }
   | { kind: "weekly"; id: string }
   | { kind: "monthly"; id: string }
@@ -112,6 +118,13 @@ const weekdayLabels: Record<number, string> = {
   6: "土",
 };
 
+const dailyGroupDefinitions: Array<{ key: DailyGroupKey; label: string }> = [
+  { key: "beforeBreakfast", label: "朝食前" },
+  { key: "beforeLunch", label: "昼食前" },
+  { key: "beforeDinner", label: "夕食前" },
+  { key: "afterDinner", label: "夕食後" },
+];
+
 const initialState: PlannerState = {
   goals: {
     year: "収益性のある個人プロダクトを1つ公開する",
@@ -125,10 +138,12 @@ const initialState: PlannerState = {
   },
   birthday: "",
   achievementTasks: [],
-  importantTodayTask: null,
-  todayTasks: [],
   inboxTasks: [],
-  dailyTasks: [],
+  dailyTaskGroups: dailyGroupDefinitions.map(({ key }) => ({
+    key,
+    theme: "",
+    tasks: [],
+  })),
   weeklyTasks: [],
   monthlyTasks: [],
 };
@@ -170,22 +185,82 @@ function isValidTimeValue(value: unknown): value is string {
   return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
-function sortDailyTasksByTime(tasks: DailyTask[]) {
-  return [...tasks].sort((left, right) => {
-    const leftHasTime = isValidTimeValue(left.time);
-    const rightHasTime = isValidTimeValue(right.time);
+function createEmptyDailyTaskTitleMap() {
+  return dailyGroupDefinitions.reduce<Record<DailyGroupKey, string>>(
+    (map, group) => ({
+      ...map,
+      [group.key]: "",
+    }),
+    {} as Record<DailyGroupKey, string>,
+  );
+}
 
-    if (leftHasTime && rightHasTime) {
-      const timeCompare = left.time.localeCompare(right.time);
-      if (timeCompare !== 0) return timeCompare;
-    } else if (leftHasTime) {
-      return -1;
-    } else if (rightHasTime) {
-      return 1;
-    }
+function getDailyGroupKeyFromTime(time: unknown): DailyGroupKey {
+  if (!isValidTimeValue(time)) return "beforeBreakfast";
+  if (time < "11:00") return "beforeBreakfast";
+  if (time < "15:00") return "beforeLunch";
+  if (time < "20:00") return "beforeDinner";
+  return "afterDinner";
+}
 
-    return left.title.localeCompare(right.title, "ja");
-  });
+function normalizeDailyTask(task: Partial<DailyTask>, index: number): DailyTask {
+  return {
+    id: task.id || `daily-task-${index + 1}`,
+    title: task.title || "",
+    completedDates: Array.isArray(task.completedDates)
+      ? task.completedDates.filter(
+          (date): date is string => typeof date === "string",
+        )
+      : [],
+  };
+}
+
+function normalizeDailyTaskGroups(
+  value: StoredPlannerState & {
+    dailyTaskGroups?: unknown;
+    dailyTasks?: Array<Partial<DailyTask> & { time?: string }>;
+  },
+) {
+  const fallbackGroups = dailyGroupDefinitions.reduce<
+    Record<DailyGroupKey, DailyTaskGroup>
+  >(
+    (groups, definition) => ({
+      ...groups,
+      [definition.key]: {
+        key: definition.key,
+        theme: "",
+        tasks: [],
+      },
+    }),
+    {} as Record<DailyGroupKey, DailyTaskGroup>,
+  );
+
+  if (Array.isArray(value.dailyTaskGroups)) {
+    value.dailyTaskGroups.forEach((group, groupIndex) => {
+      const item = group as Partial<DailyTaskGroup>;
+      if (!item.key || !(item.key in fallbackGroups)) return;
+      fallbackGroups[item.key] = {
+        key: item.key,
+        theme: typeof item.theme === "string" ? item.theme : "",
+        tasks: Array.isArray(item.tasks)
+          ? item.tasks.map((task, taskIndex) =>
+              normalizeDailyTask(task, groupIndex * 100 + taskIndex),
+            )
+          : [],
+      };
+    });
+
+    return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
+  }
+
+  if (Array.isArray(value.dailyTasks)) {
+    value.dailyTasks.forEach((task, index) => {
+      const groupKey = getDailyGroupKeyFromTime(task.time);
+      fallbackGroups[groupKey].tasks.push(normalizeDailyTask(task, index));
+    });
+  }
+
+  return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
 }
 
 function normalizeDiaryEntries(value: unknown): DiaryEntry[] {
@@ -348,10 +423,9 @@ function getAgeInfo(birthday: string) {
 
 function normalizePlanner(value: StoredPlannerState): PlannerState {
   const legacyValue = value as StoredPlannerState & {
-    priorities?: PriorityTask[];
     achievementTasks?: AchievementTask[];
-    importantTodayTask?: PriorityTask | null;
     dailyTasks?: DailyTask[];
+    dailyTaskGroups?: DailyTaskGroup[];
     weeklyTasks?: WeeklyTask[];
     monthlyTasks?: MonthlyTask[];
     inboxTasks?: PriorityTask[];
@@ -359,20 +433,9 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
   const rawAchievementTasks = Array.isArray(legacyValue.achievementTasks)
     ? legacyValue.achievementTasks
     : initialState.achievementTasks;
-  const rawTodayTasks = Array.isArray(value.todayTasks)
-    ? value.todayTasks
-    : Array.isArray(legacyValue.priorities)
-      ? legacyValue.priorities
-      : initialState.todayTasks;
   const rawInboxTasks = Array.isArray(legacyValue.inboxTasks)
     ? legacyValue.inboxTasks
     : initialState.inboxTasks;
-  const rawImportantTask =
-    legacyValue.importantTodayTask ||
-    (rawTodayTasks.length > 0 ? rawTodayTasks[0] : null);
-  const rawDailyTasks = Array.isArray(value.dailyTasks)
-    ? value.dailyTasks
-    : initialState.dailyTasks;
   const rawWeeklyTasks = Array.isArray(legacyValue.weeklyTasks)
     ? legacyValue.weeklyTasks
     : initialState.weeklyTasks;
@@ -411,22 +474,6 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
       parentId: task.parentId || undefined,
       year: typeof task.year === "number" ? task.year : currentYear,
     })),
-    importantTodayTask: rawImportantTask
-      ? {
-          id: rawImportantTask.id || "important-task",
-          title: rawImportantTask.title || "",
-          done: false,
-          projectName: rawImportantTask.projectName || undefined,
-        }
-      : null,
-    todayTasks: rawTodayTasks
-      .filter((task) => !task.done)
-      .map((task, index) => ({
-        id: task.id || `today-task-${index + 1}`,
-        title: task.title || "",
-        done: false,
-        projectName: task.projectName || undefined,
-      })),
     inboxTasks: rawInboxTasks
       .filter((task) => !task.done)
       .map((task, index) => ({
@@ -435,16 +482,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         done: false,
         projectName: task.projectName || undefined,
       })),
-    dailyTasks: rawDailyTasks.map((task, index) => ({
-      id: task.id || `daily-task-${index + 1}`,
-      title: task.title || "",
-      time: isValidTimeValue((task as { time?: unknown }).time)
-        ? (task as { time: string }).time
-        : "",
-      completedDates: Array.isArray(task.completedDates)
-        ? task.completedDates
-        : [],
-    })),
+    dailyTaskGroups: normalizeDailyTaskGroups(legacyValue),
     weeklyTasks: rawWeeklyTasks.map((task, index) => ({
       id: task.id || `weekly-task-${index + 1}`,
       title: task.title || "",
@@ -572,11 +610,10 @@ export default function HomeClient({
     }
   });
   const [achievementYearOffset, setAchievementYearOffset] = useState(0);
-  const [newImportantTaskTitle, setNewImportantTaskTitle] = useState("");
-  const [newTodayTaskTitle, setNewTodayTaskTitle] = useState("");
   const [newInboxTaskTitle, setNewInboxTaskTitle] = useState("");
-  const [newDailyTaskTitle, setNewDailyTaskTitle] = useState("");
-  const [newDailyTaskTime, setNewDailyTaskTime] = useState("");
+  const [newDailyTaskTitles, setNewDailyTaskTitles] = useState(() =>
+    createEmptyDailyTaskTitleMap(),
+  );
   const [newWeeklyTaskTitle, setNewWeeklyTaskTitle] = useState("");
   const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
     () => new Date().getDay(),
@@ -586,7 +623,7 @@ export default function HomeClient({
     () => new Date().getDate(),
   );
   const [selectedHomeTab, setSelectedHomeTab] =
-    useState<HomeTab>("today");
+    useState<HomeTab>("recurring");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -596,41 +633,34 @@ export default function HomeClient({
   const periodLabels = periodInfo.labels;
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
-  const todayWeekday = new Date().getDay();
-  const todayDayOfMonth = new Date().getDate();
   const currentWeekKey = getCurrentWeekKey();
   const achievementYear = currentYear + achievementYearOffset;
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
   const currentMonthKey = getCurrentMonthKey();
   const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
-    { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
-    { key: "achievement", label: "達成" },
     { key: "recurring", label: "繰り返し" },
+    { key: "achievement", label: "達成" },
     { key: "diary", label: "日記" },
   ];
   const showAchievementTab = selectedHomeTab === "achievement";
-  const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
-  const sortedDailyTasks = useMemo(
-    () => sortDailyTasksByTime(planner.dailyTasks),
-    [planner.dailyTasks],
-  );
 
   useEffect(() => {
     try {
       const storedTab = window.localStorage.getItem(homeTabStorageKey);
       if (
         storedTab === "achievement" ||
-        storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
         storedTab === "diary"
       ) {
         setSelectedHomeTab(storedTab);
+      } else if (storedTab === "today") {
+        setSelectedHomeTab("recurring");
       }
     } catch {
       return;
@@ -757,7 +787,7 @@ export default function HomeClient({
   useEffect(() => {
     document
       .querySelectorAll<HTMLTextAreaElement>(
-        ".taskList textarea, .todayImportantSection textarea",
+        ".taskList textarea",
       )
       .forEach((textarea) => {
         textarea.style.height = "auto";
@@ -778,22 +808,8 @@ export default function HomeClient({
 
   const focusedTask = useMemo(() => {
     if (!focusTarget) return null;
-    if (planner.importantTodayTask?.id === focusTarget.id) {
-      return planner.importantTodayTask;
-    }
-    return (
-      planner.todayTasks.find((task) => task.id === focusTarget.id) ||
-      planner.inboxTasks.find((task) => task.id === focusTarget.id) ||
-      null
-    );
-  }, [focusTarget, planner.importantTodayTask, planner.inboxTasks, planner.todayTasks]);
-  const importantTask = planner.importantTodayTask;
-  const importantEditTarget = importantTask
-    ? ({ kind: "important", id: importantTask.id } as const)
-    : null;
-  const isImportantEditing = importantEditTarget
-    ? isTaskBeingEdited(importantEditTarget)
-    : false;
+    return planner.inboxTasks.find((task) => task.id === focusTarget.id) || null;
+  }, [focusTarget, planner.inboxTasks]);
   const achievementParents = planner.achievementTasks.filter(
     (task) => !task.parentId && task.year === achievementYear,
   );
@@ -1065,19 +1081,6 @@ export default function HomeClient({
     }));
   }
 
-  function addTodayTask() {
-    const title = newTodayTaskTitle.trim();
-    if (!title) return;
-    setPlanner((current) => ({
-      ...current,
-      todayTasks: [
-        ...current.todayTasks,
-        { id: createId("today-task"), title, done: false },
-      ],
-    }));
-    setNewTodayTaskTitle("");
-  }
-
   function addInboxTask() {
     const title = newInboxTaskTitle.trim();
     if (!title) return;
@@ -1089,52 +1092,6 @@ export default function HomeClient({
       ],
     }));
     setNewInboxTaskTitle("");
-  }
-
-  function addImportantTask() {
-    const title = newImportantTaskTitle.trim();
-    if (!title) return;
-    setPlanner((current) => ({
-      ...current,
-      importantTodayTask: {
-        id: createId("important-task"),
-        title,
-        done: false,
-      },
-    }));
-    setNewImportantTaskTitle("");
-  }
-
-  function updateImportantTaskTitle(title: string) {
-    setPlanner((current) => {
-      if (!current.importantTodayTask) return current;
-      return {
-        ...current,
-        importantTodayTask: {
-          ...current.importantTodayTask,
-          title,
-        },
-      };
-    });
-  }
-
-  function updateTodayTaskTitle(id: string, title: string) {
-    setPlanner((current) => ({
-      ...current,
-      todayTasks: current.todayTasks.map((task) =>
-        task.id === id ? { ...task, title } : task,
-      ),
-    }));
-  }
-
-  function completeTodayTask(id: string) {
-    setPlanner((current) => ({
-      ...current,
-      todayTasks: current.todayTasks.filter((task) => task.id !== id),
-    }));
-    if (focusTarget?.id === id) {
-      setFocusTarget(null);
-    }
   }
 
   function updateInboxTaskTitle(id: string, title: string) {
@@ -1157,41 +1114,38 @@ export default function HomeClient({
   }
 
   function completePriority(id: string) {
-    if (planner.importantTodayTask?.id === id) {
-      completeImportantTask(id);
-      return;
-    }
-    if (planner.todayTasks.some((task) => task.id === id)) {
-      completeTodayTask(id);
-      return;
-    }
     completeInboxTask(id);
   }
 
-  function completeImportantTask(id: string) {
-    setPlanner((current) => ({ ...current, importantTodayTask: null }));
-    if (focusTarget?.id === id) {
-      setFocusTarget(null);
-    }
+  function updateNewDailyTaskTitle(groupKey: DailyGroupKey, title: string) {
+    setNewDailyTaskTitles((current) => ({
+      ...current,
+      [groupKey]: title,
+    }));
   }
 
-  function addDailyTask() {
-    const title = newDailyTaskTitle.trim();
+  function addDailyTask(groupKey: DailyGroupKey) {
+    const title = newDailyTaskTitles[groupKey].trim();
     if (!title) return;
     setPlanner((current) => ({
       ...current,
-      dailyTasks: [
-        ...current.dailyTasks,
-        {
-          id: createId("daily-task"),
-          title,
-          time: newDailyTaskTime,
-          completedDates: [],
-        },
-      ],
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              tasks: [
+                ...group.tasks,
+                {
+                  id: createId("daily-task"),
+                  title,
+                  completedDates: [],
+                },
+              ],
+            }
+          : group,
+      ),
     }));
-    setNewDailyTaskTitle("");
-    setNewDailyTaskTime("");
+    updateNewDailyTaskTitle(groupKey, "");
   }
 
   function addWeeklyTask() {
@@ -1230,44 +1184,65 @@ export default function HomeClient({
     setNewMonthlyTaskTitle("");
   }
 
-  function updateDailyTaskTitle(id: string, title: string) {
+  function updateDailyTaskGroupTheme(groupKey: DailyGroupKey, theme: string) {
     setPlanner((current) => ({
       ...current,
-      dailyTasks: current.dailyTasks.map((task) =>
-        task.id === id ? { ...task, title } : task,
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey ? { ...group, theme } : group,
       ),
     }));
   }
 
-  function updateDailyTaskTime(id: string, time: string) {
+  function updateDailyTaskTitle(groupKey: DailyGroupKey, id: string, title: string) {
     setPlanner((current) => ({
       ...current,
-      dailyTasks: current.dailyTasks.map((task) =>
-        task.id === id ? { ...task, time } : task,
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              tasks: group.tasks.map((task) =>
+                task.id === id ? { ...task, title } : task,
+              ),
+            }
+          : group,
       ),
     }));
   }
 
-  function toggleDailyTask(id: string) {
+  function toggleDailyTask(groupKey: DailyGroupKey, id: string) {
     setPlanner((current) => ({
       ...current,
-      dailyTasks: current.dailyTasks.map((task) => {
-        if (task.id !== id) return task;
-        const isCompleted = task.completedDates.includes(todayKey);
-        return {
-          ...task,
-          completedDates: isCompleted
-            ? task.completedDates.filter((date) => date !== todayKey)
-            : [...task.completedDates, todayKey],
-        };
-      }),
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              tasks: group.tasks.map((task) => {
+                if (task.id !== id) return task;
+                const isCompleted = task.completedDates.includes(todayKey);
+                return {
+                  ...task,
+                  completedDates: isCompleted
+                    ? task.completedDates.filter((date) => date !== todayKey)
+                    : [...task.completedDates, todayKey],
+                };
+              }),
+            }
+          : group,
+      ),
     }));
   }
 
-  function removeDailyTask(id: string) {
+  function removeDailyTask(groupKey: DailyGroupKey, id: string) {
     setPlanner((current) => ({
       ...current,
-      dailyTasks: current.dailyTasks.filter((task) => task.id !== id),
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              tasks: group.tasks.filter((task) => task.id !== id),
+            }
+          : group,
+      ),
     }));
   }
 
@@ -1393,6 +1368,103 @@ export default function HomeClient({
           );
         })}
       </div>
+    );
+  }
+
+  function renderDailyTaskGroup(group: DailyTaskGroup) {
+    const groupLabel =
+      dailyGroupDefinitions.find((definition) => definition.key === group.key)?.label ||
+      group.key;
+
+    return (
+      <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
+        <div className="sectionHeader dailyGroupHeader">
+          <h3>{groupLabel}</h3>
+          <input
+            className="dailyThemeInput"
+            aria-label={`${groupLabel}のテーマ`}
+            placeholder="テーマ"
+            value={group.theme}
+            onChange={(event) => updateDailyTaskGroupTheme(group.key, event.target.value)}
+          />
+        </div>
+        <form
+          className="taskForm dailyTaskForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addDailyTask(group.key);
+          }}
+        >
+          <input
+            aria-label={`${groupLabel}の毎日タスクを追加`}
+            value={newDailyTaskTitles[group.key]}
+            onChange={(event) => updateNewDailyTaskTitle(group.key, event.target.value)}
+          />
+          <button
+            className="recurringAddButton"
+            type="submit"
+            aria-label={`${groupLabel}の毎日タスクを追加`}
+          >
+            +
+          </button>
+        </form>
+        <div className="taskList">
+          {group.tasks.length === 0 && (
+            <p className="emptyText">タスクはありません。</p>
+          )}
+          {group.tasks.map((task) => {
+            const isCompleted = task.completedDates.includes(todayKey);
+            const editTarget = { kind: "daily", id: task.id } as const;
+            const isEditing = isTaskBeingEdited(editTarget);
+            return (
+              <article
+                className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
+                key={task.id}
+              >
+                <button
+                  className="checkButton"
+                  type="button"
+                  onClick={() => toggleDailyTask(group.key, task.id)}
+                  aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
+                >
+                  ✓
+                </button>
+                {isEditing ? (
+                  <textarea
+                    aria-label="毎日のタスク"
+                    value={task.title}
+                    onChange={(event) =>
+                      updateDailyTaskTitle(group.key, task.id, event.target.value)
+                    }
+                    onKeyDown={handleTaskEditKeyDown}
+                    onBlur={() => finishTaskEdit(editTarget)}
+                    rows={1}
+                  />
+                ) : (
+                  <div
+                    className="taskTitleView"
+                    role="textbox"
+                    aria-label="毎日のタスク"
+                    aria-readonly="true"
+                    tabIndex={0}
+                    onDoubleClick={() => beginTaskEdit(editTarget)}
+                  >
+                    {task.title || " "}
+                  </div>
+                )}
+                <button
+                  className="iconButton"
+                  type="button"
+                  onClick={() => removeDailyTask(group.key, task.id)}
+                  aria-label={`${task.title || "無題のタスク"}を削除`}
+                >
+                  ×
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
     );
   }
 
@@ -1730,194 +1802,6 @@ export default function HomeClient({
             </section>
           )}
 
-          {showTodayTab && (
-            <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
-              <section className="todayTaskSection todayTaskFullWidth" aria-label="今日のタスク">
-                <div className="goalHeading">
-                  <h2>今日のタスク</h2>
-                </div>
-                <form
-                  className="taskForm"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    addTodayTask();
-                  }}
-                >
-                  <input
-                    aria-label="今日のタスクを追加"
-                    placeholder="今日のタスク"
-                    value={newTodayTaskTitle}
-                    onChange={(event) => setNewTodayTaskTitle(event.target.value)}
-                  />
-                  <button type="submit" aria-label="今日のタスクを追加">
-                    +
-                  </button>
-                </form>
-                <div className="taskList">
-                  {planner.todayTasks.length === 0 && (
-                    <p className="emptyText">今日のタスクはありません。</p>
-                  )}
-                  {planner.todayTasks.map((task) => (
-                    <article className={task.done ? "taskItem done" : "taskItem"} key={task.id}>
-                      {(() => {
-                        const editTarget = { kind: "today", id: task.id } as const;
-                        const isEditing = isTaskBeingEdited(editTarget);
-                        return (
-                          <>
-                            <button
-                              className="checkButton"
-                              type="button"
-                              onClick={() => completeTodayTask(task.id)}
-                              aria-label={`${task.title || "無題のタスク"}を完了`}
-                            >
-                              ✓
-                            </button>
-                            {isEditing ? (
-                              <textarea
-                                aria-label="今日のタスク"
-                                value={task.title}
-                                onChange={(event) =>
-                                  updateTodayTaskTitle(task.id, event.target.value)
-                                }
-                                onKeyDown={handleTaskEditKeyDown}
-                                onBlur={() => finishTaskEdit(editTarget)}
-                                rows={1}
-                              />
-                            ) : (
-                              <div
-                                className="taskTitleView"
-                                role="textbox"
-                                aria-label="今日のタスク"
-                                aria-readonly="true"
-                                tabIndex={0}
-                                onDoubleClick={() => beginTaskEdit(editTarget)}
-                              >
-                                {task.title || " "}
-                              </div>
-                            )}
-                            <div className="priorityActions">
-                              <button
-                                className="focusButton"
-                                type="button"
-                                onClick={() =>
-                                  setFocusTarget({ kind: "priority", id: task.id })
-                                }
-                                aria-label={`${task.title || "無題のタスク"}に集中する`}
-                              >
-                                focus
-                              </button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </article>
-                  ))}
-                </div>
-              </section>
-
-              <div className="recurringGrid" aria-label="繰り返しタスク">
-                <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
-                  <div className="sectionHeader">
-                    <h3>毎日のタスク</h3>
-                  </div>
-                  <div className="taskList">
-                    {sortedDailyTasks.length === 0 && (
-                      <p className="emptyText">毎日のタスクはありません。</p>
-                    )}
-                    {sortedDailyTasks.map((task) => {
-                      const isCompleted = task.completedDates.includes(todayKey);
-                      const editTarget = { kind: "daily", id: task.id } as const;
-                      const isEditing = isTaskBeingEdited(editTarget);
-                      return (
-                        <article
-                          className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
-                          key={task.id}
-                        >
-                          <button
-                            className="checkButton"
-                            type="button"
-                            onClick={() => toggleDailyTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
-                          >
-                            ✓
-                          </button>
-                          {task.time && (
-                            <div className="dailyItemMeta">
-                              <span className="dailyItemTimeBadge">{task.time}</span>
-                            </div>
-                          )}
-                          {isEditing ? (
-                            <textarea
-                              aria-label="毎日のタスク"
-                              value={task.title}
-                              onChange={(event) =>
-                                updateDailyTaskTitle(task.id, event.target.value)
-                              }
-                              onKeyDown={handleTaskEditKeyDown}
-                              onBlur={() => finishTaskEdit(editTarget)}
-                              rows={1}
-                            />
-                          ) : (
-                            <div
-                              className="taskTitleView"
-                              role="textbox"
-                              aria-label="毎日のタスク"
-                              aria-readonly="true"
-                              tabIndex={0}
-                              onDoubleClick={() => beginTaskEdit(editTarget)}
-                            >
-                              {task.title || " "}
-                            </div>
-                          )}
-                          <button
-                            className="iconButton"
-                            type="button"
-                            onClick={() => removeDailyTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}を削除`}
-                          >
-                            ×
-                          </button>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <div className="recurringStack">
-                  <section className="weeklySection" aria-label="毎週のタスク">
-                    <div className="sectionHeader">
-                      <h3>毎週のタスク</h3>
-                      <span className="sectionMeta">{getWeekdayLabel(todayWeekday)}</span>
-                    </div>
-                    <div className="taskList">
-                      {planner.weeklyTasks.filter((task) => task.weekday === todayWeekday).length === 0 && (
-                        <p className="emptyText">毎週のタスクはありません。</p>
-                      )}
-                      {planner.weeklyTasks
-                        .filter((task) => task.weekday === todayWeekday)
-                        .map((task) => renderWeeklyTask(task, todayWeekday))}
-                    </div>
-                  </section>
-
-                  <section className="monthlySection" aria-label="毎月のタスク">
-                    <div className="sectionHeader">
-                      <h3>毎月のタスク</h3>
-                      <span className="sectionMeta">{todayDayOfMonth}日</span>
-                    </div>
-                    <div className="taskList">
-                      {planner.monthlyTasks.filter((task) => task.dayOfMonth === todayDayOfMonth).length === 0 && (
-                        <p className="emptyText">毎月のタスクはありません。</p>
-                      )}
-                      {planner.monthlyTasks
-                        .filter((task) => task.dayOfMonth === todayDayOfMonth)
-                        .map((task) => renderMonthlyTask(task, todayDayOfMonth))}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </section>
-          )}
-
           {showRecurringTab && (
             <section className="homeTabPanel recurringColumn" aria-label="繰り返しタスク">
               <div className="recurringGrid" aria-label="繰り返しタスクの編集">
@@ -1925,100 +1809,8 @@ export default function HomeClient({
                   <div className="sectionHeader">
                     <h3>毎日のタスク</h3>
                   </div>
-                  <form
-                    className="taskForm dailyTaskForm"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      addDailyTask();
-                    }}
-                  >
-                    <input
-                      aria-label="毎日のタスクを追加"
-                      placeholder="毎日のタスク"
-                      value={newDailyTaskTitle}
-                      onChange={(event) => setNewDailyTaskTitle(event.target.value)}
-                    />
-                    <input
-                      aria-label="毎日のタスクの時間"
-                      className="recurringTimeInput"
-                      type="time"
-                      value={newDailyTaskTime}
-                      onChange={(event) => setNewDailyTaskTime(event.target.value)}
-                    />
-                    <button
-                      className="recurringAddButton"
-                      type="submit"
-                      aria-label="毎日のタスクを追加"
-                    >
-                      +
-                    </button>
-                  </form>
-                  <div className="taskList">
-                    {sortedDailyTasks.length === 0 && (
-                      <p className="emptyText">毎日のタスクはありません。</p>
-                    )}
-                    {sortedDailyTasks.map((task) => {
-                      const isCompleted = task.completedDates.includes(todayKey);
-                      const editTarget = { kind: "daily", id: task.id } as const;
-                      const isEditing = isTaskBeingEdited(editTarget);
-                      return (
-                        <article
-                          className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
-                          key={task.id}
-                        >
-                          <button
-                            className="checkButton"
-                            type="button"
-                            onClick={() => toggleDailyTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
-                          >
-                            ✓
-                          </button>
-                          <div className="dailyItemMeta">
-                            <input
-                              aria-label={`${task.title || "毎日のタスク"}の時間`}
-                              className="recurringTimeInput"
-                              type="time"
-                              value={task.time}
-                              onChange={(event) =>
-                                updateDailyTaskTime(task.id, event.target.value)
-                              }
-                            />
-                          </div>
-                          {isEditing ? (
-                            <textarea
-                              aria-label="毎日のタスク"
-                              value={task.title}
-                              onChange={(event) =>
-                                updateDailyTaskTitle(task.id, event.target.value)
-                              }
-                              onKeyDown={handleTaskEditKeyDown}
-                              onBlur={() => finishTaskEdit(editTarget)}
-                              rows={1}
-                            />
-                          ) : (
-                            <div
-                              className="taskTitleView"
-                              role="textbox"
-                              aria-label="毎日のタスク"
-                              aria-readonly="true"
-                              tabIndex={0}
-                              onDoubleClick={() => beginTaskEdit(editTarget)}
-                            >
-                              {task.title || " "}
-                            </div>
-                          )}
-                          <button
-                            className="iconButton"
-                            type="button"
-                            onClick={() => removeDailyTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}を削除`}
-                          >
-                            ×
-                          </button>
-                        </article>
-                      );
-                    })}
+                  <div className="dailyGroupGrid">
+                    {planner.dailyTaskGroups.map(renderDailyTaskGroup)}
                   </div>
                 </section>
 
