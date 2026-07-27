@@ -1742,9 +1742,8 @@ export default function HomeClient({
           </button>
         </form>
         <div className="taskList">
-          <div className="todayGroupListLabel">通常タスク</div>
-          {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && (
-            <p className="emptyText">通常タスクはありません。</p>
+          {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && group.tasks.length === 0 && (
+            <p className="emptyText">タスクはありません。</p>
           )}
           {todayThemeGroup?.tasks.map((task) => {
             const editTarget = { kind: "today", id: task.id } as const;
@@ -1793,10 +1792,6 @@ export default function HomeClient({
               </article>
             );
           })}
-          <div className="todayGroupListLabel">繰り返しタスク</div>
-          {group.tasks.length === 0 && (
-            <p className="emptyText">繰り返しタスクはありません。</p>
-          )}
           {group.tasks.map((task) => {
             const isCompleted = task.completedDates.includes(todayKey);
             const editTarget = { kind: "daily", id: task.id } as const;
@@ -1827,14 +1822,17 @@ export default function HomeClient({
                   />
                 ) : (
                   <div
-                    className="taskTitleView"
+                    className="taskTitleView recurringTaskTitleView"
                     role="textbox"
                     aria-label="毎日のタスク"
                     aria-readonly="true"
                     tabIndex={0}
                     onDoubleClick={() => beginTaskEdit(editTarget)}
                   >
-                    {task.title || " "}
+                    <span className="recurringInlineBadge" aria-hidden="true">
+                      ↻ 繰り返し
+                    </span>
+                    <span>{task.title || " "}</span>
                   </div>
                 )}
                 <button
