@@ -1799,6 +1799,21 @@ select {
   text-align: right;
 }
 
+.dailyThemeView {
+  min-height: 34px;
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: right;
+  cursor: text;
+}
+
 .dailyItem {
   grid-template-columns: 38px minmax(0, 1fr) auto;
   grid-template-rows: auto;
