@@ -545,22 +545,15 @@ export default function DailyReportClient({
   }
 
   return (
-    <main className="shell notesPage">
+    <main className="shell notesPage dailyReportPage">
       <section className="notesHeader" aria-label="日報">
         <div>
           <h1>日報</h1>
         </div>
       </section>
 
-      <section
-        className="notesWorkspace"
-        aria-label="日報一覧と編集"
-        style={{
-          ["--notes-folder-column" as string]: "0px",
-          ["--notes-list-column" as string]: "240px",
-        }}
-      >
-        <aside className="notesListColumn" aria-label="日報一覧">
+      <section className="notesWorkspace dailyReportWorkspace" aria-label="日報一覧と編集">
+        <aside className="notesListColumn dailyReportListColumn" aria-label="日報一覧">
           <div className="notesColumnHeader">
             <h2>日報</h2>
           </div>

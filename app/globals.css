@@ -2502,6 +2502,14 @@ select {
   box-shadow: var(--shadow);
 }
 
+.dailyReportWorkspace {
+  grid-template-columns: minmax(220px, 240px) minmax(0, 1fr);
+}
+
+.dailyReportListColumn {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
 .notesFolderColumn,
 .notesListColumn {
   display: grid;
@@ -4321,6 +4329,10 @@ select {
   }
 
   .notesWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .dailyReportWorkspace {
     grid-template-columns: 1fr;
   }
 
