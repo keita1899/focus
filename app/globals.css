@@ -1907,7 +1907,7 @@ select {
   min-height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #eef1ee;
+  background: #e1e5e1;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 900;
@@ -1915,7 +1915,7 @@ select {
 
 .monthdayToggle.active {
   border-color: rgba(23, 107, 85, 0.3);
-  background: #1f7a61;
+  background: #1d7c5f;
   color: white;
 }
 
@@ -4102,7 +4102,7 @@ select {
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #eef1ee;
+  background: #e1e5e1;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 900;
@@ -4110,7 +4110,7 @@ select {
 
 .weekdayToggle.active {
   border-color: rgba(23, 107, 85, 0.3);
-  background: #1f7a61;
+  background: #1d7c5f;
   color: white;
 }
 
