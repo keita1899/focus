@@ -455,7 +455,7 @@ function getPeriodInfo(offsets: PeriodOffsets) {
     remainingDays: {
       year: getRemainingDaysInPeriod(nextYearDate),
       month: getRemainingDaysInPeriod(nextMonthDate),
-      week: getRemainingDaysInPeriod(nextWeekDate),
+      week: offsets.week === 0 ? getRemainingDaysInPeriod(nextWeekDate) : 7,
     },
   };
 }
@@ -503,6 +503,65 @@ function getAgeInfo(birthday: string) {
     age,
     nextAge: age + 1,
     daysUntilNextAge: getDaysUntil(nextBirthday),
+  };
+}
+
+function prunePlannerCompletionState(
+  planner: PlannerState,
+  nextTodayKey: string,
+  nextWeekKey: string,
+  nextMonthKey: string,
+) {
+  let hasChanges = false;
+
+  const nextDailyTaskGroups = planner.dailyTaskGroups.map((group) => {
+    let groupChanged = false;
+    const nextTasks = group.tasks.map((task) => {
+      const nextCompletedDates = task.completedDates.filter(
+        (date) => date === nextTodayKey,
+      );
+      if (nextCompletedDates.length !== task.completedDates.length) {
+        groupChanged = true;
+      }
+      return nextCompletedDates.length === task.completedDates.length
+        ? task
+        : { ...task, completedDates: nextCompletedDates };
+    });
+
+    if (!groupChanged) return group;
+    hasChanges = true;
+    return { ...group, tasks: nextTasks };
+  });
+
+  const nextWeeklyTasks = planner.weeklyTasks.map((task) => {
+    const nextCompletedWeeks = task.completedWeeks.filter((slot) =>
+      slot.startsWith(`${nextWeekKey}-`),
+    );
+    if (nextCompletedWeeks.length === task.completedWeeks.length) {
+      return task;
+    }
+    hasChanges = true;
+    return { ...task, completedWeeks: nextCompletedWeeks };
+  });
+
+  const nextMonthlyTasks = planner.monthlyTasks.map((task) => {
+    const nextCompletedMonths = task.completedMonths.filter((slot) =>
+      slot.startsWith(`${nextMonthKey}-`),
+    );
+    if (nextCompletedMonths.length === task.completedMonths.length) {
+      return task;
+    }
+    hasChanges = true;
+    return { ...task, completedMonths: nextCompletedMonths };
+  });
+
+  if (!hasChanges) return planner;
+
+  return {
+    ...planner,
+    dailyTaskGroups: nextDailyTaskGroups,
+    weeklyTasks: nextWeeklyTasks,
+    monthlyTasks: nextMonthlyTasks,
   };
 }
 
@@ -802,6 +861,17 @@ export default function HomeClient({
   }, []);
 
   useEffect(() => {
+    setPlanner((current) =>
+      prunePlannerCompletionState(
+        current,
+        todayKey,
+        currentWeekKey,
+        currentMonthKey,
+      ),
+    );
+  }, [currentMonthKey, currentWeekKey, todayKey]);
+
+  useEffect(() => {
     if (initialPlannerValue) return;
 
     async function migrateLocalPlanner() {
@@ -955,8 +1025,18 @@ export default function HomeClient({
   }
 
   function handleTaskEditKeyDown(
-    event: { key: string; preventDefault: () => void; currentTarget: { blur: () => void } },
+    event: {
+      key: string;
+      preventDefault: () => void;
+      currentTarget: { blur: () => void };
+      nativeEvent?: { isComposing?: boolean };
+      isComposing?: boolean;
+    },
   ) {
+    if (event.isComposing || event.nativeEvent?.isComposing) {
+      return;
+    }
+
     if (event.key === "Enter") {
       event.preventDefault();
       event.currentTarget.blur();

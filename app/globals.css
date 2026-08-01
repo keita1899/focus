@@ -1914,9 +1914,9 @@ select {
 }
 
 .monthdayToggle.active {
-  border-color: rgba(23, 107, 85, 0.38);
-  background: rgba(23, 107, 85, 0.1);
-  color: var(--accent-strong);
+  border-color: rgba(23, 107, 85, 0.18);
+  background: var(--accent-strong);
+  color: white;
 }
 
 .monthlyItem {
@@ -4109,9 +4109,9 @@ select {
 }
 
 .weekdayToggle.active {
-  border-color: rgba(23, 107, 85, 0.38);
-  background: rgba(23, 107, 85, 0.1);
-  color: var(--accent-strong);
+  border-color: rgba(23, 107, 85, 0.18);
+  background: var(--accent-strong);
+  color: white;
 }
 
 .scheduleEntryList {
