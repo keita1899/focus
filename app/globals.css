@@ -1907,15 +1907,15 @@ select {
   min-height: 30px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: #eef1ee;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 900;
 }
 
 .monthdayToggle.active {
-  border-color: rgba(23, 107, 85, 0.18);
-  background: var(--accent-strong);
+  border-color: rgba(23, 107, 85, 0.3);
+  background: #1f7a61;
   color: white;
 }
 
@@ -4102,15 +4102,15 @@ select {
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: #eef1ee;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 900;
 }
 
 .weekdayToggle.active {
-  border-color: rgba(23, 107, 85, 0.18);
-  background: var(--accent-strong);
+  border-color: rgba(23, 107, 85, 0.3);
+  background: #1f7a61;
   color: white;
 }
 
