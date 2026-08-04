@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Roadmap2ListKey = "focusItems" | "choreItems" | "seasonalItems";
 
@@ -26,10 +26,7 @@ type Roadmap2ClientProps = {
   initialValue: unknown;
 };
 
-type Roadmap2SectionVisibility = Record<string, boolean>;
-
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
-const roadmap2SectionsStorageKey = "roadmap2-sections-v1";
 
 const listMeta: Array<{
   key: Roadmap2ListKey;
@@ -136,57 +133,44 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
   const [roadmap, setRoadmap] = useState<Roadmap2State>(() =>
     normalizeRoadmap2State(initialValue),
   );
-  const [collapsedSections, setCollapsedSections] = useState<Roadmap2SectionVisibility>(
-    {},
-  );
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
+  const [isComposing, setIsComposing] = useState(false);
+  const hasMountedRef = useRef(false);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const activeYearKey = String(roadmap.selectedYear);
   const activeYear = useMemo(
     () => roadmap.years[activeYearKey] || createYearPlan(),
     [activeYearKey, roadmap.years],
   );
-  const currentMonth = new Date().getMonth() + 1;
-  const currentMonthPlan = useMemo(
-    () => activeYear.months.find((month) => month.month === currentMonth) || createMonth(currentMonth),
-    [activeYear.months, currentMonth],
+  const selectedMonthPlan = useMemo(
+    () => activeYear.months.find((month) => month.month === selectedMonth) || createMonth(selectedMonth),
+    [activeYear.months, selectedMonth],
   );
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(roadmap2SectionsStorageKey);
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as unknown;
-      if (!parsed || typeof parsed !== "object") return;
-      setCollapsedSections(
-        Object.fromEntries(
-          Object.entries(parsed as Record<string, unknown>).filter(
-            ([, value]) => typeof value === "boolean",
-          ),
-        ) as Roadmap2SectionVisibility,
-      );
-    } catch {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
       return;
     }
-  }, []);
+    if (isComposing) return;
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        roadmap2SectionsStorageKey,
-        JSON.stringify(collapsedSections),
-      );
-    } catch {
-      return;
-    }
-  }, [collapsedSections]);
+    const timeoutId = window.setTimeout(() => {
+      // Serialize writes so an older snapshot can never overwrite a newer one.
+      saveQueueRef.current = saveQueueRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          const response = await fetch("/api/roadmap2", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(roadmap),
+          });
+          if (!response.ok) throw new Error("ロードマップの保存に失敗しました。");
+        });
+    }, 500);
 
-  useEffect(() => {
-    fetch("/api/roadmap2", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(roadmap),
-    }).catch(() => undefined);
-  }, [roadmap]);
+    return () => window.clearTimeout(timeoutId);
+  }, [isComposing, roadmap]);
 
   function resizeGoalTextarea(textarea: HTMLTextAreaElement | null) {
     if (!textarea) return;
@@ -302,48 +286,23 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
     });
   }
 
-  function toggleMonthSection(sectionKey: string) {
-    setCollapsedSections((current) => ({
-      ...current,
-      [sectionKey]: !current[sectionKey],
-    }));
-  }
-
-  function renderMonthSection(
-    month: Roadmap2Month,
-    options?: { title?: string; sectionKey?: string },
-  ) {
-    const title = options?.title;
-    const sectionKey = options?.sectionKey || `month-${roadmap.selectedYear}-${month.month}`;
-    const isCollapsed = collapsedSections[sectionKey] === true;
-
+  function renderMonthSection(month: Roadmap2Month) {
     return (
-      <section
-        className={isCollapsed ? "roadmap2MonthCard collapsed" : "roadmap2MonthCard"}
-        key={sectionKey}
-        aria-label={`${month.month}月`}
-      >
+      <section className="roadmap2MonthCard" aria-label={`${month.month}月`}>
         <header className="roadmap2MonthHeader">
-          <h2>{title || monthLabels[month.month - 1]}</h2>
-          <button
-            type="button"
-            className="roadmap2CollapseButton"
-            onClick={() => toggleMonthSection(sectionKey)}
-            aria-expanded={!isCollapsed}
-            aria-label={`${title || monthLabels[month.month - 1]}を${isCollapsed ? "開く" : "閉じる"}`}
-          >
-            {isCollapsed ? "＋" : "−"}
-          </button>
+          <h2>{monthLabels[month.month - 1]}</h2>
         </header>
 
-        {!isCollapsed && (
-          <>
+        <>
             <div className="roadmap2GoalRow">
-              <label className="roadmap2GoalLabel" htmlFor={`roadmap2-goal-${sectionKey}`}>
+              <label
+                className="roadmap2GoalLabel"
+                htmlFor={`roadmap2-goal-${roadmap.selectedYear}-${month.month}`}
+              >
                 月間目標
               </label>
               <textarea
-                id={`roadmap2-goal-${sectionKey}`}
+                id={`roadmap2-goal-${roadmap.selectedYear}-${month.month}`}
                 className="roadmap2GoalInput"
                 placeholder={`${month.month}月の目標`}
                 rows={2}
@@ -352,6 +311,11 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
                 onChange={(event) => {
                   resizeGoalTextarea(event.currentTarget);
                   updateMonthGoal(month.month, event.target.value);
+                }}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={(event) => {
+                  setIsComposing(false);
+                  updateMonthGoal(month.month, event.currentTarget.value);
                 }}
               />
             </div>
@@ -374,7 +338,7 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
                     {month[list.key].map((item, index) => (
                       <div
                         className="roadmap2ItemRow"
-                        key={`${month.month}-${list.key}-${title || "month"}-${index}`}
+                        key={`${month.month}-${list.key}-${index}`}
                       >
                         <input
                           data-roadmap2-item={`${month.month}-${list.key}-${index}`}
@@ -386,6 +350,11 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
                           onChange={(event) =>
                             updateListItem(month.month, list.key, index, event.target.value)
                           }
+                          onCompositionStart={() => setIsComposing(true)}
+                          onCompositionEnd={(event) => {
+                            setIsComposing(false);
+                            updateListItem(month.month, list.key, index, event.currentTarget.value);
+                          }}
                         />
                         <button
                           type="button"
@@ -401,8 +370,7 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
                 </section>
               ))}
             </div>
-          </>
-        )}
+        </>
       </section>
     );
   }
@@ -447,22 +415,33 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
             resizeGoalTextarea(event.currentTarget);
             updateAnnualGoal(event.target.value);
           }}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={(event) => {
+            setIsComposing(false);
+            updateAnnualGoal(event.currentTarget.value);
+          }}
         />
       </section>
 
-      <div className="roadmap2FeaturedMonth">
-        {renderMonthSection(currentMonthPlan, {
-          title: `今月: ${monthLabels[currentMonth - 1]}`,
-          sectionKey: `featured-${roadmap.selectedYear}-${currentMonth}`,
+      <nav className="roadmap2MonthPicker" aria-label="月を選択">
+        {monthLabels.map((label, index) => {
+          const month = index + 1;
+          return (
+            <button
+              type="button"
+              key={month}
+              className={selectedMonth === month ? "isActive" : undefined}
+              aria-pressed={selectedMonth === month}
+              onClick={() => setSelectedMonth(month)}
+            >
+              {label}
+            </button>
+          );
         })}
-      </div>
+      </nav>
 
-      <div className="roadmap2MonthList">
-        {activeYear.months.map((month) =>
-          renderMonthSection(month, {
-            sectionKey: `month-${roadmap.selectedYear}-${month.month}`,
-          }),
-        )}
+      <div className="roadmap2SelectedMonth">
+        {renderMonthSection(selectedMonthPlan)}
       </div>
     </main>
   );

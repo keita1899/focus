@@ -3312,13 +3312,29 @@ select {
   resize: none;
 }
 
-.roadmap2FeaturedMonth {
+.roadmap2MonthPicker {
   display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.roadmap2MonthList {
+.roadmap2MonthPicker button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.roadmap2MonthPicker button.isActive {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
+}
+
+.roadmap2SelectedMonth {
   display: grid;
-  gap: 18px;
 }
 
 .roadmap2MonthHeader {
@@ -4372,6 +4388,10 @@ select {
     min-height: 260px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .roadmap2MonthPicker {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .roadmap2Columns {
