@@ -3333,6 +3333,12 @@ select {
   color: white;
 }
 
+.roadmap2MonthPicker button.isPast {
+  border-color: rgba(23, 107, 85, 0.18);
+  background: rgba(23, 107, 85, 0.05);
+  color: rgba(23, 107, 85, 0.48);
+}
+
 .roadmap2SelectedMonth {
   display: grid;
 }

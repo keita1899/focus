@@ -147,6 +147,10 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
     () => activeYear.months.find((month) => month.month === selectedMonth) || createMonth(selectedMonth),
     [activeYear.months, selectedMonth],
   );
+  const today = new Date();
+  const isPastMonth = (month: number) =>
+    roadmap.selectedYear < today.getFullYear() ||
+    (roadmap.selectedYear === today.getFullYear() && month < today.getMonth() + 1);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -247,6 +251,20 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
     }));
   }
 
+  function addListItemAndFocus(month: number, listKey: Roadmap2ListKey) {
+    const nextIndex =
+      activeYear.months.find((item) => item.month === month)?.[listKey].length || 0;
+
+    addListItem(month, listKey);
+
+    requestAnimationFrame(() => {
+      const nextInput = document.querySelector<HTMLInputElement>(
+        `[data-roadmap2-item="${month}-${listKey}-${nextIndex}"]`,
+      );
+      nextInput?.focus();
+    });
+  }
+
   function removeListItem(month: number, listKey: Roadmap2ListKey, index: number) {
     updateActiveYear((current) => ({
       ...current,
@@ -328,7 +346,7 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
                     <button
                       type="button"
                       className="roadmap2AddButton"
-                      onClick={() => addListItem(month.month, list.key)}
+                      onClick={() => addListItemAndFocus(month.month, list.key)}
                       aria-label={`${monthLabels[month.month - 1]}の${list.title}を追加`}
                     >
                       +
@@ -430,7 +448,13 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
             <button
               type="button"
               key={month}
-              className={selectedMonth === month ? "isActive" : undefined}
+              className={
+                selectedMonth === month
+                  ? "isActive"
+                  : isPastMonth(month)
+                    ? "isPast"
+                    : undefined
+              }
               aria-pressed={selectedMonth === month}
               onClick={() => setSelectedMonth(month)}
             >
