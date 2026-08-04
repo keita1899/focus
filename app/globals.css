@@ -4285,6 +4285,10 @@ select {
 }
 
 @media (max-width: 980px) {
+  .todayLayout .recurringGrid {
+    grid-template-columns: 1fr;
+  }
+
   .scheduleOpenShell > .topbar,
   .scheduleOpenShell > .workspaceGrid {
     width: 100%;
