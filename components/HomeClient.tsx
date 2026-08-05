@@ -11,7 +11,6 @@ type GoalMap = Record<GoalKey, string>;
 type PeriodGoalMap = Record<GoalKey, Record<string, string>>;
 type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
-  | "achievement"
   | "today"
   | "recurring"
   | "inbox"
@@ -804,10 +803,8 @@ export default function HomeClient({
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
     { key: "recurring", label: "繰り返し" },
-    { key: "achievement", label: "達成" },
     { key: "diary", label: "日記" },
   ];
-  const showAchievementTab = selectedHomeTab === "achievement";
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
@@ -817,7 +814,6 @@ export default function HomeClient({
     try {
       const storedTab = window.localStorage.getItem(homeTabStorageKey);
       if (
-        storedTab === "achievement" ||
         storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
@@ -2214,56 +2210,6 @@ export default function HomeClient({
               );
             })}
           </div>
-
-          {showAchievementTab && (
-            <section className="homeTabPanel achievementColumn" aria-label="達成リスト">
-              <div className="sectionHeader achievementSectionHeader">
-                <h2>達成リスト</h2>
-                <div className="periodSwitcher achievementPeriodSwitcher">
-                  <button
-                    type="button"
-                    onClick={() => changeAchievementYear(-1)}
-                    aria-label="達成リストの年を前へ"
-                  >
-                    &lt;
-                  </button>
-                  <span className="periodMeta">
-                    <time>{achievementYear}年</time>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => changeAchievementYear(1)}
-                    aria-label="達成リストの年を次へ"
-                  >
-                    &gt;
-                  </button>
-                </div>
-              </div>
-              <form
-                className="taskForm"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  addAchievementTask();
-                }}
-              >
-                <input
-                  aria-label="達成リストを追加"
-                  placeholder="達成したいこと"
-                  value={newAchievementTitle}
-                  onChange={(event) => setNewAchievementTitle(event.target.value)}
-                />
-                <button type="submit" aria-label="達成リストを追加">
-                  +
-                </button>
-              </form>
-              <div className="taskList">
-                {achievementParents.length === 0 && (
-                  <p className="emptyText">達成リストはありません。</p>
-                )}
-                {achievementParents.map(renderAchievementGroup)}
-              </div>
-            </section>
-          )}
 
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">

@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
-import { SignOutButton } from "./AuthControls";
-
 function getTodayLabel() {
   const today = new Date();
   return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
@@ -55,7 +53,7 @@ export default function AppHeader() {
             ロードマップ
           </a>
           <a className="navLink" href="/roadmap2">
-            ロードマップ2
+            年間ロードマップ
           </a>
           <a className="navLink" href="/notes">
             メモ
@@ -67,12 +65,9 @@ export default function AppHeader() {
             日記
           </a>
         </nav>
-        <div className="topbarAuth">
-          <a className="settingsLink" href="/settings" aria-label="設定">
-            ⚙
-          </a>
-          <SignOutButton className="navLink authNavButton" />
-        </div>
+        <a className="settingsLink" href="/settings" aria-label="設定">
+          ⚙
+        </a>
       </div>
     </header>
   );

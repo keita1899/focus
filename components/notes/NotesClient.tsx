@@ -791,6 +791,13 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     deleteNote(activeNote.id);
   }
 
+  function emptyTrash() {
+    setNotes((current) =>
+      current.filter((note) => note.folderId !== trashFolderId),
+    );
+    setActiveNoteId("");
+  }
+
   return (
     <main className="shell notesPage">
       <section className="notesHeader" aria-label="メモ">
@@ -955,6 +962,15 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
               <button className="notesAddButton" type="button" onClick={addNote}>
                 新規作成
               </button>
+              {activeFolderId === trashFolderId && visibleNotes.length > 0 && (
+                <button
+                  className="notesEmptyTrashButton"
+                  type="button"
+                  onClick={emptyTrash}
+                >
+                  すべて削除
+                </button>
+              )}
             </div>
           )}
           {isListColumnOpen && (

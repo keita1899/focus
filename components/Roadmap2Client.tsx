@@ -395,9 +395,9 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
 
   return (
     <main className="shell roadmap2Page">
-      <section className="roadmapHeader roadmap2Header" aria-label="ロードマップ2">
+      <section className="roadmapHeader roadmap2Header" aria-label="年間ロードマップ">
         <div>
-          <h1>Roadmap 2</h1>
+          <h1>年間ロードマップ</h1>
         </div>
         <div className="roadmap2YearSwitcher" aria-label="年の切り替え">
           <button

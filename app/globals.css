@@ -54,7 +54,7 @@ body > .topbar {
 }
 
 body > .topbar + .shell {
-  padding-top: 0;
+  padding-top: 18px;
 }
 
 .homeShell {
@@ -2591,7 +2591,7 @@ select {
 
 .notesListHeader {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 0;
   padding: 0;
@@ -2725,6 +2725,7 @@ select {
 
 .notesFolderItem:hover .notesFolderDelete,
 .notesFolderItem:focus-within .notesFolderDelete,
+.notesFolderItem.active .notesFolderDelete,
 .notesListItem:hover .notesListDelete,
 .notesListItem:focus-within .notesListDelete {
   opacity: 1;
@@ -2915,6 +2916,23 @@ select {
   background: var(--ink);
   color: white;
   justify-self: start;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.notesListHeader .notesEmptyTrashButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: 38px;
+  border: 1px solid rgba(168, 61, 52, 0.25);
+  border-radius: 8px;
+  background: #fff5f3;
+  color: var(--danger);
   padding: 0 12px;
   font-size: 0.9rem;
   font-weight: 900;

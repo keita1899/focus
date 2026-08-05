@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { SignOutButton } from "./AuthControls";
+
 type PlannerLike = Record<string, unknown> & {
   birthday?: string;
 };
@@ -103,6 +105,9 @@ export default function SettingsClient({ initialPlannerValue }: SettingsClientPr
             }
           />
         </label>
+        <div className="settingsActions">
+          <SignOutButton />
+        </div>
       </section>
 
     </main>
