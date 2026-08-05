@@ -737,11 +737,16 @@ export function MarkdownMemoPage({
     );
   }
 
-  function addRoadmapBlock() {
-    setRoadmapBlocks((current) => [
-      ...current,
-      createRoadmapBlock(defaultMarkdown, defaultTitle, idPrefix),
-    ]);
+  function addRoadmapBlock(afterBlockId: string) {
+    setRoadmapBlocks((current) => {
+      const insertAt = current.findIndex((block) => block.id === afterBlockId) + 1;
+      const nextBlock = createRoadmapBlock(defaultMarkdown, defaultTitle, idPrefix);
+      return [
+        ...current.slice(0, insertAt),
+        nextBlock,
+        ...current.slice(insertAt),
+      ];
+    });
   }
 
   function removeRoadmapBlock(blockId: string) {
@@ -936,21 +941,18 @@ export function MarkdownMemoPage({
         <div>
           <h1>{pageTitle}</h1>
         </div>
-        <button className="roadmapAddButton" type="button" onClick={addRoadmapBlock}>
-          追加
-        </button>
       </section>
 
       <div className="roadmapBlockList">
         {roadmapBlocks.map((block) => (
-          <section
-            className={
-              block.viewMode === "split"
-                ? "roadmapBlock"
-                : "roadmapBlock single"
-            }
-            key={block.id}
-          >
+          <div className="roadmapBlockWithAdd" key={block.id}>
+            <section
+              className={
+                block.viewMode === "split"
+                  ? "roadmapBlock"
+                  : "roadmapBlock single"
+              }
+            >
             <div className="memoBlockHeader">
               <input
                 className="memoTitleInput"
@@ -1044,15 +1046,16 @@ export function MarkdownMemoPage({
                 </article>
               )}
             </div>
-          </section>
+            </section>
+            <button
+              className="roadmapAppendButton"
+              type="button"
+              onClick={() => addRoadmapBlock(block.id)}
+            >
+              追加
+            </button>
+          </div>
         ))}
-        <button
-          className="roadmapAppendButton"
-          type="button"
-          onClick={addRoadmapBlock}
-        >
-          追加
-        </button>
       </div>
     </main>
   );

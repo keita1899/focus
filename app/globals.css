@@ -3457,6 +3457,11 @@ select {
   gap: 34px;
 }
 
+.roadmapBlockWithAdd {
+  display: grid;
+  gap: 12px;
+}
+
 .roadmapBlock {
   display: grid;
   gap: 0;
