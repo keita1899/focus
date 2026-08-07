@@ -217,11 +217,15 @@ export default function CutoutsClient({ initialValue }: CutoutsClientProps) {
                     aria-label={`${index + 1}番の切り抜き名`}
                     placeholder="切り抜き名を入力"
                     value={item.title}
-                    onChange={(event) => updateItem(item.id, (current) => ({ ...current, title: event.target.value }))}
+                    onChange={(event) => {
+                      const title = event.currentTarget.value;
+                      updateItem(item.id, (current) => ({ ...current, title }));
+                    }}
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={(event) => {
+                      const title = event.currentTarget.value;
                       setIsComposing(false);
-                      updateItem(item.id, (current) => ({ ...current, title: event.currentTarget.value }));
+                      updateItem(item.id, (current) => ({ ...current, title }));
                     }}
                   />
                 </td>
@@ -230,7 +234,10 @@ export default function CutoutsClient({ initialValue }: CutoutsClientProps) {
                     aria-label={`${index + 1}番の投稿日時`}
                     type="datetime-local"
                     value={item.scheduledAt}
-                    onChange={(event) => updateItem(item.id, (current) => ({ ...current, scheduledAt: event.target.value }))}
+                    onChange={(event) => {
+                      const scheduledAt = event.currentTarget.value;
+                      updateItem(item.id, (current) => ({ ...current, scheduledAt }));
+                    }}
                   />
                 </td>
                 {selectedKind === "short" && platformLabels.map((platform) => (
@@ -239,10 +246,13 @@ export default function CutoutsClient({ initialValue }: CutoutsClientProps) {
                       aria-label={`${platform.label}に投稿済み`}
                       type="checkbox"
                       checked={item.platforms[platform.key]}
-                      onChange={(event) => updateItem(item.id, (current) => ({
-                        ...current,
-                        platforms: { ...current.platforms, [platform.key]: event.target.checked },
-                      }))}
+                      onChange={(event) => {
+                        const isChecked = event.currentTarget.checked;
+                        updateItem(item.id, (current) => ({
+                          ...current,
+                          platforms: { ...current.platforms, [platform.key]: isChecked },
+                        }));
+                      }}
                     />
                   </td>
                 ))}
@@ -251,7 +261,10 @@ export default function CutoutsClient({ initialValue }: CutoutsClientProps) {
                     aria-label={`${index + 1}番を投稿済みにする`}
                     type="checkbox"
                     checked={item.posted}
-                    onChange={(event) => updateItem(item.id, (current) => ({ ...current, posted: event.target.checked }))}
+                    onChange={(event) => {
+                      const posted = event.currentTarget.checked;
+                      updateItem(item.id, (current) => ({ ...current, posted }));
+                    }}
                   />
                 </td>
                 <td>
