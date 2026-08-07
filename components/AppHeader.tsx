@@ -55,6 +55,9 @@ export default function AppHeader() {
           <a className="navLink" href="/roadmap2">
             年間ロードマップ
           </a>
+          <a className="navLink" href="/cutouts">
+            切り抜き
+          </a>
           <a className="navLink" href="/notes">
             メモ
           </a>

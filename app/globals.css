@@ -2448,7 +2448,8 @@ select {
 .diaryPage,
 .notesPage,
 .roadmap2Page,
-.roadmapPage {
+.roadmapPage,
+.cutoutsPage {
   display: grid;
   gap: 18px;
 }
@@ -2458,7 +2459,8 @@ select {
 }
 
 .roadmap2Page,
-.roadmapPage {
+.roadmapPage,
+.cutoutsPage {
   width: min(1180px, calc(100% - 32px));
 }
 
@@ -2472,7 +2474,8 @@ select {
 .diaryHeader h1,
 .notesHeader h1,
 .roadmap2Header h1,
-.roadmapHeader h1 {
+.roadmapHeader h1,
+.cutoutsHeader h1 {
   margin-top: 10px;
   font-size: clamp(2rem, 5vw, 4rem);
 }
@@ -2481,11 +2484,136 @@ select {
 .diaryHeader,
 .notesHeader,
 .roadmap2Header,
-.roadmapHeader {
+.roadmapHeader,
+.cutoutsHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: end;
   gap: 18px;
+}
+
+.cutoutsToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cutoutsTabs {
+  display: flex;
+  gap: 8px;
+}
+
+.cutoutsTabs button,
+.cutoutsAddButton,
+.cutoutsRemoveButton {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.cutoutsTabs button,
+.cutoutsAddButton {
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.cutoutsTabs button.active,
+.cutoutsAddButton {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
+}
+
+.cutoutsTableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.cutoutsTable {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.cutoutsTable th,
+.cutoutsTable td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cutoutsTable th {
+  background: #fbfcfa;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.cutoutsTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.cutoutsTable tr.isToday td {
+  background: #fff8e8;
+}
+
+.cutoutsTable tr.isPosted td {
+  background: #e7f2ec;
+}
+
+.cutoutsTable td:first-child,
+.cutoutsTable td:nth-last-child(2),
+.cutoutsTable td:last-child,
+.cutoutsTable th:first-child,
+.cutoutsTable th:nth-last-child(2),
+.cutoutsTable th:last-child {
+  text-align: center;
+}
+
+.cutoutsTable input[type="text"],
+.cutoutsTable input[type="datetime-local"],
+.cutoutsTable td:nth-child(2) input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  padding: 0 10px;
+}
+
+.cutoutsTable input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-strong);
+}
+
+.cutoutsRemoveButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: var(--danger);
+}
+
+.cutoutsEmpty {
+  color: var(--muted);
+  text-align: center !important;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .notesWorkspace {
@@ -4376,7 +4504,8 @@ select {
   .diaryHeader,
   .notesHeader,
   .roadmap2Header,
-  .roadmapHeader {
+  .roadmapHeader,
+  .cutoutsHeader {
     grid-template-columns: 1fr;
     align-items: start;
   }
