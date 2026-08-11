@@ -772,8 +772,10 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
 
     if (targetNote.folderId !== trashFolderId) {
       moveNoteToTrash(noteId);
-      setActiveFolderId(trashFolderId);
-      setActiveNoteId(noteId);
+      if (activeNoteId === noteId) {
+        const nextNote = visibleNotes.find((note) => note.id !== noteId);
+        setActiveNoteId(nextNote?.id || "");
+      }
       return;
     }
 
