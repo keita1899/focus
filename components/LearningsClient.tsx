@@ -189,7 +189,10 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
     </section>
     <section className="learningsWorkspace" aria-label="学習タスクとメモ">
       <aside className="learningsSidebar" aria-label="教材のセクションとタスク">
-        <div className="learningsSidebarHeader"><h2>{activeSubject?.title || "教材"}</h2>{activeSubject && <button className="learningSubjectDelete" type="button" onClick={() => removeSubject(activeSubject.id)}>教材を削除</button>}</div>
+        <div className="learningsSidebarHeader">
+          {activeSubject && <input className="learningSubjectTitle" aria-label="教材名を編集" value={activeSubject.title} onChange={(event) => { const title = event.currentTarget.value; updateSubject(activeSubject.id, (current) => ({ ...current, title })); }} />}
+          {activeSubject && <button className="learningSubjectDelete" type="button" onClick={() => removeSubject(activeSubject.id)}>教材を削除</button>}
+        </div>
         <form className="learningAddSection" onSubmit={(event) => { event.preventDefault(); addSection(); }}><input aria-label="セクション名" placeholder="セクション名" value={newSectionTitle} onChange={(event) => setNewSectionTitle(event.currentTarget.value)} /><button type="submit">＋</button></form>
         {activeSubject?.sections.map((section) => {
           const isCollapsed = collapsed[section.id] === true;

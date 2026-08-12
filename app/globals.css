@@ -2580,6 +2580,20 @@ select {
 
 .learningsSidebarHeader h2 { margin: 0; font-size: 1rem; }
 
+.learningSubjectTitle {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  padding: 0 6px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.learningSubjectTitle:focus { border-color: var(--accent); background: white; }
+
 .learningSubjectDelete {
   min-height: 32px;
   border: 1px solid rgba(168, 61, 52, .25);
