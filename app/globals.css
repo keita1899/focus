@@ -2514,6 +2514,56 @@ select {
   box-shadow: var(--shadow);
 }
 
+.learningSubjectBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.learningSubjectTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.learningSubjectTabs button,
+.learningAddSubject button,
+.learningAddSection button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  padding: 0 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.learningSubjectTabs button.active,
+.learningAddSubject button {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
+}
+
+.learningAddSubject,
+.learningAddSection {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) auto;
+  gap: 6px;
+}
+
+.learningAddSubject input,
+.learningAddSection input {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 0 10px;
+}
+
 .learningsSidebar {
   overflow: auto;
   border-right: 1px solid var(--line);
@@ -2530,7 +2580,17 @@ select {
 
 .learningsSidebarHeader h2 { margin: 0; font-size: 1rem; }
 
-.learningsSidebarHeader button,
+.learningSubjectDelete {
+  min-height: 32px;
+  border: 1px solid rgba(168, 61, 52, .25);
+  border-radius: 8px;
+  background: #fff5f3;
+  color: var(--danger);
+  padding: 0 9px;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
 .learningAddTask {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -2539,11 +2599,8 @@ select {
   font-weight: 900;
 }
 
-.learningsSidebarHeader button {
-  width: 34px;
-  height: 34px;
-  font-size: 1.2rem;
-}
+.learningAddSection { grid-template-columns: minmax(0, 1fr) 38px; margin-bottom: 10px; }
+.learningAddSection button { padding: 0; font-size: 1.2rem; }
 
 .learningSection { padding-block: 6px; border-bottom: 1px solid var(--line); }
 .learningSection > header { display: grid; grid-template-columns: minmax(0, 1fr) 30px; align-items: center; gap: 4px; }
