@@ -58,6 +58,9 @@ export default function AppHeader() {
           <a className="navLink" href="/cutouts">
             切り抜き
           </a>
+          <a className="navLink" href="/learnings">
+            学習
+          </a>
           <a className="navLink" href="/notes">
             メモ
           </a>

@@ -2449,7 +2449,8 @@ select {
 .notesPage,
 .roadmap2Page,
 .roadmapPage,
-.cutoutsPage {
+.cutoutsPage,
+.learningsPage {
   display: grid;
   gap: 18px;
 }
@@ -2460,7 +2461,8 @@ select {
 
 .roadmap2Page,
 .roadmapPage,
-.cutoutsPage {
+.cutoutsPage,
+.learningsPage {
   width: min(1180px, calc(100% - 32px));
 }
 
@@ -2475,7 +2477,8 @@ select {
 .notesHeader h1,
 .roadmap2Header h1,
 .roadmapHeader h1,
-.cutoutsHeader h1 {
+.cutoutsHeader h1,
+.learningsHeader h1 {
   margin-top: 10px;
   font-size: clamp(2rem, 5vw, 4rem);
 }
@@ -2485,7 +2488,8 @@ select {
 .notesHeader,
 .roadmap2Header,
 .roadmapHeader,
-.cutoutsHeader {
+.cutoutsHeader,
+.learningsHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: end;
@@ -2498,6 +2502,104 @@ select {
   justify-content: space-between;
   gap: 12px;
 }
+
+.learningsWorkspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  min-height: 640px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.learningsSidebar {
+  overflow: auto;
+  border-right: 1px solid var(--line);
+  background: #fbfcfa;
+  padding: 10px;
+}
+
+.learningsSidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.learningsSidebarHeader h2 { margin: 0; font-size: 1rem; }
+
+.learningsSidebarHeader button,
+.learningAddTask {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.learningsSidebarHeader button {
+  width: 34px;
+  height: 34px;
+  font-size: 1.2rem;
+}
+
+.learningSection { padding-block: 6px; border-bottom: 1px solid var(--line); }
+
+.learningSectionToggle {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 7px 4px;
+  text-align: left;
+}
+
+.learningSectionToggle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.learningSectionToggle em { border-radius: 999px; background: #e7f2ec; color: var(--accent-strong); padding: 2px 7px; font-size: .75rem; font-style: normal; font-weight: 900; }
+
+.learningSectionName {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0 8px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.learningSectionName:focus { border-color: var(--accent); background: white; }
+
+.learningTaskList { display: grid; gap: 2px; }
+.learningTask {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  padding: 6px 8px;
+  text-align: left;
+}
+.learningTask.active { background: #e7f2ec; }
+.learningTask input { width: 16px; height: 16px; accent-color: var(--accent-strong); }
+.learningTask span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.learningTask span.completed { color: var(--muted); text-decoration: line-through; }
+.learningAddTask { width: 100%; min-height: 34px; margin-top: 7px; }
+
+.learningsContent { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; }
+.learningTaskTitle { width: 100%; min-height: 62px; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 10px 16px; color: var(--ink); font-size: 1.2rem; font-weight: 900; }
+.learningMemoWorkspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+.learningMemoWorkspace textarea { min-height: 500px; border: 0; border-right: 1px solid var(--line); padding: 16px; resize: vertical; line-height: 1.7; outline: none; }
+.learningMemoPreview { overflow: auto; padding: 16px; }
 
 .cutoutsTabs {
   display: flex;
@@ -4505,13 +4607,30 @@ select {
   .notesHeader,
   .roadmap2Header,
   .roadmapHeader,
-  .cutoutsHeader {
+  .cutoutsHeader,
+  .learningsHeader {
     grid-template-columns: 1fr;
     align-items: start;
   }
 
   .notesWorkspace {
     grid-template-columns: 1fr;
+  }
+
+  .learningsWorkspace,
+  .learningMemoWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .learningsSidebar {
+    max-height: 360px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .learningMemoWorkspace textarea {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 
   .dailyReportWorkspace {

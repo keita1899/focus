@@ -7,6 +7,7 @@ const notesKey = "simple-notes-v1";
 const dailyReportKey = "daily-report-v1";
 const roadmap2Key = "roadmap-2-v1";
 const cutoutsKey = "cutouts-v1";
+const learningsKey = "learnings-v1";
 
 function getScopedKey(userId: string, key: string) {
   return `${userId}:${key}`;
@@ -97,5 +98,14 @@ export async function getCutoutsState() {
     where: { key: getScopedKey(userId, cutoutsKey) },
   });
 
+  return state ? JSON.parse(state.value) : null;
+}
+
+export async function getLearningsState() {
+  const userId = await getUserId();
+  if (!userId) return null;
+  const state = await prisma.appState.findUnique({
+    where: { key: getScopedKey(userId, learningsKey) },
+  });
   return state ? JSON.parse(state.value) : null;
 }
