@@ -2546,6 +2546,7 @@ select {
 }
 
 .learningSection { padding-block: 6px; border-bottom: 1px solid var(--line); }
+.learningSection > header { display: grid; grid-template-columns: minmax(0, 1fr) 30px; align-items: center; gap: 4px; }
 
 .learningSectionToggle {
   display: grid;
@@ -2562,6 +2563,7 @@ select {
 
 .learningSectionToggle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .learningSectionToggle em { border-radius: 999px; background: #e7f2ec; color: var(--accent-strong); padding: 2px 7px; font-size: .75rem; font-style: normal; font-weight: 900; }
+.learningSectionDelete { width: 30px; height: 30px; border: 0; border-radius: 6px; background: transparent; color: var(--danger); font-size: 1.05rem; font-weight: 900; }
 
 .learningSectionName {
   width: 100%;
@@ -2596,7 +2598,9 @@ select {
 .learningAddTask { width: 100%; min-height: 34px; margin-top: 7px; }
 
 .learningsContent { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; }
-.learningTaskTitle { width: 100%; min-height: 62px; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 10px 16px; color: var(--ink); font-size: 1.2rem; font-weight: 900; }
+.learningTaskHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; border-bottom: 1px solid var(--line); padding-right: 10px; }
+.learningTaskTitle { width: 100%; min-height: 62px; border: 0; background: transparent; padding: 10px 16px; color: var(--ink); font-size: 1.2rem; font-weight: 900; }
+.learningTaskDelete { align-self: center; min-height: 36px; border: 1px solid rgba(168, 61, 52, .25); border-radius: 8px; background: #fff5f3; color: var(--danger); padding: 0 12px; font-weight: 900; }
 .learningMemoWorkspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
 .learningMemoWorkspace textarea { min-height: 500px; border: 0; border-right: 1px solid var(--line); padding: 16px; resize: vertical; line-height: 1.7; outline: none; }
 .learningMemoPreview { overflow: auto; padding: 16px; }

@@ -103,6 +103,33 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
     setActiveTaskId(task.id);
   }
 
+  function addSection() {
+    const section = createSection();
+    setLearning((current) => ({ sections: [...current.sections, section] }));
+    setCollapsed((current) => ({ ...current, [section.id]: false }));
+    setActiveTaskId(section.tasks[0].id);
+  }
+
+  function removeTask(taskId: string) {
+    const remainingTasks = learning.sections
+      .flatMap((section) => section.tasks)
+      .filter((task) => task.id !== taskId);
+    setLearning((current) => ({
+      sections: current.sections.map((section) => ({
+        ...section,
+        tasks: section.tasks.filter((task) => task.id !== taskId),
+      })),
+    }));
+    if (activeTaskId === taskId) setActiveTaskId(remainingTasks[0]?.id || "");
+  }
+
+  function removeSection(sectionId: string) {
+    const remainingSections = learning.sections.filter((section) => section.id !== sectionId);
+    const remainingTasks = remainingSections.flatMap((section) => section.tasks);
+    setLearning({ sections: remainingSections.length ? remainingSections : [createSection()] });
+    setActiveTaskId(remainingTasks[0]?.id || "");
+  }
+
   function toggleChecklist(item: ChecklistItem) {
     if (!activeTask || item.lineNumber < 1) return;
     const lines = activeTask.markdown.split("\n");
@@ -122,7 +149,7 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
       <section className="roadmapHeader learningsHeader"><div><h1>学習</h1></div></section>
       <section className="learningsWorkspace" aria-label="学習タスクとメモ">
         <aside className="learningsSidebar" aria-label="学習タスク">
-          <div className="learningsSidebarHeader"><h2>タスク</h2><button type="button" onClick={() => setLearning((current) => ({ sections: [...current.sections, createSection()] }))}>＋</button></div>
+          <div className="learningsSidebarHeader"><h2>学習対象</h2><button type="button" onClick={addSection} aria-label="学習対象を追加">＋</button></div>
           {learning.sections.map((section) => {
             const isCollapsed = collapsed[section.id] === true;
             return <section className="learningSection" key={section.id}>
@@ -130,6 +157,7 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
                 <button className="learningSectionToggle" type="button" onClick={() => setCollapsed((current) => ({ ...current, [section.id]: !current[section.id] }))} aria-expanded={!isCollapsed}>
                   <span>{isCollapsed ? "›" : "⌄"}</span><strong>{section.title || "無題のセクション"}</strong><em>{section.tasks.length}</em>
                 </button>
+                <button className="learningSectionDelete" type="button" onClick={() => removeSection(section.id)} aria-label={`${section.title || "学習対象"}を削除`}>×</button>
               </header>
               {!isCollapsed && <>
                 <input className="learningSectionName" aria-label="セクション名" value={section.title} onChange={(event) => { const title = event.currentTarget.value; updateSection(section.id, (current) => ({ ...current, title })); }} />
@@ -146,7 +174,10 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
         </aside>
         <section className="learningsContent" aria-label="学習メモ">
           {activeTask ? <>
-            <input className="learningTaskTitle" aria-label="タスク名" value={activeTask.title} onChange={(event) => { const title = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, title })); }} />
+            <div className="learningTaskHeader">
+              <input className="learningTaskTitle" aria-label="タスク名" value={activeTask.title} onChange={(event) => { const title = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, title })); }} />
+              <button className="learningTaskDelete" type="button" onClick={() => removeTask(activeTask.id)}>削除</button>
+            </div>
             <div className="learningMemoWorkspace">
               <textarea aria-label="マークダウンメモ" value={activeTask.markdown} onChange={(event) => { const markdown = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, markdown })); }} />
               <article className="learningMemoPreview"><MarkdownPreview markdown={activeTask.markdown} onToggleChecklist={toggleChecklist} /></article>
