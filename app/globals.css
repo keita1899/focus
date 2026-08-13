@@ -2525,17 +2525,62 @@ select {
   gap: 12px;
 }
 
-.visionEditor {
-  width: 100%;
-  min-height: 620px;
+.visionList {
+  display: grid;
+  gap: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, .9);
   box-shadow: var(--shadow);
-  color: var(--ink);
   padding: 18px;
-  line-height: 1.75;
-  resize: vertical;
+}
+
+.visionList ol,
+.visionReminderList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 28px;
+}
+
+.visionList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.visionList input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 0 12px;
+}
+
+.visionList li > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(168, 61, 52, .25);
+  border-radius: 8px;
+  background: #fff5f3;
+  color: var(--danger);
+  font-weight: 900;
+}
+
+.visionAddButton {
+  justify-self: start;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  padding: 0 14px;
+  font-weight: 900;
 }
 
 .visionModalBackdrop {

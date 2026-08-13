@@ -2,19 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { createVisionItem, normalizeVision } from "../lib/vision";
+
 type VisionClientProps = { initialValue: unknown };
 
-const defaultVision = `# 私のビジョン
-
-ここに、理想の生活や実現したいやりたいことを書きます。
-`;
-
-function normalizeVision(value: unknown) {
-  return typeof value === "string" ? value : defaultVision;
-}
-
 export default function VisionClient({ initialValue }: VisionClientProps) {
-  const [vision, setVision] = useState(() => normalizeVision(initialValue));
+  const [items, setItems] = useState(() => normalizeVision(initialValue));
   const hasMounted = useRef(false);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
@@ -22,15 +15,21 @@ export default function VisionClient({ initialValue }: VisionClientProps) {
     if (!hasMounted.current) { hasMounted.current = true; return; }
     const timeoutId = window.setTimeout(() => {
       saveQueue.current = saveQueue.current.catch(() => undefined).then(async () => {
-        const response = await fetch("/api/vision", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(vision) });
+        const response = await fetch("/api/vision", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(items) });
         if (!response.ok) throw new Error("ビジョンの保存に失敗しました。");
       });
     }, 500);
     return () => window.clearTimeout(timeoutId);
-  }, [vision]);
+  }, [items]);
 
   return <main className="shell visionPage">
     <section className="roadmapHeader visionHeader"><div><h1>ビジョン</h1></div></section>
-    <textarea className="visionEditor" aria-label="ビジョン" value={vision} onChange={(event) => setVision(event.currentTarget.value)} />
+    <section className="visionList" aria-label="ビジョン一覧">
+      <ol>{items.map((item, index) => <li key={item.id}>
+        <input aria-label={`${index + 1}番目のビジョン`} placeholder="理想の生活や、やりたいこと" value={item.text} onChange={(event) => { const text = event.currentTarget.value; setItems((current) => current.map((currentItem) => currentItem.id === item.id ? { ...currentItem, text } : currentItem)); }} />
+        <button type="button" onClick={() => setItems((current) => current.length === 1 ? [{ ...current[0], text: "" }] : current.filter((currentItem) => currentItem.id !== item.id))} aria-label={`${index + 1}番目のビジョンを削除`}>×</button>
+      </li>)}</ol>
+      <button className="visionAddButton" type="button" onClick={() => setItems((current) => [...current, createVisionItem()])}>＋ 追加</button>
+    </section>
   </main>;
 }
