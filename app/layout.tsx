@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "../components/AuthProvider";
 import AppHeader from "../components/AppHeader";
+import VisionReminder from "../components/VisionReminder";
 import { ServiceWorkerRegistration } from "../components/ServiceWorkerRegistration";
 import { auth } from "../auth";
+import { getVisionState } from "../lib/server-state";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,6 +33,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const vision = await getVisionState();
 
   return (
     <html lang="ja">
@@ -39,6 +42,7 @@ export default async function RootLayout({
         <AuthProvider session={session}>
           <AppHeader />
           {children}
+          <VisionReminder initialValue={vision} />
         </AuthProvider>
       </body>
     </html>

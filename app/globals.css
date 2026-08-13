@@ -2450,7 +2450,8 @@ select {
 .roadmap2Page,
 .roadmapPage,
 .cutoutsPage,
-.learningsPage {
+.learningsPage,
+.visionPage {
   display: grid;
   gap: 18px;
 }
@@ -2462,7 +2463,8 @@ select {
 .roadmap2Page,
 .roadmapPage,
 .cutoutsPage,
-.learningsPage {
+.learningsPage,
+.visionPage {
   width: min(1180px, calc(100% - 32px));
 }
 
@@ -2478,7 +2480,8 @@ select {
 .roadmap2Header h1,
 .roadmapHeader h1,
 .cutoutsHeader h1,
-.learningsHeader h1 {
+.learningsHeader h1,
+.visionHeader h1 {
   margin-top: 10px;
   font-size: clamp(2rem, 5vw, 4rem);
 }
@@ -2489,7 +2492,8 @@ select {
 .roadmap2Header,
 .roadmapHeader,
 .cutoutsHeader,
-.learningsHeader {
+.learningsHeader,
+.visionHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: end;
@@ -2520,6 +2524,47 @@ select {
   align-items: center;
   gap: 12px;
 }
+
+.visionEditor {
+  width: 100%;
+  min-height: 620px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  padding: 18px;
+  line-height: 1.75;
+  resize: vertical;
+}
+
+.visionModalBackdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  background: rgba(23, 32, 28, .48);
+  padding: 24px;
+}
+
+.visionModal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(720px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.visionModal header { border-bottom: 1px solid var(--line); padding: 18px; }
+.visionModal h2 { margin: 0; font-size: 1.25rem; }
+.visionModalContent { overflow: auto; padding: 18px; line-height: 1.7; }
+.visionModal > button { min-height: 46px; margin: 14px 18px 18px; border: 0; border-radius: 8px; background: var(--accent-strong); color: white; font-weight: 900; }
 
 .learningSubjectTabs {
   display: flex;
