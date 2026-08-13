@@ -535,6 +535,12 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
     );
   }
 
+  function updateNoteTitle(noteId: string, title: string) {
+    setNotes((current) =>
+      current.map((note) => (note.id === noteId ? { ...note, title } : note)),
+    );
+  }
+
   function selectFolder(folderId: string) {
     setActiveFolderId(folderId);
     const nextNote =
@@ -1017,7 +1023,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   aria-label="メモタイトル"
                   value={activeNote.title}
                   onChange={(event) =>
-                    updateActiveNote({ title: event.target.value })
+                    updateNoteTitle(activeNote.id, event.currentTarget.value)
                   }
                   onKeyDown={(event) => {
                     if (event.key !== "Enter") return;
