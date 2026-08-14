@@ -1,23 +1,10 @@
-import {
-  MarkdownMemoPage,
-  defaultMemoMarkdown,
-  memoStorageKey,
-} from "../../components/MarkdownMemoClient";
-import { getMemoState } from "../../lib/server-state";
+import RoadmapTabs from "../../components/RoadmapTabs";
+import { getMemoState, getRoadmap2State } from "../../lib/server-state";
 
-export default async function RoadmapPage() {
+export default async function RoadmapPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const memos = await getMemoState();
+  const roadmap2 = await getRoadmap2State();
+  const { tab } = await searchParams;
 
-  return (
-    <MarkdownMemoPage
-      apiPath="/api/memos"
-      ariaLabel="ロードマップ"
-      defaultMarkdown={defaultMemoMarkdown}
-      defaultTitle="ロードマップ"
-      idPrefix="roadmap"
-      initialValue={memos.length > 0 ? memos : null}
-      pageTitle="Roadmap"
-      storageKey={memoStorageKey}
-    />
-  );
+  return <RoadmapTabs initialMemoValue={memos.length > 0 ? memos : null} initialRoadmap2Value={roadmap2} initialTab={tab === "annual" ? "annual" : "roadmap"} />;
 }

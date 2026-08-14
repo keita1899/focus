@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
+import { SignOutButton } from "./AuthControls";
+
 function getTodayLabel() {
   const today = new Date();
   return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
@@ -11,6 +13,7 @@ function getTodayLabel() {
 export default function AppHeader() {
   const { data: session } = useSession();
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -40,20 +43,12 @@ export default function AppHeader() {
         </time>
       </div>
       <div className="topbarLinks">
-        {session?.user && (
-          <span className="userBadge">
-            {session.user.name || session.user.email || "ログイン中"}
-          </span>
-        )}
         <nav className="topbarNav" aria-label="ナビゲーション">
-          <a className="navLink" href="/">
-            ホーム
+          <a className="navLink homeNavLink" href="/" aria-label="ホーム" title="ホーム">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v9.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9.5 21v-6h5v6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
           </a>
           <a className="navLink" href="/roadmap">
             ロードマップ
-          </a>
-          <a className="navLink" href="/roadmap2">
-            年間ロードマップ
           </a>
           <a className="navLink" href="/cutouts">
             切り抜き
@@ -74,9 +69,14 @@ export default function AppHeader() {
             日記
           </a>
         </nav>
-        <a className="settingsLink" href="/settings" aria-label="設定">
-          ⚙
-        </a>
+        <div className="accountMenu">
+          <button className="settingsLink" type="button" aria-label="アカウントメニュー" aria-expanded={isAccountMenuOpen} onClick={() => setIsAccountMenuOpen((current) => !current)}>⚙</button>
+          {isAccountMenuOpen && <div className="accountMenuPopup">
+            <span>{session?.user?.name || session?.user?.email || "ログイン中"}</span>
+            <a href="/settings" onClick={() => setIsAccountMenuOpen(false)}>設定</a>
+            <SignOutButton />
+          </div>}
+        </div>
       </div>
     </header>
   );
