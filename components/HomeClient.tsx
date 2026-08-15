@@ -23,11 +23,7 @@ type PriorityTask = {
   projectName?: string;
 };
 
-type DailyGroupKey =
-  | "beforeBreakfast"
-  | "beforeLunch"
-  | "beforeDinner"
-  | "afterDinner";
+type DailyGroupKey = string;
 
 type DailyPattern = "work" | "holiday";
 
@@ -41,6 +37,9 @@ type DailyTask = {
 
 type DailyTaskGroup = {
   key: DailyGroupKey;
+  title: string;
+  startTime: string;
+  endTime: string;
   theme: string;
   tasks: DailyTask[];
 };
@@ -142,11 +141,11 @@ const defaultDailyPatternByWeekday: Record<number, DailyPattern> = {
   6: "holiday",
 };
 
-const dailyGroupDefinitions: Array<{ key: DailyGroupKey; label: string }> = [
-  { key: "beforeBreakfast", label: "朝食前 ~9:00" },
-  { key: "beforeLunch", label: "昼食前 ~12:00" },
-  { key: "beforeDinner", label: "夕食前 ~19:00" },
-  { key: "afterDinner", label: "夕食後 ~23:00" },
+const dailyGroupDefinitions: Array<Pick<DailyTaskGroup, "key" | "title" | "startTime" | "endTime">> = [
+  { key: "beforeBreakfast", title: "朝食前", startTime: "06:00", endTime: "09:00" },
+  { key: "beforeLunch", title: "昼食前", startTime: "09:00", endTime: "12:00" },
+  { key: "beforeDinner", title: "昼食後", startTime: "12:00", endTime: "19:00" },
+  { key: "afterDinner", title: "夕食後", startTime: "19:00", endTime: "23:00" },
 ];
 
 const initialState: PlannerState = {
@@ -170,6 +169,9 @@ const initialState: PlannerState = {
   inboxTasks: [],
   dailyTaskGroups: dailyGroupDefinitions.map(({ key }) => ({
     key,
+    title: dailyGroupDefinitions.find((definition) => definition.key === key)?.title || "",
+    startTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.startTime || "",
+    endTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.endTime || "",
     theme: "",
     tasks: [],
   })),
@@ -274,6 +276,9 @@ function normalizeDailyTaskGroups(
       ...groups,
       [definition.key]: {
         key: definition.key,
+        title: definition.title,
+        startTime: definition.startTime,
+        endTime: definition.endTime,
         theme: "",
         tasks: [],
       },
@@ -284,9 +289,20 @@ function normalizeDailyTaskGroups(
   if (Array.isArray(value.dailyTaskGroups)) {
     value.dailyTaskGroups.forEach((group, groupIndex) => {
       const item = group as Partial<DailyTaskGroup>;
-      if (!item.key || !(item.key in fallbackGroups)) return;
+      if (!item.key) return;
+      const fallback = fallbackGroups[item.key] || {
+        key: item.key,
+        title: "新しいグループ",
+        startTime: "09:00",
+        endTime: "10:00",
+        theme: "",
+        tasks: [],
+      };
       fallbackGroups[item.key] = {
         key: item.key,
+        title: typeof item.title === "string" ? item.title : fallback.title,
+        startTime: isValidTimeValue(item.startTime) ? item.startTime : fallback.startTime,
+        endTime: isValidTimeValue(item.endTime) ? item.endTime : fallback.endTime,
         theme: typeof item.theme === "string" ? item.theme : "",
         tasks: Array.isArray(item.tasks)
           ? item.tasks.map((task, taskIndex) =>
@@ -296,7 +312,7 @@ function normalizeDailyTaskGroups(
       };
     });
 
-    return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
+    return Object.values(fallbackGroups);
   }
 
   if (Array.isArray(value.dailyTasks)) {
@@ -332,7 +348,10 @@ function normalizeTodayThemeTaskGroups(
   if (Array.isArray(value.todayThemeTaskGroups)) {
     value.todayThemeTaskGroups.forEach((group, groupIndex) => {
       const item = group as Partial<TodayThemeTaskGroup>;
-      if (!item.key || !(item.key in fallbackGroups)) return;
+      if (!item.key) return;
+      if (!fallbackGroups[item.key]) {
+        fallbackGroups[item.key] = { key: item.key, tasks: [] };
+      }
       fallbackGroups[item.key] = {
         key: item.key,
         tasks: Array.isArray(item.tasks)
@@ -348,7 +367,7 @@ function normalizeTodayThemeTaskGroups(
       };
     });
 
-    return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
+    return Object.values(fallbackGroups);
   }
 
   const legacyTodayTasks = Array.isArray(value.todayTasks)
@@ -806,6 +825,10 @@ export default function HomeClient({
   const [newDailyTaskTitles, setNewDailyTaskTitles] = useState(() =>
     createEmptyDailyTaskTitleMap(),
   );
+  const [newDailyGroupTitle, setNewDailyGroupTitle] = useState("");
+  const [newDailyGroupStartTime, setNewDailyGroupStartTime] = useState("09:00");
+  const [newDailyGroupEndTime, setNewDailyGroupEndTime] = useState("10:00");
+  const [newDailyGroupTheme, setNewDailyGroupTheme] = useState("");
   const [newTodayThemeTaskTitles, setNewTodayThemeTaskTitles] = useState(() =>
     createEmptyTodayThemeTaskTitleMap(),
   );
@@ -1374,7 +1397,7 @@ export default function HomeClient({
   }
 
   function addTodayThemeTask(groupKey: DailyGroupKey) {
-    const title = newTodayThemeTaskTitles[groupKey].trim();
+    const title = (newTodayThemeTaskTitles[groupKey] || "").trim();
     if (!title) return;
     setPlanner((current) => ({
       ...current,
@@ -1432,7 +1455,7 @@ export default function HomeClient({
   }
 
   function addDailyTask(groupKey: DailyGroupKey) {
-    const title = newDailyTaskTitles[groupKey].trim();
+    const title = (newDailyTaskTitles[groupKey] || "").trim();
     if (!title) return;
     setPlanner((current) => ({
       ...current,
@@ -1499,6 +1522,37 @@ export default function HomeClient({
       dailyTaskGroups: current.dailyTaskGroups.map((group) =>
         group.key === groupKey ? { ...group, theme } : group,
       ),
+    }));
+  }
+
+  function updateDailyTaskGroup(groupKey: DailyGroupKey, value: Partial<Pick<DailyTaskGroup, "title" | "startTime" | "endTime" | "theme">>) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey ? { ...group, ...value } : group,
+      ),
+    }));
+  }
+
+  function addDailyTaskGroup() {
+    const title = newDailyGroupTitle.trim();
+    if (!title || !isValidTimeValue(newDailyGroupStartTime) || !isValidTimeValue(newDailyGroupEndTime)) return;
+    const key = createId("daily-group");
+    setPlanner((current) => ({
+      ...current,
+      dailyTaskGroups: [...current.dailyTaskGroups, { key, title, startTime: newDailyGroupStartTime, endTime: newDailyGroupEndTime, theme: newDailyGroupTheme, tasks: [] }],
+      todayThemeTaskGroups: [...current.todayThemeTaskGroups, { key, tasks: [] }],
+    }));
+    setNewDailyTaskTitles((current) => ({ ...current, [key]: "" }));
+    setNewDailyGroupTitle("");
+    setNewDailyGroupTheme("");
+  }
+
+  function removeDailyTaskGroup(groupKey: DailyGroupKey) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTaskGroups: current.dailyTaskGroups.filter((group) => group.key !== groupKey),
+      todayThemeTaskGroups: current.todayThemeTaskGroups.filter((group) => group.key !== groupKey),
     }));
   }
 
@@ -1713,40 +1767,16 @@ export default function HomeClient({
   }
 
   function renderDailyTaskGroup(group: DailyTaskGroup, pattern: DailyPattern) {
-    const groupLabel =
-      dailyGroupDefinitions.find((definition) => definition.key === group.key)?.label ||
-      group.key;
-    const themeEditTarget = { kind: "daily-theme", id: group.key } as const;
-    const isThemeEditing = isTaskBeingEdited(themeEditTarget);
+    const groupLabel = group.title || "無題のグループ";
     const tasks = group.tasks.filter((task) => task.pattern === pattern);
 
     return (
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
         <div className="sectionHeader dailyGroupHeader">
-          <h3>{groupLabel}</h3>
-          {isThemeEditing ? (
-            <input
-              className="dailyThemeInput"
-              aria-label={`${groupLabel}のテーマ`}
-              value={group.theme}
-              onChange={(event) => updateDailyTaskGroupTheme(group.key, event.target.value)}
-              onKeyDown={handleTaskEditKeyDown}
-              onBlur={() => finishTaskEdit(themeEditTarget)}
-              autoFocus
-            />
-          ) : (
-            <div
-              className="dailyThemeView"
-              role="textbox"
-              aria-label={`${groupLabel}のテーマ`}
-              aria-readonly="true"
-              tabIndex={0}
-              onDoubleClick={() => beginTaskEdit(themeEditTarget)}
-            >
-              {group.theme || "テーマ未設定"}
-            </div>
-          )}
+          <input className="dailyGroupTitleInput" aria-label="グループ名" value={group.title} onChange={(event) => updateDailyTaskGroup(group.key, { title: event.currentTarget.value })} />
+          <button className="iconButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>×</button>
         </div>
+        <div className="dailyGroupMetaFields"><input type="time" aria-label={`${groupLabel}の開始時刻`} value={group.startTime} onChange={(event) => updateDailyTaskGroup(group.key, { startTime: event.currentTarget.value })} /><span>〜</span><input type="time" aria-label={`${groupLabel}の終了時刻`} value={group.endTime} onChange={(event) => updateDailyTaskGroup(group.key, { endTime: event.currentTarget.value })} /><input aria-label={`${groupLabel}のテーマ`} placeholder="テーマ" value={group.theme} onChange={(event) => updateDailyTaskGroup(group.key, { theme: event.currentTarget.value })} /></div>
         <form
           className="taskForm dailyTaskForm"
           onSubmit={(event) => {
@@ -1756,7 +1786,7 @@ export default function HomeClient({
         >
           <input
             aria-label={`${groupLabel}の毎日タスクを追加`}
-            value={newDailyTaskTitles[group.key]}
+            value={newDailyTaskTitles[group.key] || ""}
             onChange={(event) => updateNewDailyTaskTitle(group.key, event.target.value)}
           />
           <button
@@ -1819,11 +1849,7 @@ export default function HomeClient({
   }
 
   function renderTodayDailyGroup(group: DailyTaskGroup) {
-    const groupLabel =
-      dailyGroupDefinitions.find((definition) => definition.key === group.key)?.label ||
-      group.key;
-    const themeEditTarget = { kind: "daily-theme", id: group.key } as const;
-    const isThemeEditing = isTaskBeingEdited(themeEditTarget);
+    const groupLabel = group.title || "無題のグループ";
     const todayThemeGroup =
       planner.todayThemeTaskGroups.find((item) => item.key === group.key) || null;
     const todayPattern = planner.dailyPatternByWeekday[new Date().getDay()];
@@ -1837,29 +1863,9 @@ export default function HomeClient({
       >
         <div className="sectionHeader dailyGroupHeader">
           <h3>{groupLabel}</h3>
-          {isThemeEditing ? (
-            <input
-              className="dailyThemeInput"
-              aria-label={`${groupLabel}のテーマ`}
-              value={group.theme}
-              onChange={(event) => updateDailyTaskGroupTheme(group.key, event.target.value)}
-              onKeyDown={handleTaskEditKeyDown}
-              onBlur={() => finishTaskEdit(themeEditTarget)}
-              autoFocus
-            />
-          ) : (
-            <div
-              className="dailyThemeView"
-              role="textbox"
-              aria-label={`${groupLabel}のテーマ`}
-              aria-readonly="true"
-              tabIndex={0}
-              onDoubleClick={() => beginTaskEdit(themeEditTarget)}
-            >
-              {group.theme || "テーマ未設定"}
-            </div>
-          )}
+          <span className="sectionMeta">{group.startTime}〜{group.endTime}</span>
         </div>
+        {group.theme && <p className="dailyGroupThemeText">{group.theme}</p>}
         <form
           className="taskForm dailyTaskForm"
           onSubmit={(event) => {
@@ -1869,7 +1875,7 @@ export default function HomeClient({
         >
           <input
             aria-label={`${groupLabel}の今日タスクを追加`}
-            value={newTodayThemeTaskTitles[group.key]}
+            value={newTodayThemeTaskTitles[group.key] || ""}
             onChange={(event) => updateNewTodayThemeTaskTitle(group.key, event.target.value)}
           />
           <button
@@ -2342,6 +2348,13 @@ export default function HomeClient({
                     <button className={selectedDailyPattern === "holiday" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "holiday"} onClick={() => setSelectedDailyPattern("holiday")}>休日</button>
                   </div>
                   {renderDailyPatternWeekdayToggles()}
+                  <form className="dailyGroupCreateForm" onSubmit={(event) => { event.preventDefault(); addDailyTaskGroup(); }}>
+                    <input aria-label="グループ名" placeholder="グループ名" value={newDailyGroupTitle} onChange={(event) => setNewDailyGroupTitle(event.currentTarget.value)} />
+                    <input aria-label="開始時刻" type="time" value={newDailyGroupStartTime} onChange={(event) => setNewDailyGroupStartTime(event.currentTarget.value)} />
+                    <input aria-label="終了時刻" type="time" value={newDailyGroupEndTime} onChange={(event) => setNewDailyGroupEndTime(event.currentTarget.value)} />
+                    <input aria-label="テーマ" placeholder="テーマ" value={newDailyGroupTheme} onChange={(event) => setNewDailyGroupTheme(event.currentTarget.value)} />
+                    <button className="recurringAddButton" type="submit">＋</button>
+                  </form>
                   <div className="dailyGroupGrid">
                     {planner.dailyTaskGroups.map((group) =>
                       renderDailyTaskGroup(group, selectedDailyPattern),
