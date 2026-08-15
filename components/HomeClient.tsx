@@ -38,8 +38,7 @@ type DailyTask = {
 type DailyTaskGroup = {
   key: DailyGroupKey;
   title: string;
-  startTime: string;
-  endTime: string;
+  time: string;
   theme: string;
   tasks: DailyTask[];
 };
@@ -141,11 +140,11 @@ const defaultDailyPatternByWeekday: Record<number, DailyPattern> = {
   6: "holiday",
 };
 
-const dailyGroupDefinitions: Array<Pick<DailyTaskGroup, "key" | "title" | "startTime" | "endTime">> = [
-  { key: "beforeBreakfast", title: "朝食前", startTime: "06:00", endTime: "09:00" },
-  { key: "beforeLunch", title: "昼食前", startTime: "09:00", endTime: "12:00" },
-  { key: "beforeDinner", title: "昼食後", startTime: "12:00", endTime: "19:00" },
-  { key: "afterDinner", title: "夕食後", startTime: "19:00", endTime: "23:00" },
+const dailyGroupDefinitions: Array<Pick<DailyTaskGroup, "key" | "title" | "time">> = [
+  { key: "beforeBreakfast", title: "朝食前", time: "06:00" },
+  { key: "beforeLunch", title: "昼食前", time: "09:00" },
+  { key: "beforeDinner", title: "昼食後", time: "12:00" },
+  { key: "afterDinner", title: "夕食後", time: "19:00" },
 ];
 
 const initialState: PlannerState = {
@@ -170,8 +169,7 @@ const initialState: PlannerState = {
   dailyTaskGroups: dailyGroupDefinitions.map(({ key }) => ({
     key,
     title: dailyGroupDefinitions.find((definition) => definition.key === key)?.title || "",
-    startTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.startTime || "",
-    endTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.endTime || "",
+    time: dailyGroupDefinitions.find((definition) => definition.key === key)?.time || "",
     theme: "",
     tasks: [],
   })),
@@ -186,6 +184,10 @@ function getAchievementYearLabel(offset: number) {
 
 function getWeekdayLabel(weekday: number) {
   return `${weekdayLabels[weekday]}曜日`;
+}
+
+function formatTimeLabel(time: string) {
+  return time.replace(/^0(\d:)/, "$1");
 }
 
 const goalLabels: Record<GoalKey, string> = {
@@ -277,8 +279,7 @@ function normalizeDailyTaskGroups(
       [definition.key]: {
         key: definition.key,
         title: definition.title,
-        startTime: definition.startTime,
-        endTime: definition.endTime,
+        time: definition.time,
         theme: "",
         tasks: [],
       },
@@ -293,16 +294,18 @@ function normalizeDailyTaskGroups(
       const fallback = fallbackGroups[item.key] || {
         key: item.key,
         title: "新しいグループ",
-        startTime: "09:00",
-        endTime: "10:00",
+        time: "09:00",
         theme: "",
         tasks: [],
       };
       fallbackGroups[item.key] = {
         key: item.key,
         title: typeof item.title === "string" ? item.title : fallback.title,
-        startTime: isValidTimeValue(item.startTime) ? item.startTime : fallback.startTime,
-        endTime: isValidTimeValue(item.endTime) ? item.endTime : fallback.endTime,
+        time: isValidTimeValue(item.time)
+          ? item.time
+          : isValidTimeValue((item as { startTime?: unknown }).startTime)
+            ? (item as { startTime: string }).startTime
+            : fallback.time,
         theme: typeof item.theme === "string" ? item.theme : "",
         tasks: Array.isArray(item.tasks)
           ? item.tasks.map((task, taskIndex) =>
@@ -826,8 +829,7 @@ export default function HomeClient({
     createEmptyDailyTaskTitleMap(),
   );
   const [newDailyGroupTitle, setNewDailyGroupTitle] = useState("");
-  const [newDailyGroupStartTime, setNewDailyGroupStartTime] = useState("09:00");
-  const [newDailyGroupEndTime, setNewDailyGroupEndTime] = useState("10:00");
+  const [newDailyGroupTime, setNewDailyGroupTime] = useState("09:00");
   const [newDailyGroupTheme, setNewDailyGroupTheme] = useState("");
   const [newTodayThemeTaskTitles, setNewTodayThemeTaskTitles] = useState(() =>
     createEmptyTodayThemeTaskTitleMap(),
@@ -1525,7 +1527,7 @@ export default function HomeClient({
     }));
   }
 
-  function updateDailyTaskGroup(groupKey: DailyGroupKey, value: Partial<Pick<DailyTaskGroup, "title" | "startTime" | "endTime" | "theme">>) {
+  function updateDailyTaskGroup(groupKey: DailyGroupKey, value: Partial<Pick<DailyTaskGroup, "title" | "time" | "theme">>) {
     setPlanner((current) => ({
       ...current,
       dailyTaskGroups: current.dailyTaskGroups.map((group) =>
@@ -1536,11 +1538,11 @@ export default function HomeClient({
 
   function addDailyTaskGroup() {
     const title = newDailyGroupTitle.trim();
-    if (!title || !isValidTimeValue(newDailyGroupStartTime) || !isValidTimeValue(newDailyGroupEndTime)) return;
+    if (!title || !isValidTimeValue(newDailyGroupTime)) return;
     const key = createId("daily-group");
     setPlanner((current) => ({
       ...current,
-      dailyTaskGroups: [...current.dailyTaskGroups, { key, title, startTime: newDailyGroupStartTime, endTime: newDailyGroupEndTime, theme: newDailyGroupTheme, tasks: [] }],
+      dailyTaskGroups: [...current.dailyTaskGroups, { key, title, time: newDailyGroupTime, theme: newDailyGroupTheme, tasks: [] }],
       todayThemeTaskGroups: [...current.todayThemeTaskGroups, { key, tasks: [] }],
     }));
     setNewDailyTaskTitles((current) => ({ ...current, [key]: "" }));
@@ -1776,7 +1778,7 @@ export default function HomeClient({
           <input className="dailyGroupTitleInput" aria-label="グループ名" value={group.title} onChange={(event) => updateDailyTaskGroup(group.key, { title: event.currentTarget.value })} />
           <button className="iconButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>×</button>
         </div>
-        <div className="dailyGroupMetaFields"><input type="time" aria-label={`${groupLabel}の開始時刻`} value={group.startTime} onChange={(event) => updateDailyTaskGroup(group.key, { startTime: event.currentTarget.value })} /><span>〜</span><input type="time" aria-label={`${groupLabel}の終了時刻`} value={group.endTime} onChange={(event) => updateDailyTaskGroup(group.key, { endTime: event.currentTarget.value })} /><input aria-label={`${groupLabel}のテーマ`} placeholder="テーマ" value={group.theme} onChange={(event) => updateDailyTaskGroup(group.key, { theme: event.currentTarget.value })} /></div>
+        <div className="dailyGroupMetaFields"><input type="time" aria-label={`${groupLabel}の時刻`} value={group.time} onChange={(event) => updateDailyTaskGroup(group.key, { time: event.currentTarget.value })} /><input aria-label={`${groupLabel}のテーマ`} placeholder="テーマ" value={group.theme} onChange={(event) => updateDailyTaskGroup(group.key, { theme: event.currentTarget.value })} /></div>
         <form
           className="taskForm dailyTaskForm"
           onSubmit={(event) => {
@@ -1862,10 +1864,9 @@ export default function HomeClient({
         aria-label={`${groupLabel}の今日のタスク`}
       >
         <div className="sectionHeader dailyGroupHeader">
-          <h3>{groupLabel}</h3>
-          <span className="sectionMeta">{group.startTime}〜{group.endTime}</span>
+          <h3>{groupLabel} <span className="dailyGroupTime">{formatTimeLabel(group.time)}</span></h3>
+          <span className="sectionMeta">{group.theme || "テーマ未設定"}</span>
         </div>
-        {group.theme && <p className="dailyGroupThemeText">{group.theme}</p>}
         <form
           className="taskForm dailyTaskForm"
           onSubmit={(event) => {
@@ -2350,8 +2351,7 @@ export default function HomeClient({
                   {renderDailyPatternWeekdayToggles()}
                   <form className="dailyGroupCreateForm" onSubmit={(event) => { event.preventDefault(); addDailyTaskGroup(); }}>
                     <input aria-label="グループ名" placeholder="グループ名" value={newDailyGroupTitle} onChange={(event) => setNewDailyGroupTitle(event.currentTarget.value)} />
-                    <input aria-label="開始時刻" type="time" value={newDailyGroupStartTime} onChange={(event) => setNewDailyGroupStartTime(event.currentTarget.value)} />
-                    <input aria-label="終了時刻" type="time" value={newDailyGroupEndTime} onChange={(event) => setNewDailyGroupEndTime(event.currentTarget.value)} />
+                    <input aria-label="時刻" type="time" value={newDailyGroupTime} onChange={(event) => setNewDailyGroupTime(event.currentTarget.value)} />
                     <input aria-label="テーマ" placeholder="テーマ" value={newDailyGroupTheme} onChange={(event) => setNewDailyGroupTheme(event.currentTarget.value)} />
                     <button className="recurringAddButton" type="submit">＋</button>
                   </form>
