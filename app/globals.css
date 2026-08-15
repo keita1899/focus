@@ -2762,12 +2762,32 @@ select {
   padding-left: 28px;
 }
 
+.visionList ol {
+  list-style: none;
+  padding-left: 0;
+}
+
 .visionList li {
+  display: block;
+}
+
+.visionListItem {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  grid-template-columns: 28px minmax(0, 1fr) 34px;
   align-items: center;
   gap: 8px;
-  padding-left: 4px;
+}
+
+.visionItemNumber {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: #e7f2ec;
+  color: var(--accent-strong);
+  font-size: .82rem;
+  font-weight: 900;
 }
 
 .visionList input {
@@ -2779,7 +2799,7 @@ select {
   padding: 0 12px;
 }
 
-.visionList li > button {
+.visionListItem > button {
   display: grid;
   width: 34px;
   height: 34px;
@@ -2789,6 +2809,33 @@ select {
   background: #fff5f3;
   color: var(--danger);
   font-weight: 900;
+}
+
+.visionInsertPoint {
+  display: grid;
+  height: 20px;
+  place-items: center;
+}
+
+.visionInsertPoint button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.visionInsertPoint:hover button,
+.visionInsertPoint:focus-within button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .visionAddButton {

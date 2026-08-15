@@ -26,8 +26,12 @@ export default function VisionClient({ initialValue }: VisionClientProps) {
     <section className="roadmapHeader visionHeader"><div><h1>ビジョン</h1></div></section>
     <section className="visionList" aria-label="ビジョン一覧">
       <ol>{items.map((item, index) => <li key={item.id}>
-        <input aria-label={`${index + 1}番目のビジョン`} placeholder="理想の生活や、やりたいこと" value={item.text} onChange={(event) => { const text = event.currentTarget.value; setItems((current) => current.map((currentItem) => currentItem.id === item.id ? { ...currentItem, text } : currentItem)); }} />
-        <button type="button" onClick={() => setItems((current) => current.length === 1 ? [{ ...current[0], text: "" }] : current.filter((currentItem) => currentItem.id !== item.id))} aria-label={`${index + 1}番目のビジョンを削除`}>×</button>
+        <div className="visionListItem">
+          <span className="visionItemNumber" aria-hidden="true">{index + 1}</span>
+          <input aria-label={`${index + 1}番目のビジョン`} placeholder="理想の生活や、やりたいこと" value={item.text} onChange={(event) => { const text = event.currentTarget.value; setItems((current) => current.map((currentItem) => currentItem.id === item.id ? { ...currentItem, text } : currentItem)); }} />
+          <button type="button" onClick={() => setItems((current) => current.length === 1 ? [{ ...current[0], text: "" }] : current.filter((currentItem) => currentItem.id !== item.id))} aria-label={`${index + 1}番目のビジョンを削除`}>×</button>
+        </div>
+        {index < items.length - 1 && <div className="visionInsertPoint"><button type="button" onClick={() => setItems((current) => [...current.slice(0, index + 1), createVisionItem(), ...current.slice(index + 1)])} aria-label={`${index + 1}番目と${index + 2}番目の間に追加`}>＋</button></div>}
       </li>)}</ol>
       <button className="visionAddButton" type="button" onClick={() => setItems((current) => [...current, createVisionItem()])}>＋ 追加</button>
     </section>
