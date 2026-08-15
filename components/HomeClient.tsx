@@ -1493,7 +1493,6 @@ export default function HomeClient({
       ),
     }));
     updateNewDailyTaskTitle(groupKey, "");
-    setNewDailyTaskTimes((current) => ({ ...current, [groupKey]: "09:00" }));
   }
 
   function addWeeklyTask() {
