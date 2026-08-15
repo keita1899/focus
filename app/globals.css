@@ -1853,13 +1853,13 @@ select {
 .dailyGroupCreateForm,
 .dailyGroupMetaFields {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) 110px minmax(120px, 1fr) 42px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px;
   gap: 8px;
   align-items: center;
 }
 
 .dailyGroupMetaFields {
-  grid-template-columns: 110px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .dailyGroupCreateForm input,
@@ -1874,6 +1874,28 @@ select {
   font: inherit;
 }
 
+.dailyGroupNameTimeFields {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 92px 18px 92px;
+  align-items: center;
+  gap: 6px;
+}
+
+.dailyGroupMetaFields .dailyGroupNameTimeFields {
+  grid-template-columns: 100px 18px 100px;
+}
+
+.dailyGroupDeleteButton {
+  min-height: 32px;
+  border: 1px solid rgba(168, 61, 52, .25);
+  border-radius: 8px;
+  background: #fff5f3;
+  color: var(--danger);
+  padding: 0 9px;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
 .dailyGroupTitleInput {
   width: 100%;
   border-color: transparent;
@@ -1884,6 +1906,18 @@ select {
 }
 
 .dailyGroupTime { color: var(--muted); font-size: .85rem; font-weight: 900; }
+
+.weeklyTaskFormWeekdays .weekdayToggle,
+.monthlyTaskFormDays .monthdayToggle {
+  background: #e1e5e1;
+}
+
+.weeklyTaskFormWeekdays .weekdayToggle.active,
+.monthlyTaskFormDays .monthdayToggle.active {
+  border-color: rgba(23, 107, 85, .3);
+  background: #1d7c5f;
+  color: white;
+}
 
 .monthlyTaskFormDays,
 .monthlyItemDays {
