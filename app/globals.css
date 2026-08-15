@@ -1228,6 +1228,19 @@ select {
   padding: 10px;
 }
 
+.taskItem.noCompletion {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.taskItem.noCompletion .taskTitleView,
+.taskItem.noCompletion textarea {
+  grid-column: 1;
+}
+
+.taskItem.noCompletion .iconButton {
+  grid-column: 2;
+}
+
 .priority {
   grid-template-columns: 42px minmax(0, 1fr) auto;
   min-height: 66px;

@@ -32,6 +32,7 @@ type DailyGroupKey =
 type DailyTask = {
   id: string;
   title: string;
+  weekday: number;
   completedDates: string[];
 };
 
@@ -231,6 +232,9 @@ function normalizeDailyTask(task: Partial<DailyTask>, index: number): DailyTask 
   return {
     id: task.id || `daily-task-${index + 1}`,
     title: task.title || "",
+    weekday: typeof task.weekday === "number" && task.weekday >= 0 && task.weekday <= 6
+      ? task.weekday
+      : new Date().getDay(),
     completedDates: Array.isArray(task.completedDates)
       ? task.completedDates.filter(
           (date): date is string => typeof date === "string",
@@ -777,6 +781,9 @@ export default function HomeClient({
   );
   const [newWeeklyTaskTitle, setNewWeeklyTaskTitle] = useState("");
   const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
+    () => new Date().getDay(),
+  );
+  const [selectedDailyWeekday, setSelectedDailyWeekday] = useState(
     () => new Date().getDay(),
   );
   const [newMonthlyTaskTitle, setNewMonthlyTaskTitle] = useState("");
@@ -1410,6 +1417,7 @@ export default function HomeClient({
                 {
                   id: createId("daily-task"),
                   title,
+                  weekday: selectedDailyWeekday,
                   completedDates: [],
                 },
               ],
@@ -1643,12 +1651,13 @@ export default function HomeClient({
     );
   }
 
-  function renderDailyTaskGroup(group: DailyTaskGroup) {
+  function renderDailyTaskGroup(group: DailyTaskGroup, weekday: number) {
     const groupLabel =
       dailyGroupDefinitions.find((definition) => definition.key === group.key)?.label ||
       group.key;
     const themeEditTarget = { kind: "daily-theme", id: group.key } as const;
     const isThemeEditing = isTaskBeingEdited(themeEditTarget);
+    const tasks = group.tasks.filter((task) => task.weekday === weekday);
 
     return (
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
@@ -1698,26 +1707,17 @@ export default function HomeClient({
           </button>
         </form>
         <div className="taskList">
-          {group.tasks.length === 0 && (
+          {tasks.length === 0 && (
             <p className="emptyText">タスクはありません。</p>
           )}
-          {group.tasks.map((task) => {
-            const isCompleted = task.completedDates.includes(todayKey);
+          {tasks.map((task) => {
             const editTarget = { kind: "daily", id: task.id } as const;
             const isEditing = isTaskBeingEdited(editTarget);
             return (
               <article
-                className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
+                className="taskItem dailyItem noCompletion"
                 key={task.id}
               >
-                <button
-                  className="checkButton"
-                  type="button"
-                  onClick={() => toggleDailyTask(group.key, task.id)}
-                  aria-label={`${task.title || "無題のタスク"}の完了を切り替え`}
-                >
-                  ✓
-                </button>
                 {isEditing ? (
                   <textarea
                     aria-label="毎日のタスク"
@@ -1765,6 +1765,7 @@ export default function HomeClient({
     const isThemeEditing = isTaskBeingEdited(themeEditTarget);
     const todayThemeGroup =
       planner.todayThemeTaskGroups.find((item) => item.key === group.key) || null;
+    const tasks = group.tasks.filter((task) => task.weekday === new Date().getDay());
 
     return (
       <section
@@ -1818,7 +1819,7 @@ export default function HomeClient({
           </button>
         </form>
         <div className="taskList">
-          {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && group.tasks.length === 0 && (
+          {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && tasks.length === 0 && (
             <p className="emptyText">タスクはありません。</p>
           )}
           {todayThemeGroup?.tasks.map((task) => {
@@ -1868,7 +1869,7 @@ export default function HomeClient({
               </article>
             );
           })}
-          {group.tasks.map((task) => {
+          {tasks.map((task) => {
             const isCompleted = task.completedDates.includes(todayKey);
             const editTarget = { kind: "daily", id: task.id } as const;
             const isEditing = isTaskBeingEdited(editTarget);
@@ -1927,7 +1928,11 @@ export default function HomeClient({
     );
   }
 
-  function renderWeeklyTask(task: WeeklyTask, activeWeekday = selectedWeeklyWeekday) {
+  function renderWeeklyTask(
+    task: WeeklyTask,
+    activeWeekday = selectedWeeklyWeekday,
+    showCompletion = true,
+  ) {
     const editTarget = { kind: "weekly", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
     const activeWeeklySlotKey = getWeeklySlotKey(currentWeekKey, activeWeekday);
@@ -1935,10 +1940,10 @@ export default function HomeClient({
     const isCompleted = task.completedWeeks.includes(activeWeeklySlotKey);
     return (
       <article
-        className={isCompleted ? "taskItem done weeklyItem" : "taskItem weeklyItem"}
+        className={isCompleted ? `taskItem done weeklyItem${showCompletion ? "" : " noCompletion"}` : `taskItem weeklyItem${showCompletion ? "" : " noCompletion"}`}
         key={task.id}
       >
-        <button
+        {showCompletion && <button
           className="checkButton"
           type="button"
           onClick={() => toggleWeeklyTask(task.id)}
@@ -1950,7 +1955,7 @@ export default function HomeClient({
           }
         >
           ✓
-        </button>
+        </button>}
         {isEditing ? (
           <textarea
             aria-label="毎週やること"
@@ -1989,7 +1994,11 @@ export default function HomeClient({
     );
   }
 
-  function renderMonthlyTask(task: MonthlyTask, activeDayOfMonth = selectedMonthlyDay) {
+  function renderMonthlyTask(
+    task: MonthlyTask,
+    activeDayOfMonth = selectedMonthlyDay,
+    showCompletion = true,
+  ) {
     const editTarget = { kind: "monthly", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
     const activeMonthlySlotKey = getMonthlySlotKey(currentMonthKey, activeDayOfMonth);
@@ -1997,10 +2006,10 @@ export default function HomeClient({
     const isCompleted = task.completedMonths.includes(activeMonthlySlotKey);
     return (
       <article
-        className={isCompleted ? "taskItem done monthlyItem" : "taskItem monthlyItem"}
+        className={isCompleted ? `taskItem done monthlyItem${showCompletion ? "" : " noCompletion"}` : `taskItem monthlyItem${showCompletion ? "" : " noCompletion"}`}
         key={task.id}
       >
-        <button
+        {showCompletion && <button
           className="checkButton"
           type="button"
           onClick={() => toggleMonthlyTask(task.id)}
@@ -2012,7 +2021,7 @@ export default function HomeClient({
           }
         >
           ✓
-        </button>
+        </button>}
         {isEditing ? (
           <textarea
             aria-label="毎月やること"
@@ -2263,10 +2272,17 @@ export default function HomeClient({
               <div className="recurringGrid" aria-label="繰り返しタスクの編集">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
-                    <h3>毎日のタスク</h3>
+                    <h3>曜日ごとのタスク</h3>
+                    <span className="sectionMeta">{getWeekdayLabel(selectedDailyWeekday)}</span>
                   </div>
+                  {renderWeekdayToggles(
+                    selectedDailyWeekday,
+                    setSelectedDailyWeekday,
+                  )}
                   <div className="dailyGroupGrid">
-                    {planner.dailyTaskGroups.map(renderDailyTaskGroup)}
+                    {planner.dailyTaskGroups.map((group) =>
+                      renderDailyTaskGroup(group, selectedDailyWeekday),
+                    )}
                   </div>
                 </section>
 
@@ -2308,7 +2324,9 @@ export default function HomeClient({
                       )}
                       {planner.weeklyTasks
                         .filter((task) => task.weekday === selectedWeeklyWeekday)
-                        .map(renderWeeklyTask)}
+                        .map((task) =>
+                          renderWeeklyTask(task, selectedWeeklyWeekday, false),
+                        )}
                     </div>
                   </section>
 
@@ -2349,7 +2367,9 @@ export default function HomeClient({
                       )}
                       {planner.monthlyTasks
                         .filter((task) => task.dayOfMonth === selectedMonthlyDay)
-                        .map(renderMonthlyTask)}
+                        .map((task) =>
+                          renderMonthlyTask(task, selectedMonthlyDay, false),
+                        )}
                     </div>
                   </section>
                 </div>
