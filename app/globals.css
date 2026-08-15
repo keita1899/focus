@@ -1804,7 +1804,7 @@ select {
 
 .dailyTaskForm {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px;
+  grid-template-columns: 110px minmax(0, 1fr) 42px;
   gap: 8px;
   min-width: 0;
 }
@@ -1886,13 +1886,16 @@ select {
 }
 
 .dailyGroupDeleteButton {
-  min-height: 32px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
   border: 1px solid rgba(168, 61, 52, .25);
   border-radius: 8px;
   background: #fff5f3;
   color: var(--danger);
-  padding: 0 9px;
-  font-size: .78rem;
+  padding: 0;
+  font-size: 1rem;
   font-weight: 900;
 }
 
@@ -1906,6 +1909,35 @@ select {
 }
 
 .dailyGroupTime { color: var(--muted); font-size: .85rem; font-weight: 900; }
+
+.dailyTaskTimeInput {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 0 8px;
+  font: inherit;
+}
+
+.dailyItem.noCompletion {
+  grid-template-columns: 110px minmax(0, 1fr) auto;
+}
+
+.dailyItem.noCompletion .taskTitleView,
+.dailyItem.noCompletion textarea {
+  grid-column: 2;
+}
+
+.dailyItem.noCompletion .iconButton {
+  grid-column: 3;
+}
+
+.dailyTaskTimeBadge {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 900;
+}
 
 .weeklyTaskFormWeekdays .weekdayToggle,
 .monthlyTaskFormDays .monthdayToggle {

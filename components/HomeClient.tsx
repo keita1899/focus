@@ -30,6 +30,7 @@ type DailyPattern = "work" | "holiday";
 type DailyTask = {
   id: string;
   title: string;
+  time: string;
   weekday: number;
   pattern: DailyPattern;
   completedDates: string[];
@@ -253,6 +254,7 @@ function normalizeDailyTask(task: Partial<DailyTask>, index: number): DailyTask 
   return {
     id: task.id || `daily-task-${index + 1}`,
     title: task.title || "",
+    time: isValidTimeValue(task.time) ? task.time : "09:00",
     weekday: typeof task.weekday === "number" && task.weekday >= 0 && task.weekday <= 6
       ? task.weekday
       : new Date().getDay(),
@@ -835,6 +837,7 @@ export default function HomeClient({
   const [newDailyTaskTitles, setNewDailyTaskTitles] = useState(() =>
     createEmptyDailyTaskTitleMap(),
   );
+  const [newDailyTaskTimes, setNewDailyTaskTimes] = useState<Record<DailyGroupKey, string>>({});
   const [newDailyGroupTitle, setNewDailyGroupTitle] = useState("");
   const [newDailyGroupStartTime, setNewDailyGroupStartTime] = useState("09:00");
   const [newDailyGroupEndTime, setNewDailyGroupEndTime] = useState("10:00");
@@ -1466,7 +1469,8 @@ export default function HomeClient({
 
   function addDailyTask(groupKey: DailyGroupKey) {
     const title = (newDailyTaskTitles[groupKey] || "").trim();
-    if (!title) return;
+    const time = newDailyTaskTimes[groupKey] || "09:00";
+    if (!title || !isValidTimeValue(time)) return;
     setPlanner((current) => ({
       ...current,
       dailyTaskGroups: current.dailyTaskGroups.map((group) =>
@@ -1478,6 +1482,7 @@ export default function HomeClient({
                 {
                   id: createId("daily-task"),
                   title,
+                  time,
                   weekday: new Date().getDay(),
                   pattern: selectedDailyPattern,
                   completedDates: [],
@@ -1488,6 +1493,7 @@ export default function HomeClient({
       ),
     }));
     updateNewDailyTaskTitle(groupKey, "");
+    setNewDailyTaskTimes((current) => ({ ...current, [groupKey]: "09:00" }));
   }
 
   function addWeeklyTask() {
@@ -1587,6 +1593,17 @@ export default function HomeClient({
                 task.id === id ? { ...task, title } : task,
               ),
             }
+          : group,
+      ),
+    }));
+  }
+
+  function updateDailyTaskTime(groupKey: DailyGroupKey, id: string, time: string) {
+    setPlanner((current) => ({
+      ...current,
+      dailyTaskGroups: current.dailyTaskGroups.map((group) =>
+        group.key === groupKey
+          ? { ...group, tasks: group.tasks.map((task) => task.id === id ? { ...task, time } : task) }
           : group,
       ),
     }));
@@ -1792,7 +1809,7 @@ export default function HomeClient({
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
         <div className="sectionHeader dailyGroupHeader">
           <input className="dailyGroupTitleInput" aria-label="グループ名" value={group.title} onChange={(event) => updateDailyTaskGroup(group.key, { title: event.currentTarget.value })} />
-          <button className="dailyGroupDeleteButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>削除</button>
+          <button className="dailyGroupDeleteButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>✗</button>
         </div>
         <div className="dailyGroupMetaFields"><div className="dailyGroupNameTimeFields"><input type="time" aria-label={`${groupLabel}の開始時刻`} value={group.startTime} onChange={(event) => updateDailyTaskGroup(group.key, { startTime: event.currentTarget.value })} /><span>〜</span><input type="time" aria-label={`${groupLabel}の終了時刻`} value={group.endTime} onChange={(event) => updateDailyTaskGroup(group.key, { endTime: event.currentTarget.value })} /></div><input aria-label={`${groupLabel}のテーマ`} placeholder="テーマ" value={group.theme} onChange={(event) => updateDailyTaskGroup(group.key, { theme: event.currentTarget.value })} /></div>
         <form
@@ -1802,6 +1819,7 @@ export default function HomeClient({
             addDailyTask(group.key);
           }}
         >
+          <input className="dailyTaskTimeInput" aria-label={`${groupLabel}のタスク時刻`} type="time" value={newDailyTaskTimes[group.key] || "09:00"} onChange={(event) => { const time = event.currentTarget.value; setNewDailyTaskTimes((current) => ({ ...current, [group.key]: time })); }} />
           <input
             aria-label={`${groupLabel}の毎日タスクを追加`}
             value={newDailyTaskTitles[group.key] || ""}
@@ -1827,6 +1845,7 @@ export default function HomeClient({
                 className="taskItem dailyItem noCompletion"
                 key={task.id}
               >
+                <input className="dailyTaskTimeInput" aria-label={`${task.title || "タスク"}の時刻`} type="time" value={task.time} onChange={(event) => updateDailyTaskTime(group.key, task.id, event.currentTarget.value)} />
                 {isEditing ? (
                   <textarea
                     aria-label="毎日のタスク"
@@ -1994,6 +2013,7 @@ export default function HomeClient({
                     <span className="recurringInlineBadge" aria-hidden="true">
                       ↻ 繰り返し
                     </span>
+                    <span className="dailyTaskTimeBadge">{formatTimeLabel(task.time)}</span>
                     <span>{task.title || " "}</span>
                   </div>
                 )}
