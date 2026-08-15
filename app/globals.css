@@ -1829,6 +1829,27 @@ select {
   min-width: 0;
 }
 
+.dailyPatternTabs {
+  display: flex;
+  gap: 8px;
+}
+
+.dailyPatternTabs button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  padding: 0 14px;
+  font-weight: 900;
+}
+
+.dailyPatternTabs button.active {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
+}
+
 .monthlyTaskFormDays,
 .monthlyItemDays {
   grid-column: 1 / -1;

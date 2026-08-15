@@ -29,10 +29,13 @@ type DailyGroupKey =
   | "beforeDinner"
   | "afterDinner";
 
+type DailyPattern = "work" | "holiday";
+
 type DailyTask = {
   id: string;
   title: string;
   weekday: number;
+  pattern: DailyPattern;
   completedDates: string[];
 };
 
@@ -78,6 +81,7 @@ type PlannerState = {
   todayThemeTaskGroups: TodayThemeTaskGroup[];
   inboxTasks: PriorityTask[];
   dailyTaskGroups: DailyTaskGroup[];
+  dailyPatternByWeekday: Record<number, DailyPattern>;
   weeklyTasks: WeeklyTask[];
   monthlyTasks: MonthlyTask[];
 };
@@ -128,6 +132,16 @@ const weekdayLabels: Record<number, string> = {
   6: "土",
 };
 
+const defaultDailyPatternByWeekday: Record<number, DailyPattern> = {
+  0: "holiday",
+  1: "work",
+  2: "work",
+  3: "work",
+  4: "work",
+  5: "work",
+  6: "holiday",
+};
+
 const dailyGroupDefinitions: Array<{ key: DailyGroupKey; label: string }> = [
   { key: "beforeBreakfast", label: "朝食前 ~9:00" },
   { key: "beforeLunch", label: "昼食前 ~12:00" },
@@ -159,6 +173,7 @@ const initialState: PlannerState = {
     theme: "",
     tasks: [],
   })),
+  dailyPatternByWeekday: defaultDailyPatternByWeekday,
   weeklyTasks: [],
   monthlyTasks: [],
 };
@@ -235,6 +250,9 @@ function normalizeDailyTask(task: Partial<DailyTask>, index: number): DailyTask 
     weekday: typeof task.weekday === "number" && task.weekday >= 0 && task.weekday <= 6
       ? task.weekday
       : new Date().getDay(),
+    pattern: task.pattern === "work" || task.pattern === "holiday"
+      ? task.pattern
+      : ((typeof task.weekday === "number" ? task.weekday : new Date().getDay()) === 0 || (typeof task.weekday === "number" ? task.weekday : new Date().getDay()) === 6 ? "holiday" : "work"),
     completedDates: Array.isArray(task.completedDates)
       ? task.completedDates.filter(
           (date): date is string => typeof date === "string",
@@ -574,6 +592,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     achievementTasks?: AchievementTask[];
     dailyTasks?: DailyTask[];
     dailyTaskGroups?: DailyTaskGroup[];
+    dailyPatternByWeekday?: Partial<Record<number, DailyPattern>>;
     weeklyTasks?: WeeklyTask[];
     monthlyTasks?: MonthlyTask[];
     inboxTasks?: PriorityTask[];
@@ -645,6 +664,17 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         projectName: task.projectName || undefined,
       })),
     dailyTaskGroups: normalizeDailyTaskGroups(legacyValue),
+    dailyPatternByWeekday: weekdayOrder.reduce<Record<number, DailyPattern>>(
+      (patterns, weekday) => ({
+        ...patterns,
+        [weekday]: legacyValue.dailyPatternByWeekday?.[weekday] === "holiday"
+          ? "holiday"
+          : legacyValue.dailyPatternByWeekday?.[weekday] === "work"
+            ? "work"
+            : defaultDailyPatternByWeekday[weekday],
+      }),
+      {} as Record<number, DailyPattern>,
+    ),
     weeklyTasks: rawWeeklyTasks.map((task, index) => ({
       id: task.id || `weekly-task-${index + 1}`,
       title: task.title || "",
@@ -783,9 +813,7 @@ export default function HomeClient({
   const [selectedWeeklyWeekday, setSelectedWeeklyWeekday] = useState(
     () => new Date().getDay(),
   );
-  const [selectedDailyWeekday, setSelectedDailyWeekday] = useState(
-    () => new Date().getDay(),
-  );
+  const [selectedDailyPattern, setSelectedDailyPattern] = useState<DailyPattern>("work");
   const [newMonthlyTaskTitle, setNewMonthlyTaskTitle] = useState("");
   const [selectedMonthlyDay, setSelectedMonthlyDay] = useState(
     () => new Date().getDate(),
@@ -1417,7 +1445,8 @@ export default function HomeClient({
                 {
                   id: createId("daily-task"),
                   title,
-                  weekday: selectedDailyWeekday,
+                  weekday: new Date().getDay(),
+                  pattern: selectedDailyPattern,
                   completedDates: [],
                 },
               ],
@@ -1470,6 +1499,16 @@ export default function HomeClient({
       dailyTaskGroups: current.dailyTaskGroups.map((group) =>
         group.key === groupKey ? { ...group, theme } : group,
       ),
+    }));
+  }
+
+  function setDailyPatternForWeekday(weekday: number) {
+    setPlanner((current) => ({
+      ...current,
+      dailyPatternByWeekday: {
+        ...current.dailyPatternByWeekday,
+        [weekday]: selectedDailyPattern,
+      },
     }));
   }
 
@@ -1625,6 +1664,28 @@ export default function HomeClient({
     );
   }
 
+  function renderDailyPatternWeekdayToggles() {
+    return (
+      <div className="weekdayToggleRow" aria-label={`${selectedDailyPattern === "work" ? "仕事" : "休日"}を適用する曜日`}>
+        {weekdayOrder.map((weekday) => {
+          const isActive = planner.dailyPatternByWeekday[weekday] === selectedDailyPattern;
+          return (
+            <button
+              key={weekday}
+              className={isActive ? "weekdayToggle active" : "weekdayToggle"}
+              type="button"
+              onClick={() => setDailyPatternForWeekday(weekday)}
+              aria-pressed={isActive}
+              aria-label={`${getWeekdayLabel(weekday)}を${selectedDailyPattern === "work" ? "仕事" : "休日"}にする`}
+            >
+              {weekdayLabels[weekday]}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   function renderMonthdayToggles(
     selectedDay: number,
     onToggle: (dayOfMonth: number) => void,
@@ -1651,13 +1712,13 @@ export default function HomeClient({
     );
   }
 
-  function renderDailyTaskGroup(group: DailyTaskGroup, weekday: number) {
+  function renderDailyTaskGroup(group: DailyTaskGroup, pattern: DailyPattern) {
     const groupLabel =
       dailyGroupDefinitions.find((definition) => definition.key === group.key)?.label ||
       group.key;
     const themeEditTarget = { kind: "daily-theme", id: group.key } as const;
     const isThemeEditing = isTaskBeingEdited(themeEditTarget);
-    const tasks = group.tasks.filter((task) => task.weekday === weekday);
+    const tasks = group.tasks.filter((task) => task.pattern === pattern);
 
     return (
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
@@ -1765,7 +1826,8 @@ export default function HomeClient({
     const isThemeEditing = isTaskBeingEdited(themeEditTarget);
     const todayThemeGroup =
       planner.todayThemeTaskGroups.find((item) => item.key === group.key) || null;
-    const tasks = group.tasks.filter((task) => task.weekday === new Date().getDay());
+    const todayPattern = planner.dailyPatternByWeekday[new Date().getDay()];
+    const tasks = group.tasks.filter((task) => task.pattern === todayPattern);
 
     return (
       <section
@@ -2272,16 +2334,17 @@ export default function HomeClient({
               <div className="recurringGrid" aria-label="繰り返しタスクの編集">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
-                    <h3>曜日ごとのタスク</h3>
-                    <span className="sectionMeta">{getWeekdayLabel(selectedDailyWeekday)}</span>
+                    <h3>毎日のタスク</h3>
+                    <span className="sectionMeta">{selectedDailyPattern === "work" ? "仕事" : "休日"}</span>
                   </div>
-                  {renderWeekdayToggles(
-                    selectedDailyWeekday,
-                    setSelectedDailyWeekday,
-                  )}
+                  <div className="dailyPatternTabs" role="tablist" aria-label="毎日タスクのパターン">
+                    <button className={selectedDailyPattern === "work" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "work"} onClick={() => setSelectedDailyPattern("work")}>仕事</button>
+                    <button className={selectedDailyPattern === "holiday" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "holiday"} onClick={() => setSelectedDailyPattern("holiday")}>休日</button>
+                  </div>
+                  {renderDailyPatternWeekdayToggles()}
                   <div className="dailyGroupGrid">
                     {planner.dailyTaskGroups.map((group) =>
-                      renderDailyTaskGroup(group, selectedDailyWeekday),
+                      renderDailyTaskGroup(group, selectedDailyPattern),
                     )}
                   </div>
                 </section>
