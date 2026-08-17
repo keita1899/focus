@@ -2665,8 +2665,7 @@ export default function HomeClient({
 
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
         <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
-        {currentDailyTaskEntry && <span className="currentTaskTime">タスク時刻 {formatTimeLabel(currentDailyTaskEntry.task.time)}</span>}
-        <strong>{currentDailyTaskEntry?.task.title || "現在のタスクはありません"}</strong>
+        <strong>{currentDailyTaskEntry ? `${formatTimeLabel(currentDailyTaskEntry.task.time)}開始 ${currentDailyTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
         {currentDailyTaskEntry && (
           <button
             className="currentTaskCompleteButton"
