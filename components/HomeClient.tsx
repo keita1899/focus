@@ -473,9 +473,9 @@ function getRemainingDaysInPeriod(nextPeriodStart: Date) {
   return Math.max(0, getDaysUntil(nextPeriodStart) - 1);
 }
 
-function getRemainingDaysInMonth(date: Date) {
+function getRemainingDaysInMonth(date: Date, fromFirstDay = false) {
   const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  return Math.max(0, lastDay - date.getDate());
+  return Math.max(0, lastDay - (fromFirstDay ? 1 : date.getDate()));
 }
 
 function getWeekStartDate(offset = 0) {
@@ -539,7 +539,7 @@ function getPeriodInfo(offsets: PeriodOffsets) {
     },
     remainingDays: {
       year: getRemainingDaysInPeriod(nextYearDate),
-      month: getRemainingDaysInMonth(monthDate),
+      month: getRemainingDaysInMonth(monthDate, offsets.month !== 0),
       week: offsets.week === 0 ? getRemainingDaysInPeriod(nextWeekDate) : 7,
     },
   };
@@ -910,12 +910,15 @@ export default function HomeClient({
   const currentTime = useCurrentTime();
   const todayDailyPattern = planner.dailyPatternByWeekday[currentTime.getDay()];
   const currentTimeValue = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
-  const activeDailyGroup = dailyTaskGroupsByTime.find(
-    (group) => group.pattern === todayDailyPattern && group.startTime <= currentTimeValue && currentTimeValue < group.endTime,
+  const availableDailyTasks = dailyTaskGroupsByTime
+    .filter((group) => group.pattern === todayDailyPattern)
+    .flatMap((group) => group.tasks.map((task) => ({ group, task })))
+    .filter(({ task }) => task.pattern === todayDailyPattern && !task.completedDates.includes(todayKey))
+    .sort((first, second) => first.task.time.localeCompare(second.task.time));
+  const currentOrPreviousDailyTasks = availableDailyTasks.filter(
+    ({ task }) => task.time <= currentTimeValue,
   );
-  const currentDailyTask = activeDailyGroup?.tasks
-    .filter((task) => task.pattern === todayDailyPattern && task.time <= currentTimeValue)
-    .sort((first, second) => second.time.localeCompare(first.time))[0];
+  const currentDailyTaskEntry = currentOrPreviousDailyTasks.at(-1) || availableDailyTasks[0];
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -1856,7 +1859,7 @@ export default function HomeClient({
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
         <div className="sectionHeader dailyGroupHeader">
           <input className="dailyGroupTitleInput" aria-label="グループ名" value={group.title} onChange={(event) => updateDailyTaskGroup(group.key, { title: event.currentTarget.value })} />
-          <button className="dailyGroupDeleteButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>✗</button>
+          <button className="iconButton dailyGroupDeleteButton" type="button" onClick={() => removeDailyTaskGroup(group.key)} aria-label={`${groupLabel}を削除`}>×</button>
         </div>
         <div className="dailyGroupMetaFields"><div className="dailyGroupNameTimeFields"><input type="time" aria-label={`${groupLabel}の開始時刻`} value={group.startTime} onChange={(event) => updateDailyTaskGroup(group.key, { startTime: event.currentTarget.value })} /><span>〜</span><input type="time" aria-label={`${groupLabel}の終了時刻`} value={group.endTime} onChange={(event) => updateDailyTaskGroup(group.key, { endTime: event.currentTarget.value })} /></div><input aria-label={`${groupLabel}のテーマ`} placeholder="テーマ" value={group.theme} onChange={(event) => updateDailyTaskGroup(group.key, { theme: event.currentTarget.value })} /></div>
         <form
@@ -2274,6 +2277,7 @@ export default function HomeClient({
               <input
                 className="goalLineInput"
                 aria-label="年の目標"
+                placeholder={`${getGoalLabel("year", periodOffsets.year, periodLabels.year)}を入力してください`}
                 value={planner.goalsByPeriod.year[periodKeys.year] || ""}
                 onChange={(event) => updateGoal("year", event.target.value)}
               />
@@ -2310,6 +2314,7 @@ export default function HomeClient({
                 <input
                   className="goalLineInput"
                   aria-label="月の目標"
+                  placeholder={`${getGoalLabel("month", periodOffsets.month, periodLabels.month)}を入力してください`}
                   value={planner.goalsByPeriod.month[periodKeys.month] || ""}
                   onChange={(event) => updateGoal("month", event.target.value)}
                 />
@@ -2346,6 +2351,7 @@ export default function HomeClient({
                   <input
                     className="goalWeekInput"
                     aria-label="週の目標"
+                    placeholder={`${getGoalLabel("week", periodOffsets.week, periodLabels.week)}を入力してください`}
                     value={planner.goalsByPeriod.week[periodKeys.week] || ""}
                     onChange={(event) => updateGoal("week", event.target.value)}
                   />
@@ -2659,14 +2665,15 @@ export default function HomeClient({
 
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
         <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
-        <strong>{currentDailyTask?.title || "現在のタスクはありません"}</strong>
-        {currentDailyTask && activeDailyGroup && (
+        {currentDailyTaskEntry && <span className="currentTaskTime">タスク時刻 {formatTimeLabel(currentDailyTaskEntry.task.time)}</span>}
+        <strong>{currentDailyTaskEntry?.task.title || "現在のタスクはありません"}</strong>
+        {currentDailyTaskEntry && (
           <button
             className="currentTaskCompleteButton"
             type="button"
-            onClick={() => toggleDailyTask(activeDailyGroup.key, currentDailyTask.id)}
+            onClick={() => toggleDailyTask(currentDailyTaskEntry.group.key, currentDailyTaskEntry.task.id)}
           >
-            {currentDailyTask.completedDates.includes(todayKey) ? "完了を戻す" : "完了"}
+            完了
           </button>
         )}
       </aside>
