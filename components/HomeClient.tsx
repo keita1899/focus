@@ -38,6 +38,7 @@ type DailyTask = {
 
 type DailyTaskGroup = {
   key: DailyGroupKey;
+  pattern: DailyPattern;
   title: string;
   startTime: string;
   endTime: string;
@@ -149,6 +150,26 @@ const dailyGroupDefinitions: Array<Pick<DailyTaskGroup, "key" | "title" | "start
   { key: "afterDinner", title: "夕食後", startTime: "19:00", endTime: "23:00" },
 ];
 
+const dailyPatterns: DailyPattern[] = ["work", "holiday"];
+
+function getDailyGroupPatternKey(pattern: DailyPattern, key: DailyGroupKey) {
+  return `${pattern}-${key}`;
+}
+
+function createDefaultDailyTaskGroups() {
+  return dailyPatterns.flatMap((pattern) =>
+    dailyGroupDefinitions.map((definition) => ({
+      key: getDailyGroupPatternKey(pattern, definition.key),
+      pattern,
+      title: definition.title,
+      startTime: definition.startTime,
+      endTime: definition.endTime,
+      theme: "",
+      tasks: [],
+    })),
+  );
+}
+
 const initialState: PlannerState = {
   goals: {
     year: "収益性のある個人プロダクトを1つ公開する",
@@ -163,19 +184,12 @@ const initialState: PlannerState = {
   birthday: "",
   achievementTasks: [],
   todayTasks: [],
-  todayThemeTaskGroups: dailyGroupDefinitions.map(({ key }) => ({
+  todayThemeTaskGroups: createDefaultDailyTaskGroups().map(({ key }) => ({
     key,
     tasks: [],
   })),
   inboxTasks: [],
-  dailyTaskGroups: dailyGroupDefinitions.map(({ key }) => ({
-    key,
-    title: dailyGroupDefinitions.find((definition) => definition.key === key)?.title || "",
-    startTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.startTime || "",
-    endTime: dailyGroupDefinitions.find((definition) => definition.key === key)?.endTime || "",
-    theme: "",
-    tasks: [],
-  })),
+  dailyTaskGroups: createDefaultDailyTaskGroups(),
   dailyPatternByWeekday: defaultDailyPatternByWeekday,
   weeklyTasks: [],
   monthlyTasks: [],
@@ -191,6 +205,17 @@ function getWeekdayLabel(weekday: number) {
 
 function formatTimeLabel(time: string) {
   return time.replace(/^0(\d:)/, "$1");
+}
+
+function useCurrentTime() {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setCurrentTime(new Date()), 30_000);
+    return () => window.clearInterval(timerId);
+  }, []);
+
+  return currentTime;
 }
 
 const goalLabels: Record<GoalKey, string> = {
@@ -223,7 +248,7 @@ function isValidTimeValue(value: unknown): value is string {
 }
 
 function createEmptyDailyTaskTitleMap() {
-  return dailyGroupDefinitions.reduce<Record<DailyGroupKey, string>>(
+  return createDefaultDailyTaskGroups().reduce<Record<DailyGroupKey, string>>(
     (map, group) => ({
       ...map,
       [group.key]: "",
@@ -233,7 +258,7 @@ function createEmptyDailyTaskTitleMap() {
 }
 
 function createEmptyTodayThemeTaskTitleMap() {
-  return dailyGroupDefinitions.reduce<Record<DailyGroupKey, string>>(
+  return createDefaultDailyTaskGroups().reduce<Record<DailyGroupKey, string>>(
     (map, group) => ({
       ...map,
       [group.key]: "",
@@ -275,37 +300,34 @@ function normalizeDailyTaskGroups(
     dailyTasks?: Array<Partial<DailyTask> & { time?: string }>;
   },
 ) {
-  const fallbackGroups = dailyGroupDefinitions.reduce<
-    Record<DailyGroupKey, DailyTaskGroup>
-  >(
-    (groups, definition) => ({
-      ...groups,
-      [definition.key]: {
-        key: definition.key,
-        title: definition.title,
-        startTime: definition.startTime,
-        endTime: definition.endTime,
-        theme: "",
-        tasks: [],
-      },
-    }),
-    {} as Record<DailyGroupKey, DailyTaskGroup>,
-  );
+  const fallbackGroups = Object.fromEntries(
+    createDefaultDailyTaskGroups().map((group) => [group.key, group]),
+  ) as Record<DailyGroupKey, DailyTaskGroup>;
 
   if (Array.isArray(value.dailyTaskGroups)) {
     value.dailyTaskGroups.forEach((group, groupIndex) => {
       const item = group as Partial<DailyTaskGroup>;
       if (!item.key) return;
-      const fallback = fallbackGroups[item.key] || {
-        key: item.key,
+      const pattern = item.pattern === "holiday" ? "holiday" : "work";
+      const isLegacyGroup = item.pattern !== "work" && item.pattern !== "holiday";
+      const key = isLegacyGroup ? getDailyGroupPatternKey(pattern, item.key) : item.key;
+      const fallback = fallbackGroups[key] || {
+        key,
+        pattern,
         title: "新しいグループ",
         startTime: "09:00",
         endTime: "10:00",
         theme: "",
         tasks: [],
       };
-      fallbackGroups[item.key] = {
-        key: item.key,
+      const tasks = Array.isArray(item.tasks)
+        ? item.tasks.map((task, taskIndex) =>
+            normalizeDailyTask(task, groupIndex * 100 + taskIndex),
+          )
+        : [];
+      fallbackGroups[key] = {
+        key,
+        pattern,
         title: typeof item.title === "string" ? item.title : fallback.title,
         startTime: isValidTimeValue((item as { startTime?: unknown }).startTime)
           ? (item as { startTime: string }).startTime
@@ -316,12 +338,25 @@ function normalizeDailyTaskGroups(
           ? (item as { endTime: string }).endTime
           : fallback.endTime,
         theme: typeof item.theme === "string" ? item.theme : "",
-        tasks: Array.isArray(item.tasks)
-          ? item.tasks.map((task, taskIndex) =>
-              normalizeDailyTask(task, groupIndex * 100 + taskIndex),
-            )
-          : [],
+        tasks,
       };
+
+      if (isLegacyGroup) {
+        const holidayTasks = tasks.filter((task) => task.pattern === "holiday");
+        if (holidayTasks.length > 0) {
+          const holidayKey = getDailyGroupPatternKey("holiday", item.key);
+          fallbackGroups[holidayKey] = {
+            ...fallbackGroups[holidayKey],
+            key: holidayKey,
+            pattern: "holiday",
+            title: typeof item.title === "string" ? item.title : fallback.title,
+            startTime: fallbackGroups[key].startTime,
+            endTime: fallbackGroups[key].endTime,
+            theme: typeof item.theme === "string" ? item.theme : "",
+            tasks: holidayTasks,
+          };
+        }
+      }
     });
 
     return Object.values(fallbackGroups);
@@ -329,12 +364,16 @@ function normalizeDailyTaskGroups(
 
   if (Array.isArray(value.dailyTasks)) {
     value.dailyTasks.forEach((task, index) => {
-      const groupKey = getDailyGroupKeyFromTime(task.time);
-      fallbackGroups[groupKey].tasks.push(normalizeDailyTask(task, index));
+      const normalizedTask = normalizeDailyTask(task, index);
+      const groupKey = getDailyGroupPatternKey(
+        normalizedTask.pattern,
+        getDailyGroupKeyFromTime(task.time),
+      );
+      fallbackGroups[groupKey].tasks.push(normalizedTask);
     });
   }
 
-  return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
+  return Object.values(fallbackGroups);
 }
 
 function normalizeTodayThemeTaskGroups(
@@ -344,28 +383,22 @@ function normalizeTodayThemeTaskGroups(
     priorities?: PriorityTask[];
   },
 ) {
-  const fallbackGroups = dailyGroupDefinitions.reduce<
-    Record<DailyGroupKey, TodayThemeTaskGroup>
-  >(
-    (groups, definition) => ({
-      ...groups,
-      [definition.key]: {
-        key: definition.key,
-        tasks: [],
-      },
-    }),
-    {} as Record<DailyGroupKey, TodayThemeTaskGroup>,
-  );
+  const fallbackGroups = Object.fromEntries(
+    createDefaultDailyTaskGroups().map((group) => [group.key, { key: group.key, tasks: [] }]),
+  ) as Record<DailyGroupKey, TodayThemeTaskGroup>;
 
   if (Array.isArray(value.todayThemeTaskGroups)) {
     value.todayThemeTaskGroups.forEach((group, groupIndex) => {
       const item = group as Partial<TodayThemeTaskGroup>;
       if (!item.key) return;
-      if (!fallbackGroups[item.key]) {
-        fallbackGroups[item.key] = { key: item.key, tasks: [] };
+      const key = item.key.startsWith("work-") || item.key.startsWith("holiday-")
+        ? item.key
+        : getDailyGroupPatternKey("work", item.key);
+      if (!fallbackGroups[key]) {
+        fallbackGroups[key] = { key, tasks: [] };
       }
-      fallbackGroups[item.key] = {
-        key: item.key,
+      fallbackGroups[key] = {
+        key,
         tasks: Array.isArray(item.tasks)
           ? item.tasks
               .filter((task): task is PriorityTask => Boolean(task))
@@ -388,7 +421,7 @@ function normalizeTodayThemeTaskGroups(
       ? value.priorities
       : [];
 
-  fallbackGroups.beforeBreakfast.tasks = legacyTodayTasks
+  fallbackGroups[getDailyGroupPatternKey("work", "beforeBreakfast")].tasks = legacyTodayTasks
     .filter((task) => !task.done)
     .map((task, index) => ({
       id: task.id || `today-theme-task-${index + 1}`,
@@ -397,7 +430,7 @@ function normalizeTodayThemeTaskGroups(
       projectName: task.projectName || undefined,
     }));
 
-  return dailyGroupDefinitions.map(({ key }) => fallbackGroups[key]);
+  return Object.values(fallbackGroups);
 }
 
 function normalizeDiaryEntries(value: unknown): DiaryEntry[] {
@@ -874,6 +907,15 @@ export default function HomeClient({
     () => [...planner.dailyTaskGroups].sort((first, second) => first.startTime.localeCompare(second.startTime)),
     [planner.dailyTaskGroups],
   );
+  const currentTime = useCurrentTime();
+  const todayDailyPattern = planner.dailyPatternByWeekday[currentTime.getDay()];
+  const currentTimeValue = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
+  const activeDailyGroup = dailyTaskGroupsByTime.find(
+    (group) => group.pattern === todayDailyPattern && group.startTime <= currentTimeValue && currentTimeValue < group.endTime,
+  );
+  const currentDailyTask = activeDailyGroup?.tasks
+    .filter((task) => task.pattern === todayDailyPattern && task.time <= currentTimeValue)
+    .sort((first, second) => second.time.localeCompare(first.time))[0];
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -1488,7 +1530,7 @@ export default function HomeClient({
                   title,
                   time,
                   weekday: new Date().getDay(),
-                  pattern: selectedDailyPattern,
+                  pattern: group.pattern,
                   completedDates: [],
                 },
               ],
@@ -1556,10 +1598,10 @@ export default function HomeClient({
   function addDailyTaskGroup() {
     const title = newDailyGroupTitle.trim();
     if (!title || !isValidTimeValue(newDailyGroupStartTime) || !isValidTimeValue(newDailyGroupEndTime)) return;
-    const key = createId("daily-group");
+    const key = getDailyGroupPatternKey(selectedDailyPattern, createId("daily-group"));
     setPlanner((current) => ({
       ...current,
-      dailyTaskGroups: [...current.dailyTaskGroups, { key, title, startTime: newDailyGroupStartTime, endTime: newDailyGroupEndTime, theme: newDailyGroupTheme, tasks: [] }],
+      dailyTaskGroups: [...current.dailyTaskGroups, { key, pattern: selectedDailyPattern, title, startTime: newDailyGroupStartTime, endTime: newDailyGroupEndTime, theme: newDailyGroupTheme, tasks: [] }],
       todayThemeTaskGroups: [...current.todayThemeTaskGroups, { key, tasks: [] }],
     }));
     setNewDailyTaskTitles((current) => ({ ...current, [key]: "" }));
@@ -2340,7 +2382,9 @@ export default function HomeClient({
                     <h3>今日のタスク</h3>
                   </div>
                   <div className="dailyGroupGrid">
-                    {dailyTaskGroupsByTime.map(renderTodayDailyGroup)}
+                    {dailyTaskGroupsByTime
+                      .filter((group) => group.pattern === todayDailyPattern)
+                      .map(renderTodayDailyGroup)}
                   </div>
                 </section>
 
@@ -2383,13 +2427,12 @@ export default function HomeClient({
             <section className="homeTabPanel recurringColumn" aria-label="繰り返しタスク">
               <div className="recurringGrid" aria-label="繰り返しタスクの編集">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
-                  <div className="sectionHeader">
+                  <div className="sectionHeader dailyPatternHeader">
                     <h3>毎日のタスク</h3>
-                    <span className="sectionMeta">{selectedDailyPattern === "work" ? "仕事" : "休日"}</span>
-                  </div>
-                  <div className="dailyPatternTabs" role="tablist" aria-label="毎日タスクのパターン">
-                    <button className={selectedDailyPattern === "work" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "work"} onClick={() => setSelectedDailyPattern("work")}>仕事</button>
-                    <button className={selectedDailyPattern === "holiday" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "holiday"} onClick={() => setSelectedDailyPattern("holiday")}>休日</button>
+                    <div className="dailyPatternTabs" role="tablist" aria-label="毎日タスクのパターン">
+                      <button className={selectedDailyPattern === "work" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "work"} onClick={() => setSelectedDailyPattern("work")}>仕事</button>
+                      <button className={selectedDailyPattern === "holiday" ? "active" : undefined} type="button" role="tab" aria-selected={selectedDailyPattern === "holiday"} onClick={() => setSelectedDailyPattern("holiday")}>休日</button>
+                    </div>
                   </div>
                   {renderDailyPatternWeekdayToggles()}
                   <form className="dailyGroupCreateForm" onSubmit={(event) => { event.preventDefault(); addDailyTaskGroup(); }}>
@@ -2398,7 +2441,7 @@ export default function HomeClient({
                     <button className="recurringAddButton" type="submit">＋</button>
                   </form>
                   <div className="dailyGroupGrid">
-                    {dailyTaskGroupsByTime.map((group) =>
+                    {dailyTaskGroupsByTime.filter((group) => group.pattern === selectedDailyPattern).map((group) =>
                       renderDailyTaskGroup(group, selectedDailyPattern),
                     )}
                   </div>
@@ -2613,6 +2656,11 @@ export default function HomeClient({
           </article>
         </div>
       )}
+
+      <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
+        <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
+        <strong>{currentDailyTask?.title || "現在のタスクはありません"}</strong>
+      </aside>
     </main>
   );
 }

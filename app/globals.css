@@ -1844,6 +1844,14 @@ select {
   gap: 8px;
 }
 
+.dailyPatternHeader {
+  min-height: 36px;
+}
+
+.dailyPatternHeader .dailyPatternTabs {
+  margin-left: auto;
+}
+
 .dailyPatternTabs button {
   min-height: 36px;
   border: 1px solid var(--line);
@@ -1858,6 +1866,37 @@ select {
   border-color: var(--accent-strong);
   background: var(--accent-strong);
   color: white;
+}
+
+.currentTaskModal {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  display: grid;
+  gap: 5px;
+  min-width: 180px;
+  max-width: min(320px, calc(100vw - 44px));
+  padding: 12px 14px;
+  border: 1px solid rgba(23, 107, 85, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 32px rgba(23, 32, 28, 0.16);
+  backdrop-filter: blur(10px);
+}
+
+.currentTaskModal time {
+  color: var(--accent-strong);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.currentTaskModal strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dailyGroupCreateForm,
@@ -5174,6 +5213,12 @@ select {
   .topbar {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .currentTaskModal {
+    right: 10px;
+    bottom: 10px;
+    max-width: calc(100vw - 20px);
   }
 
   .homeTabList {
