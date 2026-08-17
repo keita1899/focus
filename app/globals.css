@@ -4995,7 +4995,8 @@ select {
 }
 
 @media (max-width: 980px) {
-  .todayLayout .recurringGrid {
+  .todayLayout .recurringGrid,
+  .recurringColumn .recurringGrid {
     grid-template-columns: 1fr;
   }
 
