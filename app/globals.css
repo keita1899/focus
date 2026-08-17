@@ -729,6 +729,7 @@ h2 {
 }
 
 .homeTabList {
+  justify-content: center;
   margin-bottom: 0;
 }
 
@@ -789,7 +790,7 @@ h2 {
 }
 
 .goalHeading span {
-  color: var(--gold);
+  color: #b42318;
   font-size: 0.86rem;
   font-weight: 900;
 }
@@ -1874,29 +1875,39 @@ select {
   bottom: 22px;
   z-index: 20;
   display: grid;
-  gap: 5px;
-  min-width: 180px;
-  max-width: min(320px, calc(100vw - 44px));
-  padding: 12px 14px;
-  border: 1px solid rgba(23, 107, 85, 0.22);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 32px rgba(23, 32, 28, 0.16);
+  gap: 8px;
+  min-width: 240px;
+  max-width: min(380px, calc(100vw - 44px));
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  background: var(--accent-strong);
+  box-shadow: 0 14px 36px rgba(14, 79, 62, 0.32);
   backdrop-filter: blur(10px);
 }
 
 .currentTaskModal time {
-  color: var(--accent-strong);
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.4rem;
   font-weight: 900;
 }
 
 .currentTaskModal strong {
   overflow: hidden;
-  color: var(--ink);
-  font-size: 0.85rem;
+  color: white;
+  font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.currentTaskCompleteButton {
+  min-height: 38px;
+  margin-top: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
 }
 
 .dailyGroupCreateForm,

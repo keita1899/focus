@@ -57,9 +57,6 @@ export default function AppHeader() {
           <a className="navLink" href="/learnings">
             学習
           </a>
-          <a className="navLink" href="/vision">
-            ビジョン
-          </a>
           <a className="navLink" href="/notes">
             メモ
           </a>

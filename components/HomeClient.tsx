@@ -2660,6 +2660,15 @@ export default function HomeClient({
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
         <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
         <strong>{currentDailyTask?.title || "現在のタスクはありません"}</strong>
+        {currentDailyTask && activeDailyGroup && (
+          <button
+            className="currentTaskCompleteButton"
+            type="button"
+            onClick={() => toggleDailyTask(activeDailyGroup.key, currentDailyTask.id)}
+          >
+            {currentDailyTask.completedDates.includes(todayKey) ? "完了を戻す" : "完了"}
+          </button>
+        )}
       </aside>
     </main>
   );
