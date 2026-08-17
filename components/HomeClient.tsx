@@ -1910,7 +1910,7 @@ export default function HomeClient({
           <span className="sectionMeta">{group.theme || "テーマ未設定"}</span>
         </div>
         <form
-          className="taskForm dailyTaskForm"
+          className="taskForm dailyTaskForm todayDailyTaskForm"
           onSubmit={(event) => {
             event.preventDefault();
             addTodayThemeTask(group.key);
