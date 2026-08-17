@@ -870,6 +870,10 @@ export default function HomeClient({
   const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
   const currentMonthKey = getCurrentMonthKey();
   const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
+  const dailyTaskGroupsByTime = useMemo(
+    () => [...planner.dailyTaskGroups].sort((first, second) => first.startTime.localeCompare(second.startTime)),
+    [planner.dailyTaskGroups],
+  );
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -1802,7 +1806,9 @@ export default function HomeClient({
 
   function renderDailyTaskGroup(group: DailyTaskGroup, pattern: DailyPattern) {
     const groupLabel = group.title || "無題のグループ";
-    const tasks = group.tasks.filter((task) => task.pattern === pattern);
+    const tasks = group.tasks
+      .filter((task) => task.pattern === pattern)
+      .sort((first, second) => first.time.localeCompare(second.time));
 
     return (
       <section className="dailyGroupCard" key={group.key} aria-label={`${groupLabel}の毎日タスク`}>
@@ -1889,7 +1895,9 @@ export default function HomeClient({
     const todayThemeGroup =
       planner.todayThemeTaskGroups.find((item) => item.key === group.key) || null;
     const todayPattern = planner.dailyPatternByWeekday[new Date().getDay()];
-    const tasks = group.tasks.filter((task) => task.pattern === todayPattern);
+    const tasks = group.tasks
+      .filter((task) => task.pattern === todayPattern)
+      .sort((first, second) => first.time.localeCompare(second.time));
 
     return (
       <section
@@ -2332,7 +2340,7 @@ export default function HomeClient({
                     <h3>今日のタスク</h3>
                   </div>
                   <div className="dailyGroupGrid">
-                    {planner.dailyTaskGroups.map(renderTodayDailyGroup)}
+                    {dailyTaskGroupsByTime.map(renderTodayDailyGroup)}
                   </div>
                 </section>
 
@@ -2390,7 +2398,7 @@ export default function HomeClient({
                     <button className="recurringAddButton" type="submit">＋</button>
                   </form>
                   <div className="dailyGroupGrid">
-                    {planner.dailyTaskGroups.map((group) =>
+                    {dailyTaskGroupsByTime.map((group) =>
                       renderDailyTaskGroup(group, selectedDailyPattern),
                     )}
                   </div>
