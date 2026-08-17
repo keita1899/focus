@@ -440,6 +440,11 @@ function getRemainingDaysInPeriod(nextPeriodStart: Date) {
   return Math.max(0, getDaysUntil(nextPeriodStart) - 1);
 }
 
+function getRemainingDaysInMonth(date: Date) {
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return Math.max(0, lastDay - date.getDate());
+}
+
 function getWeekStartDate(offset = 0) {
   const today = new Date();
   const day = today.getDay();
@@ -486,11 +491,6 @@ function getPeriodInfo(offsets: PeriodOffsets) {
   monthDate.setMonth(today.getMonth() + offsets.month);
 
   const nextYearDate = new Date(yearDate.getFullYear() + 1, 0, 1);
-  const nextMonthDate = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth() + 1,
-    1,
-  );
   const nextWeekDate = getWeekStartDate(offsets.week + 1);
 
   return {
@@ -506,7 +506,7 @@ function getPeriodInfo(offsets: PeriodOffsets) {
     },
     remainingDays: {
       year: getRemainingDaysInPeriod(nextYearDate),
-      month: getRemainingDaysInPeriod(nextMonthDate),
+      month: getRemainingDaysInMonth(monthDate),
       week: offsets.week === 0 ? getRemainingDaysInPeriod(nextWeekDate) : 7,
     },
   };

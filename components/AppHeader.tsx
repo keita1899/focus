@@ -7,7 +7,8 @@ import { SignOutButton } from "./AuthControls";
 
 function getTodayLabel() {
   const today = new Date();
-  return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  const weekday = ["日", "月", "火", "水", "木", "金", "土"][today.getDay()];
+  return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日（${weekday}）`;
 }
 
 export default function AppHeader() {
