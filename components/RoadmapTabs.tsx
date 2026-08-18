@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   MarkdownMemoPage,
@@ -24,6 +24,17 @@ export default function RoadmapTabs({
   initialTab = "roadmap",
 }: RoadmapTabsProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    try {
+      const storedTab = window.localStorage.getItem("roadmap-active-tab-v1");
+      if (storedTab === "roadmap" || storedTab === "annual" || storedTab === "vision") setActiveTab(storedTab);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("roadmap-active-tab-v1", activeTab); } catch {}
+  }, [activeTab]);
 
   return <main className="roadmapTabsPage">
     <div className="roadmapPageTabs" role="tablist" aria-label="ロードマップの種類">

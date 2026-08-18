@@ -596,7 +596,7 @@ h2 {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
-  background: #fffdf8;
+  background: #fff3d8;
   padding: 8px 10px 0;
   box-shadow: none;
 }
@@ -610,7 +610,7 @@ h2 {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
-  background: #f8fcf9;
+  background: #e6f5ec;
   padding: 8px 10px 0;
   box-shadow: none;
 }
@@ -620,7 +620,7 @@ h2 {
   margin-left: clamp(36px, 6vw, 64px);
   margin-right: 0;
   border: 0;
-  background: linear-gradient(180deg, #ffffff, var(--surface-strong));
+  background: #d4ecdf;
   padding: 8px 10px;
   box-shadow: none;
 }
@@ -3532,6 +3532,7 @@ select {
   align-items: center;
   gap: 0;
   padding: 0;
+  margin-bottom: 10px;
 }
 
 .notesListPanel {
@@ -3850,7 +3851,7 @@ select {
   min-height: 38px;
   border: 0;
   border-radius: 8px;
-  background: var(--ink);
+  background: var(--accent-strong);
   color: white;
   justify-self: start;
   padding: 0 12px;

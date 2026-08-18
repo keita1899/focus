@@ -83,6 +83,18 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
   const hasMounted = useRef(false);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
+  useEffect(() => {
+    try {
+      const storedSubjectId = window.localStorage.getItem("learnings-active-subject-v1");
+      if (storedSubjectId && learning.subjects.some((subject) => subject.id === storedSubjectId)) setActiveSubjectId(storedSubjectId);
+    } catch {}
+  }, [learning.subjects]);
+
+  useEffect(() => {
+    if (!activeSubjectId) return;
+    try { window.localStorage.setItem("learnings-active-subject-v1", activeSubjectId); } catch {}
+  }, [activeSubjectId]);
+
   const activeSubject = useMemo(
     () => learning.subjects.find((subject) => subject.id === activeSubjectId) || learning.subjects[0] || null,
     [activeSubjectId, learning.subjects],
@@ -185,7 +197,7 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
       <div className="learningSubjectTabs">
         {learning.subjects.map((subject) => <button key={subject.id} type="button" className={activeSubject?.id === subject.id ? "active" : undefined} onClick={() => { setActiveSubjectId(subject.id); setActiveTaskId(subject.sections[0]?.tasks[0]?.id || ""); }}>{subject.title || "無題の教材"}</button>)}
       </div>
-      <form className="learningAddSubject" onSubmit={(event) => { event.preventDefault(); addSubject(); }}><input aria-label="教材名" placeholder="教材名" value={newSubjectTitle} onChange={(event) => setNewSubjectTitle(event.currentTarget.value)} /><button type="submit">教材を追加</button></form>
+      <form className="learningAddSubject" onSubmit={(event) => { event.preventDefault(); addSubject(); }}><input aria-label="教材名" placeholder="教材名" value={newSubjectTitle} onChange={(event) => setNewSubjectTitle(event.currentTarget.value)} /><button type="submit">追加</button></form>
     </section>
     <section className="learningsWorkspace" aria-label="学習タスクとメモ">
       <aside className="learningsSidebar" aria-label="教材のセクションとタスク">

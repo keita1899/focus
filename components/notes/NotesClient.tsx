@@ -54,10 +54,7 @@ const notesActiveNoteStorageKey = "simple-notes-active-note-v1";
 const allFoldersId = "all";
 const defaultFolderId = "folder-default";
 const trashFolderId = "folder-trash";
-const defaultMarkdown = `# 新しいメモ
-
-- 
-`;
+const defaultMarkdown = "";
 
 const viewModeOptions: ViewModeOption[] = [
   {
@@ -161,7 +158,7 @@ function createFolder(name: string): NoteFolder {
   };
 }
 
-function createNote(title = "新しいメモ", folderId = defaultFolderId): Note {
+function createNote(title = "", folderId = defaultFolderId): Note {
   return {
     id: createNoteId(),
     folderId,
@@ -246,10 +243,7 @@ function normalizeNotesState(value: unknown): NotesState {
       return {
         id: typeof note.id === "string" ? note.id : `note-${index + 1}`,
         folderId,
-        title:
-          typeof note.title === "string" && note.title.trim()
-            ? note.title
-            : "無題のメモ",
+        title: typeof note.title === "string" ? note.title : "",
         markdown:
           typeof note.markdown === "string" ? note.markdown : defaultMarkdown,
         updatedAt:
@@ -767,7 +761,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
       activeFolderId === allFoldersId || activeFolderId === trashFolderId
         ? defaultFolderId
         : activeFolderId;
-    const note = createNote("新しいメモ", folderId);
+    const note = createNote("", folderId);
     setNotes((current) => [note, ...current]);
     setActiveNoteId(note.id);
   }
@@ -845,18 +839,22 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
           </div>
           {isFolderColumnOpen && (
             <section className="notesFolderPanel" aria-label="フォルダ">
-              <button
+              <div
                 className={
                   activeFolderId === allFoldersId
-                    ? "notesFolderButton active"
-                    : "notesFolderButton"
+                    ? "notesFolderItem active"
+                    : "notesFolderItem"
                 }
-                type="button"
-                onClick={() => selectFolder(allFoldersId)}
               >
-                <strong>すべて</strong>
-                <span>{noteCounts.get(allFoldersId) || 0}</span>
-              </button>
+                <button
+                  className="notesFolderButton"
+                  type="button"
+                  onClick={() => selectFolder(allFoldersId)}
+                >
+                  <strong>すべて</strong>
+                  <span>{noteCounts.get(allFoldersId) || 0}</span>
+                </button>
+              </div>
               {[defaultFolder, ...regularFolders].map((folder) => {
                 const isEditing = editingFolderId === folder.id;
                 return (

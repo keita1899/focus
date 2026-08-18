@@ -117,6 +117,7 @@ const plannerStorageKey = "focus-planner-state-v1";
 const diaryStorageKey = "diary-v1";
 const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
 const homeTabStorageKey = "focus-home-tab-v1";
+const dailyPatternStorageKey = "focus-daily-pattern-v1";
 const currentYear = new Date().getFullYear();
 const weekdayOrder = [1, 2, 3, 4, 5, 6, 0] as const;
 const weekdayLabels: Record<number, string> = {
@@ -965,6 +966,23 @@ export default function HomeClient({
       return;
     }
   }, [selectedHomeTab]);
+
+  useEffect(() => {
+    try {
+      const storedPattern = window.localStorage.getItem(dailyPatternStorageKey);
+      if (storedPattern === "work" || storedPattern === "holiday") setSelectedDailyPattern(storedPattern);
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(dailyPatternStorageKey, selectedDailyPattern);
+    } catch {
+      return;
+    }
+  }, [selectedDailyPattern]);
 
   useEffect(() => {
     let timeoutId: number | null = null;

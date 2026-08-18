@@ -115,6 +115,17 @@ export default function CutoutsClient({ initialValue }: CutoutsClientProps) {
   const hasMountedRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
+  useEffect(() => {
+    try {
+      const storedKind = window.localStorage.getItem("cutouts-selected-kind-v1");
+      if (storedKind === "regular" || storedKind === "short") setSelectedKind(storedKind);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("cutouts-selected-kind-v1", selectedKind); } catch {}
+  }, [selectedKind]);
+
   const visibleItems = useMemo(
     () => cutouts.items.filter((item) => item.kind === selectedKind),
     [cutouts.items, selectedKind],
