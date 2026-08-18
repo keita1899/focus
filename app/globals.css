@@ -592,9 +592,7 @@ h2 {
   width: 100%;
   margin-inline: auto;
   gap: 4px;
-  border-color: rgba(183, 116, 34, 0.32);
-  border-right: 0;
-  border-bottom: 0;
+  border: 0;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
@@ -608,9 +606,7 @@ h2 {
   margin-left: clamp(18px, 3vw, 32px);
   margin-right: 0;
   gap: 4px;
-  border-color: rgba(23, 107, 85, 0.26);
-  border-right: 0;
-  border-bottom: 0;
+  border: 0;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
@@ -623,15 +619,13 @@ h2 {
   width: calc(100% - clamp(36px, 6vw, 64px));
   margin-left: clamp(36px, 6vw, 64px);
   margin-right: 0;
-  border-color: rgba(23, 107, 85, 0.48);
+  border: 0;
   background: linear-gradient(180deg, #ffffff, var(--surface-strong));
   padding: 8px 10px;
   box-shadow: none;
 }
 
 .goalMonthPanel > .goalWeekPanel {
-  border-right: 0;
-  border-bottom: 0;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: 0;
@@ -2184,6 +2178,26 @@ select {
   border: 1px solid rgba(23, 107, 85, 0.12);
   border-radius: 10px;
   background: rgba(248, 250, 246, 0.94);
+}
+
+.todayLayout .dailyGroupCard {
+  overflow: hidden;
+  padding: 14px 14px 0;
+}
+
+.todayLayout .dailyGroupCard > .taskList {
+  width: calc(100% + 28px);
+  margin: 0 -14px;
+}
+
+.todayLayout .dailyGroupCard > .taskList > .taskItem {
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+}
+
+.todayLayout .dailyGroupCard > .taskList > .taskItem:last-child {
+  border-bottom: 0;
 }
 
 .dailyGroupTone-beforeBreakfast {
