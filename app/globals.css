@@ -4252,7 +4252,7 @@ select {
   display: inline-grid;
   grid-template-columns: 42px auto 42px;
   align-items: center;
-  justify-self: start;
+  justify-self: center;
   gap: 8px;
 }
 
@@ -4290,9 +4290,9 @@ select {
   margin: 0;
 }
 
-.roadmap2AnnualInput,
 .roadmap2GoalInput,
-.roadmap2ItemRow input {
+.roadmap2ItemRow input,
+.roadmap2AnnualGoalRow input {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--line);
@@ -4304,15 +4304,9 @@ select {
   line-height: 1.5;
 }
 
-.roadmap2AnnualInput,
-.roadmap2GoalInput {
-  overflow: hidden;
-  resize: none;
-}
-
 .roadmap2MonthPicker {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
   margin-top: 18px;
 }
@@ -4340,6 +4334,53 @@ select {
 
 .roadmap2SelectedMonth {
   display: grid;
+}
+
+.roadmapTabsPage .roadmap2Page {
+  width: min(860px, calc(100% - 32px));
+}
+
+.roadmap2Header {
+  justify-items: center;
+  text-align: center;
+}
+
+.roadmap2AnnualGoalList,
+.homeAnnualGoalList {
+  display: grid;
+  gap: 0;
+}
+
+.roadmap2AnnualGoalRow,
+.homeAnnualGoalRow {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap2AnnualGoalRow + .roadmap2AnnualGoalRow,
+.homeAnnualGoalRow + .homeAnnualGoalRow {
+  margin-top: 8px;
+}
+
+.roadmap2AnnualGoalRow > span,
+.homeAnnualGoalRow > span {
+  color: var(--muted);
+  font-weight: 900;
+  text-align: right;
+}
+
+.roadmap2AnnualAddButton,
+.homeAnnualGoalAdd {
+  justify-self: start;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+  padding: 8px 12px;
 }
 
 .roadmap2MonthHeader {

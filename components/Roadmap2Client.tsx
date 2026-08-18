@@ -1,19 +1,14 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-
-type Roadmap2ListKey = "focusItems" | "choreItems" | "seasonalItems";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Roadmap2Month = {
   month: number;
   goal: string;
-  focusItems: string[];
-  choreItems: string[];
-  seasonalItems: string[];
 };
 
 type Roadmap2Year = {
-  annualGoal: string;
+  annualGoals: string[];
   months: Roadmap2Month[];
 };
 
@@ -22,135 +17,109 @@ type Roadmap2State = {
   years: Record<string, Roadmap2Year>;
 };
 
+type PlannerGoals = {
+  goalsByPeriod?: { month?: Record<string, string> };
+  annualGoalsByPeriod?: Record<string, string[]>;
+};
+
 type Roadmap2ClientProps = {
   initialValue: unknown;
+  initialPlannerValue: unknown;
 };
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
 
-const listMeta: Array<{
-  key: Roadmap2ListKey;
-  title: string;
-  placeholder: string;
-}> = [
-  { key: "focusItems", title: "やるべきこと", placeholder: "今月進めること" },
-  { key: "choreItems", title: "雑務的なタスク", placeholder: "雑務・事務タスク" },
-  { key: "seasonalItems", title: "イベント・趣味", placeholder: "イベント・趣味" },
-];
-
 function createMonth(month: number): Roadmap2Month {
-  return {
-    month,
-    goal: "",
-    focusItems: [""],
-    choreItems: [""],
-    seasonalItems: [""],
-  };
+  return { month, goal: "" };
 }
 
 function createYearPlan(): Roadmap2Year {
   return {
-    annualGoal: "",
+    annualGoals: [""],
     months: Array.from({ length: 12 }, (_, index) => createMonth(index + 1)),
   };
 }
 
 function createInitialRoadmap2State(): Roadmap2State {
   const year = new Date().getFullYear();
-  return {
-    selectedYear: year,
-    years: {
-      [String(year)]: createYearPlan(),
-    },
-  };
+  return { selectedYear: year, years: { [String(year)]: createYearPlan() } };
 }
 
 function normalizeMonth(value: unknown, month: number): Roadmap2Month {
   const source = value && typeof value === "object" ? (value as Partial<Roadmap2Month>) : {};
-  const normalizedMonth =
-    typeof source.month === "number" && source.month >= 1 && source.month <= 12
-      ? source.month
-      : month;
-
-  function normalizeItems(items: unknown) {
-    if (!Array.isArray(items)) return [""];
-    const nextItems = items.map((item) => (typeof item === "string" ? item : ""));
-    return nextItems.length > 0 ? nextItems : [""];
-  }
-
   return {
-    month: normalizedMonth,
+    month,
     goal: typeof source.goal === "string" ? source.goal : "",
-    focusItems: normalizeItems(source.focusItems),
-    choreItems: normalizeItems(source.choreItems),
-    seasonalItems: normalizeItems(source.seasonalItems),
   };
 }
 
 function normalizeYearPlan(value: unknown): Roadmap2Year {
-  const source = value && typeof value === "object" ? (value as Partial<Roadmap2Year>) : {};
+  const source = value && typeof value === "object" ? (value as { annualGoals?: unknown; annualGoal?: unknown; months?: unknown }) : {};
+  const rawGoals = Array.isArray(source.annualGoals)
+    ? source.annualGoals.filter((goal): goal is string => typeof goal === "string")
+    : typeof source.annualGoal === "string"
+      ? [source.annualGoal]
+      : [];
   const rawMonths = Array.isArray(source.months) ? source.months : [];
 
   return {
-    annualGoal: typeof source.annualGoal === "string" ? source.annualGoal : "",
+    annualGoals: (rawGoals.length ? rawGoals : [""]).slice(0, 5),
     months: Array.from({ length: 12 }, (_, index) => {
       const month = index + 1;
-      const existing = rawMonths.find((item) => {
-        if (!item || typeof item !== "object") return false;
-        return (item as Partial<Roadmap2Month>).month === month;
-      });
+      const existing = rawMonths.find(
+        (item) => item && typeof item === "object" && (item as Partial<Roadmap2Month>).month === month,
+      );
       return normalizeMonth(existing, month);
     }),
   };
 }
 
-function normalizeRoadmap2State(value: unknown): Roadmap2State {
-  if (!value || typeof value !== "object") {
-    return createInitialRoadmap2State();
-  }
-
-  const source = value as Partial<Roadmap2State>;
-  const selectedYear =
-    typeof source.selectedYear === "number" && Number.isInteger(source.selectedYear)
-      ? source.selectedYear
-      : new Date().getFullYear();
+function normalizeRoadmap2State(value: unknown, plannerValue: unknown): Roadmap2State {
+  const fallback = createInitialRoadmap2State();
+  const source = value && typeof value === "object" ? (value as Partial<Roadmap2State>) : {};
+  const selectedYear = typeof source.selectedYear === "number" && Number.isInteger(source.selectedYear)
+    ? source.selectedYear
+    : fallback.selectedYear;
   const rawYears = source.years && typeof source.years === "object" ? source.years : {};
   const years = Object.fromEntries(
-    Object.entries(rawYears).map(([yearKey, yearValue]) => [
-      yearKey,
-      normalizeYearPlan(yearValue),
-    ]),
+    Object.entries(rawYears).map(([year, plan]) => [year, normalizeYearPlan(plan)]),
   );
+  const planner = plannerValue && typeof plannerValue === "object" ? plannerValue as PlannerGoals : {};
 
-  if (!years[String(selectedYear)]) {
-    years[String(selectedYear)] = createYearPlan();
-  }
+  Object.entries(planner.annualGoalsByPeriod || {}).forEach(([year, goals]) => {
+    const plan = years[year] || createYearPlan();
+    years[year] = { ...plan, annualGoals: (goals.length ? goals : [""]).slice(0, 5) };
+  });
+  Object.entries(planner.goalsByPeriod?.month || {}).forEach(([monthKey, goal]) => {
+    const [year, monthValue] = monthKey.split("-");
+    const month = Number(monthValue);
+    if (!Number.isInteger(month) || month < 1 || month > 12) return;
+    const plan = years[year] || createYearPlan();
+    years[year] = {
+      ...plan,
+      months: plan.months.map((item) => item.month === month ? { ...item, goal } : item),
+    };
+  });
 
+  if (!years[String(selectedYear)]) years[String(selectedYear)] = createYearPlan();
   return { selectedYear, years };
 }
 
-export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
-  const [roadmap, setRoadmap] = useState<Roadmap2State>(() =>
-    normalizeRoadmap2State(initialValue),
-  );
+export default function Roadmap2Client({ initialValue, initialPlannerValue }: Roadmap2ClientProps) {
+  const [roadmap, setRoadmap] = useState<Roadmap2State>(() => normalizeRoadmap2State(initialValue, initialPlannerValue));
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
   const [isComposing, setIsComposing] = useState(false);
   const hasMountedRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const activeYearKey = String(roadmap.selectedYear);
-  const activeYear = useMemo(
-    () => roadmap.years[activeYearKey] || createYearPlan(),
-    [activeYearKey, roadmap.years],
-  );
+  const activeYear = useMemo(() => roadmap.years[activeYearKey] || createYearPlan(), [activeYearKey, roadmap.years]);
   const selectedMonthPlan = useMemo(
     () => activeYear.months.find((month) => month.month === selectedMonth) || createMonth(selectedMonth),
     [activeYear.months, selectedMonth],
   );
   const today = new Date();
-  const isPastMonth = (month: number) =>
-    roadmap.selectedYear < today.getFullYear() ||
-    (roadmap.selectedYear === today.getFullYear() && month < today.getMonth() + 1);
+  const isPastMonth = (month: number) => roadmap.selectedYear < today.getFullYear() || (roadmap.selectedYear === today.getFullYear() && month < today.getMonth() + 1);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -158,315 +127,113 @@ export default function Roadmap2Client({ initialValue }: Roadmap2ClientProps) {
       return;
     }
     if (isComposing) return;
-
     const timeoutId = window.setTimeout(() => {
-      // Serialize writes so an older snapshot can never overwrite a newer one.
-      saveQueueRef.current = saveQueueRef.current
-        .catch(() => undefined)
-        .then(async () => {
-          const response = await fetch("/api/roadmap2", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(roadmap),
-          });
-          if (!response.ok) throw new Error("ロードマップの保存に失敗しました。");
+      saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
+        const response = await fetch("/api/roadmap2", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(roadmap),
         });
+        if (!response.ok) throw new Error("ロードマップの保存に失敗しました。");
+      });
     }, 500);
-
     return () => window.clearTimeout(timeoutId);
   }, [isComposing, roadmap]);
-
-  function resizeGoalTextarea(textarea: HTMLTextAreaElement | null) {
-    if (!textarea) return;
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }
-
-  useEffect(() => {
-    document
-      .querySelectorAll<HTMLTextAreaElement>(".roadmap2AnnualInput, .roadmap2GoalInput")
-      .forEach((textarea) => resizeGoalTextarea(textarea));
-  }, [roadmap]);
 
   function ensureYear(year: number) {
     setRoadmap((current) => ({
       selectedYear: year,
-      years: current.years[String(year)]
-        ? current.years
-        : { ...current.years, [String(year)]: createYearPlan() },
+      years: current.years[String(year)] ? current.years : { ...current.years, [String(year)]: createYearPlan() },
     }));
   }
 
   function updateActiveYear(updater: (current: Roadmap2Year) => Roadmap2Year) {
     setRoadmap((current) => ({
       ...current,
-      years: {
-        ...current.years,
-        [String(current.selectedYear)]: updater(
-          current.years[String(current.selectedYear)] || createYearPlan(),
-        ),
-      },
+      years: { ...current.years, [String(current.selectedYear)]: updater(current.years[String(current.selectedYear)] || createYearPlan()) },
     }));
   }
 
-  function updateAnnualGoal(value: string) {
-    updateActiveYear((current) => ({ ...current, annualGoal: value }));
+  function updateAnnualGoal(index: number, value: string) {
+    updateActiveYear((current) => ({
+      ...current,
+      annualGoals: current.annualGoals.map((goal, goalIndex) => goalIndex === index ? value : goal),
+    }));
+  }
+
+  function addAnnualGoal() {
+    updateActiveYear((current) => current.annualGoals.length >= 5 ? current : { ...current, annualGoals: [...current.annualGoals, ""] });
+  }
+
+  function removeAnnualGoal(index: number) {
+    updateActiveYear((current) => {
+      const annualGoals = current.annualGoals.filter((_, goalIndex) => goalIndex !== index);
+      return { ...current, annualGoals: annualGoals.length ? annualGoals : [""] };
+    });
   }
 
   function updateMonthGoal(month: number, goal: string) {
     updateActiveYear((current) => ({
       ...current,
-      months: current.months.map((item) =>
-        item.month === month ? { ...item, goal } : item,
-      ),
+      months: current.months.map((item) => item.month === month ? { ...item, goal } : item),
     }));
-  }
-
-  function updateListItem(
-    month: number,
-    listKey: Roadmap2ListKey,
-    index: number,
-    value: string,
-  ) {
-    updateActiveYear((current) => ({
-      ...current,
-      months: current.months.map((item) => {
-        if (item.month !== month) return item;
-        const nextItems = item[listKey].map((entry, entryIndex) =>
-          entryIndex === index ? value : entry,
-        );
-        return { ...item, [listKey]: nextItems };
-      }),
-    }));
-  }
-
-  function addListItem(month: number, listKey: Roadmap2ListKey) {
-    updateActiveYear((current) => ({
-      ...current,
-      months: current.months.map((item) =>
-        item.month === month
-          ? { ...item, [listKey]: [...item[listKey], ""] }
-          : item,
-      ),
-    }));
-  }
-
-  function addListItemAndFocus(month: number, listKey: Roadmap2ListKey) {
-    const nextIndex =
-      activeYear.months.find((item) => item.month === month)?.[listKey].length || 0;
-
-    addListItem(month, listKey);
-
-    requestAnimationFrame(() => {
-      const nextInput = document.querySelector<HTMLInputElement>(
-        `[data-roadmap2-item="${month}-${listKey}-${nextIndex}"]`,
-      );
-      nextInput?.focus();
-    });
-  }
-
-  function removeListItem(month: number, listKey: Roadmap2ListKey, index: number) {
-    updateActiveYear((current) => ({
-      ...current,
-      months: current.months.map((item) => {
-        if (item.month !== month) return item;
-        const nextItems = item[listKey].filter((_, entryIndex) => entryIndex !== index);
-        return {
-          ...item,
-          [listKey]: nextItems.length > 0 ? nextItems : [""],
-        };
-      }),
-    }));
-  }
-
-  function handleListItemKeyDown(
-    event: KeyboardEvent<HTMLInputElement>,
-    month: number,
-    listKey: Roadmap2ListKey,
-    index: number,
-  ) {
-    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-    event.preventDefault();
-
-    const nextIndex = index + 1;
-    const currentItems =
-      activeYear.months.find((item) => item.month === month)?.[listKey] || [];
-
-    if (nextIndex >= currentItems.length) {
-      addListItem(month, listKey);
-    }
-
-    requestAnimationFrame(() => {
-      const nextInput = document.querySelector<HTMLInputElement>(
-        `[data-roadmap2-item="${month}-${listKey}-${nextIndex}"]`,
-      );
-      nextInput?.focus();
-    });
-  }
-
-  function renderMonthSection(month: Roadmap2Month) {
-    return (
-      <section className="roadmap2MonthCard" aria-label={`${month.month}月`}>
-        <header className="roadmap2MonthHeader">
-          <h2>{monthLabels[month.month - 1]}</h2>
-        </header>
-
-        <>
-            <div className="roadmap2GoalRow">
-              <label
-                className="roadmap2GoalLabel"
-                htmlFor={`roadmap2-goal-${roadmap.selectedYear}-${month.month}`}
-              >
-                月間目標
-              </label>
-              <textarea
-                id={`roadmap2-goal-${roadmap.selectedYear}-${month.month}`}
-                className="roadmap2GoalInput"
-                placeholder={`${month.month}月の目標`}
-                rows={2}
-                ref={resizeGoalTextarea}
-                value={month.goal}
-                onChange={(event) => {
-                  resizeGoalTextarea(event.currentTarget);
-                  updateMonthGoal(month.month, event.target.value);
-                }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={(event) => {
-                  setIsComposing(false);
-                  updateMonthGoal(month.month, event.currentTarget.value);
-                }}
-              />
-            </div>
-
-            <div className="roadmap2Columns">
-              {listMeta.map((list) => (
-                <section className="roadmap2ListCard" key={list.key}>
-                  <header className="roadmap2ListHeader">
-                    <h3>{list.title}</h3>
-                    <button
-                      type="button"
-                      className="roadmap2AddButton"
-                      onClick={() => addListItemAndFocus(month.month, list.key)}
-                      aria-label={`${monthLabels[month.month - 1]}の${list.title}を追加`}
-                    >
-                      +
-                    </button>
-                  </header>
-                  <div className="roadmap2ItemList">
-                    {month[list.key].map((item, index) => (
-                      <div
-                        className="roadmap2ItemRow"
-                        key={`${month.month}-${list.key}-${index}`}
-                      >
-                        <input
-                          data-roadmap2-item={`${month.month}-${list.key}-${index}`}
-                          aria-label={`${monthLabels[month.month - 1]}の${list.title}`}
-                          value={item}
-                          onKeyDown={(event) =>
-                            handleListItemKeyDown(event, month.month, list.key, index)
-                          }
-                          onChange={(event) =>
-                            updateListItem(month.month, list.key, index, event.target.value)
-                          }
-                          onCompositionStart={() => setIsComposing(true)}
-                          onCompositionEnd={(event) => {
-                            setIsComposing(false);
-                            updateListItem(month.month, list.key, index, event.currentTarget.value);
-                          }}
-                        />
-                        <button
-                          type="button"
-                          className="roadmap2RemoveButton"
-                          onClick={() => removeListItem(month.month, list.key, index)}
-                          aria-label={`${monthLabels[month.month - 1]}の${list.title}を削除`}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-        </>
-      </section>
-    );
   }
 
   return (
     <main className="shell roadmap2Page">
       <section className="roadmapHeader roadmap2Header" aria-label="年間ロードマップ">
-        <div>
-          <h1>年間ロードマップ</h1>
-        </div>
+        <h1>年間ロードマップ</h1>
         <div className="roadmap2YearSwitcher" aria-label="年の切り替え">
-          <button
-            type="button"
-            onClick={() => ensureYear(roadmap.selectedYear - 1)}
-            aria-label="前年へ"
-          >
-            &lt;
-          </button>
+          <button type="button" onClick={() => ensureYear(roadmap.selectedYear - 1)} aria-label="前年へ">&lt;</button>
           <strong>{roadmap.selectedYear}年</strong>
-          <button
-            type="button"
-            onClick={() => ensureYear(roadmap.selectedYear + 1)}
-            aria-label="翌年へ"
-          >
-            &gt;
-          </button>
+          <button type="button" onClick={() => ensureYear(roadmap.selectedYear + 1)} aria-label="翌年へ">&gt;</button>
         </div>
       </section>
 
       <section className="roadmap2AnnualCard" aria-label="年間目標">
-        <header className="sectionHeader">
-          <h2>年間目標</h2>
-        </header>
-        <textarea
-          className="roadmap2AnnualInput"
-          aria-label="年間目標"
-          placeholder="この年を通して達成したいこと"
-          rows={2}
-          ref={resizeGoalTextarea}
-          value={activeYear.annualGoal}
-          onChange={(event) => {
-            resizeGoalTextarea(event.currentTarget);
-            updateAnnualGoal(event.target.value);
-          }}
-          onCompositionStart={() => setIsComposing(true)}
-          onCompositionEnd={(event) => {
-            setIsComposing(false);
-            updateAnnualGoal(event.currentTarget.value);
-          }}
-        />
+        <header className="sectionHeader"><h2>年間目標</h2></header>
+        <div className="roadmap2AnnualGoalList">
+          {activeYear.annualGoals.map((goal, index) => (
+            <div className="roadmap2AnnualGoalRow" key={`${activeYearKey}-${index}`}>
+              <span aria-hidden="true">{index + 1}.</span>
+              <input
+                aria-label={`年間目標 ${index + 1}`}
+                placeholder="この年を通して達成したいこと"
+                value={goal}
+                onChange={(event) => updateAnnualGoal(index, event.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={(event) => { setIsComposing(false); updateAnnualGoal(index, event.currentTarget.value); }}
+              />
+              <button type="button" className="roadmap2RemoveButton" onClick={() => removeAnnualGoal(index)} aria-label={`年間目標 ${index + 1}を削除`}>×</button>
+            </div>
+          ))}
+        </div>
+        {activeYear.annualGoals.length < 5 && <button type="button" className="roadmap2AnnualAddButton" onClick={addAnnualGoal}>＋ 目標を追加</button>}
       </section>
 
       <nav className="roadmap2MonthPicker" aria-label="月を選択">
         {monthLabels.map((label, index) => {
           const month = index + 1;
-          return (
-            <button
-              type="button"
-              key={month}
-              className={
-                selectedMonth === month
-                  ? "isActive"
-                  : isPastMonth(month)
-                    ? "isPast"
-                    : undefined
-              }
-              aria-pressed={selectedMonth === month}
-              onClick={() => setSelectedMonth(month)}
-            >
-              {label}
-            </button>
-          );
+          return <button type="button" key={month} className={selectedMonth === month ? "isActive" : isPastMonth(month) ? "isPast" : undefined} aria-pressed={selectedMonth === month} onClick={() => setSelectedMonth(month)}>{label}</button>;
         })}
       </nav>
 
-      <div className="roadmap2SelectedMonth">
-        {renderMonthSection(selectedMonthPlan)}
-      </div>
+      <section className="roadmap2SelectedMonth roadmap2MonthCard" aria-label={`${selectedMonth}月`}>
+        <header className="roadmap2MonthHeader"><h2>{monthLabels[selectedMonth - 1]}</h2></header>
+        <div className="roadmap2GoalRow">
+          <label className="roadmap2GoalLabel" htmlFor={`roadmap2-goal-${roadmap.selectedYear}-${selectedMonth}`}>月間目標</label>
+          <input
+            id={`roadmap2-goal-${roadmap.selectedYear}-${selectedMonth}`}
+            className="roadmap2GoalInput"
+            aria-label="月間目標"
+            placeholder={`${selectedMonth}月の目標`}
+            value={selectedMonthPlan.goal}
+            onChange={(event) => updateMonthGoal(selectedMonth, event.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={(event) => { setIsComposing(false); updateMonthGoal(selectedMonth, event.currentTarget.value); }}
+          />
+        </div>
+      </section>
     </main>
   );
 }

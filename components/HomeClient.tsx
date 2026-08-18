@@ -77,6 +77,7 @@ type AchievementTask = {
 type PlannerState = {
   goals: GoalMap;
   goalsByPeriod: PeriodGoalMap;
+  annualGoalsByPeriod: Record<string, string[]>;
   birthday: string;
   achievementTasks: AchievementTask[];
   todayTasks: PriorityTask[];
@@ -178,6 +179,7 @@ const initialState: PlannerState = {
     month: {},
     week: {},
   },
+  annualGoalsByPeriod: {},
   birthday: "",
   achievementTasks: [],
   todayTasks: [],
@@ -684,6 +686,18 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     month: { ...storedGoalsByPeriod.month },
     week: { ...storedGoalsByPeriod.week },
   };
+  const storedAnnualGoals =
+    value.annualGoalsByPeriod && typeof value.annualGoalsByPeriod === "object"
+      ? value.annualGoalsByPeriod
+      : {};
+  const annualGoalsByPeriod = Object.fromEntries(
+    Object.entries(storedAnnualGoals).map(([year, goals]) => [
+      year,
+      Array.isArray(goals)
+        ? goals.filter((goal): goal is string => typeof goal === "string").slice(0, 5)
+        : [],
+    ]),
+  );
 
   (Object.keys(initialState.goals) as GoalKey[]).forEach((key) => {
     const periodKey = currentPeriodInfo.keys[key];
@@ -693,12 +707,19 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     }
   });
 
+  Object.entries(goalsByPeriod.year).forEach(([year, goal]) => {
+    if (!annualGoalsByPeriod[year]) annualGoalsByPeriod[year] = [goal || ""];
+  });
+  const currentYearKey = currentPeriodInfo.keys.year;
+  if (!annualGoalsByPeriod[currentYearKey]) annualGoalsByPeriod[currentYearKey] = [""];
+
   return {
     goals: {
       ...initialState.goals,
       ...value.goals,
     },
     goalsByPeriod,
+    annualGoalsByPeriod,
     birthday: typeof value.birthday === "string" ? value.birthday : "",
     achievementTasks: rawAchievementTasks.map((task, index) => ({
       id: task.id || `achievement-task-${index + 1}`,
@@ -1431,6 +1452,68 @@ export default function HomeClient({
         },
       },
     }));
+  }
+
+  function updateAnnualGoal(index: number, value: string) {
+    const yearKey = periodKeys.year;
+    setPlanner((current) => {
+      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
+      const nextGoals = currentGoals.map((goal, goalIndex) =>
+        goalIndex === index ? value : goal,
+      );
+      return {
+        ...current,
+        annualGoalsByPeriod: {
+          ...current.annualGoalsByPeriod,
+          [yearKey]: nextGoals,
+        },
+        goalsByPeriod: {
+          ...current.goalsByPeriod,
+          year: {
+            ...current.goalsByPeriod.year,
+            [yearKey]: nextGoals.filter(Boolean).join("\n"),
+          },
+        },
+      };
+    });
+  }
+
+  function addAnnualGoal() {
+    const yearKey = periodKeys.year;
+    setPlanner((current) => {
+      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
+      if (currentGoals.length >= 5) return current;
+      return {
+        ...current,
+        annualGoalsByPeriod: {
+          ...current.annualGoalsByPeriod,
+          [yearKey]: [...currentGoals, ""],
+        },
+      };
+    });
+  }
+
+  function removeAnnualGoal(index: number) {
+    const yearKey = periodKeys.year;
+    setPlanner((current) => {
+      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
+      const nextGoals = currentGoals.filter((_, goalIndex) => goalIndex !== index);
+      const normalizedGoals = nextGoals.length > 0 ? nextGoals : [""];
+      return {
+        ...current,
+        annualGoalsByPeriod: {
+          ...current.annualGoalsByPeriod,
+          [yearKey]: normalizedGoals,
+        },
+        goalsByPeriod: {
+          ...current.goalsByPeriod,
+          year: {
+            ...current.goalsByPeriod.year,
+            [yearKey]: normalizedGoals.filter(Boolean).join("\n"),
+          },
+        },
+      };
+    });
   }
 
   function changePeriod(key: GoalKey, direction: -1 | 1) {
@@ -2306,13 +2389,24 @@ export default function HomeClient({
                   </button>
                 </span>
               </div>
-              <input
-                className="goalLineInput"
-                aria-label="年の目標"
-                placeholder={`${getGoalLabel("year", periodOffsets.year, periodLabels.year)}を入力してください`}
-                value={planner.goalsByPeriod.year[periodKeys.year] || ""}
-                onChange={(event) => updateGoal("year", event.target.value)}
-              />
+              <div className="homeAnnualGoalList">
+                {(planner.annualGoalsByPeriod[periodKeys.year] || [""]).map((goal, index) => (
+                  <div className="homeAnnualGoalRow" key={`${periodKeys.year}-${index}`}>
+                    <span aria-hidden="true">{index + 1}.</span>
+                    <input
+                      className="goalLineInput"
+                      aria-label={`年の目標 ${index + 1}`}
+                      placeholder={`${getGoalLabel("year", periodOffsets.year, periodLabels.year)}を入力してください`}
+                      value={goal}
+                      onChange={(event) => updateAnnualGoal(index, event.target.value)}
+                    />
+                    <button className="iconButton" type="button" onClick={() => removeAnnualGoal(index)} aria-label={`年の目標 ${index + 1}を削除`}>×</button>
+                  </div>
+                ))}
+                {(planner.annualGoalsByPeriod[periodKeys.year] || [""]).length < 5 && (
+                  <button className="homeAnnualGoalAdd" type="button" onClick={addAnnualGoal}>＋ 目標を追加</button>
+                )}
+              </div>
               <section className="goalPanel goalMonthPanel">
                 <div className="goalHeading">
                   <span>

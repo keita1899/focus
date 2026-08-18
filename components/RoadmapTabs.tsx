@@ -13,6 +13,7 @@ import VisionClient from "./VisionClient";
 type RoadmapTabsProps = {
   initialMemoValue: unknown;
   initialRoadmap2Value: unknown;
+  initialPlannerValue: unknown;
   initialVisionValue: unknown;
   initialTab?: "roadmap" | "annual" | "vision";
 };
@@ -20,6 +21,7 @@ type RoadmapTabsProps = {
 export default function RoadmapTabs({
   initialMemoValue,
   initialRoadmap2Value,
+  initialPlannerValue,
   initialVisionValue,
   initialTab = "roadmap",
 }: RoadmapTabsProps) {
@@ -42,6 +44,6 @@ export default function RoadmapTabs({
       <button className={activeTab === "annual" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "annual"} onClick={() => setActiveTab("annual")}>年間ロードマップ</button>
       <button className={activeTab === "vision" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "vision"} onClick={() => setActiveTab("vision")}>ビジョン</button>
     </div>
-    {activeTab === "roadmap" ? <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} /> : activeTab === "annual" ? <Roadmap2Client initialValue={initialRoadmap2Value} /> : <VisionClient initialValue={initialVisionValue} />}
+    {activeTab === "roadmap" ? <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} /> : activeTab === "annual" ? <Roadmap2Client initialValue={initialRoadmap2Value} initialPlannerValue={initialPlannerValue} /> : <VisionClient initialValue={initialVisionValue} />}
   </main>;
 }
