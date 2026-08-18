@@ -1237,10 +1237,11 @@ select {
 }
 
 .inboxTaskItem {
-  grid-template-columns: 38px minmax(0, 1fr) 142px auto;
+  grid-template-columns: 38px minmax(0, 1fr) 142px 104px;
 }
 
-.inboxTaskDate {
+.inboxTaskDate,
+.inboxTaskTime {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--line) !important;
@@ -1269,6 +1270,19 @@ select {
   font-size: 0.78rem;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.taskItem.isCurrentTask {
+  position: relative;
+  z-index: 1;
+  border-color: var(--accent-strong);
+  background: #dff3e6;
+  box-shadow: 0 0 0 2px rgba(23, 107, 85, 0.16);
+}
+
+.taskList > .taskItem.isCurrentTask,
+.taskList > .taskItem.isCurrentTask + .taskItem {
+  border-top: 1px solid var(--accent-strong);
 }
 
 .todayDashboardTask {
@@ -2308,13 +2322,10 @@ select {
   flex: 0 0 auto;
   display: inline-grid;
   place-items: center;
-  min-height: 22px;
-  padding: 0 8px;
-  border: 1px solid rgba(23, 107, 85, 0.18);
-  border-radius: 999px;
-  background: rgba(23, 107, 85, 0.08);
+  width: 20px;
+  height: 20px;
   color: var(--accent-strong);
-  font-size: 0.72rem;
+  font-size: 1rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -5681,7 +5692,8 @@ select {
     grid-template-columns: 38px minmax(0, 1fr) 42px;
   }
 
-  .inboxTaskDate {
+  .inboxTaskDate,
+  .inboxTaskTime {
     grid-column: 2 / -1;
   }
 

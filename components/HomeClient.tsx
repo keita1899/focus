@@ -21,6 +21,7 @@ type PriorityTask = {
   title: string;
   done: boolean;
   scheduledDate?: string;
+  scheduledTime?: string;
   projectName?: string;
 };
 
@@ -46,6 +47,10 @@ type DailyTaskGroup = {
   theme: string;
   tasks: DailyTask[];
 };
+
+type CurrentTaskEntry =
+  | { source: "daily"; time: string; group: DailyTaskGroup; task: DailyTask }
+  | { source: "inbox"; time: string; task: PriorityTask };
 
 type TodayThemeTaskGroup = {
   key: DailyGroupKey;
@@ -746,6 +751,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         scheduledDate: typeof task.scheduledDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(task.scheduledDate)
           ? task.scheduledDate
           : undefined,
+        scheduledTime: isValidTimeValue(task.scheduledTime) ? task.scheduledTime : undefined,
         projectName: task.projectName || undefined,
       })),
     dailyTaskGroups: normalizeDailyTaskGroups(legacyValue),
@@ -936,10 +942,18 @@ export default function HomeClient({
     .flatMap((group) => group.tasks.map((task) => ({ group, task })))
     .filter(({ task }) => task.pattern === todayDailyPattern && !task.completedDates.includes(todayKey))
     .sort((first, second) => first.task.time.localeCompare(second.task.time));
-  const currentOrPreviousDailyTasks = availableDailyTasks.filter(
-    ({ task }) => task.time <= currentTimeValue,
-  );
-  const currentDailyTaskEntry = currentOrPreviousDailyTasks.at(-1) || availableDailyTasks[0];
+  const currentTaskCandidates: CurrentTaskEntry[] = [
+    ...availableDailyTasks.map(({ group, task }) => ({ source: "daily" as const, time: task.time, group, task })),
+    ...planner.inboxTasks
+      .filter((task) => task.scheduledDate === todayKey && isValidTimeValue(task.scheduledTime))
+      .map((task) => ({ source: "inbox" as const, time: task.scheduledTime!, task })),
+  ];
+  const compareCurrentTasks = (first: CurrentTaskEntry, second: CurrentTaskEntry) =>
+    first.time.localeCompare(second.time) || (first.source === "inbox" ? -1 : 1);
+  const currentOrPreviousTasks = currentTaskCandidates.filter((task) => task.time <= currentTimeValue);
+  const currentTaskEntry = currentOrPreviousTasks.length
+    ? [...currentOrPreviousTasks].sort((first, second) => compareCurrentTasks(second, first))[0]
+    : [...currentTaskCandidates].sort(compareCurrentTasks)[0];
   const weekStart = getWeekStartDate();
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
@@ -1554,6 +1568,15 @@ export default function HomeClient({
     }));
   }
 
+  function updateInboxTaskScheduledTime(id: string, scheduledTime: string) {
+    setPlanner((current) => ({
+      ...current,
+      inboxTasks: current.inboxTasks.map((task) =>
+        task.id === id ? { ...task, scheduledTime: scheduledTime || undefined } : task,
+      ),
+    }));
+  }
+
   function completeInboxTask(id: string) {
     setPlanner((current) => ({
       ...current,
@@ -2125,11 +2148,12 @@ export default function HomeClient({
           })}
           {tasks.map((task) => {
             const isCompleted = task.completedDates.includes(todayKey);
+            const isCurrentTask = currentTaskEntry?.source === "daily" && currentTaskEntry.task.id === task.id;
             const editTarget = { kind: "daily", id: task.id } as const;
             const isEditing = isTaskBeingEdited(editTarget);
             return (
               <article
-                className={isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}
+                className={`${isCompleted ? "taskItem done dailyItem" : "taskItem dailyItem"}${isCurrentTask ? " isCurrentTask" : ""}`}
                 key={task.id}
               >
                 <button
@@ -2160,9 +2184,7 @@ export default function HomeClient({
                     tabIndex={0}
                     onDoubleClick={() => beginTaskEdit(editTarget)}
                   >
-                    <span className="recurringInlineBadge" aria-hidden="true">
-                      ↻ 繰り返し
-                    </span>
+                    <span className="recurringInlineBadge" aria-label="繰り返し">↻</span>
                     <span className="dailyTaskTimeBadge">{formatTimeLabel(task.time)}</span>
                     <span>{task.title || " "}</span>
                   </div>
@@ -2317,7 +2339,7 @@ export default function HomeClient({
 
   function renderScheduledInboxTask(task: PriorityTask) {
     return (
-      <article className="taskItem scheduledInboxTask" key={task.id}>
+      <article className={`taskItem scheduledInboxTask${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
         <button
           className="checkButton"
           type="button"
@@ -2327,7 +2349,7 @@ export default function HomeClient({
           ✓
         </button>
         <div className="taskTitleView">{task.title || " "}</div>
-        {task.scheduledDate && <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time>}
+        {task.scheduledDate && <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}{task.scheduledTime ? ` ${formatTimeLabel(task.scheduledTime)}` : ""}</time>}
       </article>
     );
   }
@@ -2721,7 +2743,7 @@ export default function HomeClient({
                   <p className="emptyText">Inboxタスクはありません。</p>
                 )}
                 {planner.inboxTasks.map((task) => (
-                  <article className={task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"} key={task.id}>
+                  <article className={`${task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
                     {(() => {
                       const editTarget = { kind: "inbox", id: task.id } as const;
                       const isEditing = isTaskBeingEdited(editTarget);
@@ -2765,6 +2787,13 @@ export default function HomeClient({
                             value={task.scheduledDate || ""}
                             onChange={(event) => updateInboxTaskScheduledDate(task.id, event.currentTarget.value)}
                           />
+                          <input
+                            className="inboxTaskTime"
+                            type="time"
+                            aria-label={`${task.title || "Inboxタスク"}の実行時刻`}
+                            value={task.scheduledTime || ""}
+                            onChange={(event) => updateInboxTaskScheduledTime(task.id, event.currentTarget.value)}
+                          />
                         </>
                       );
                     })()}
@@ -2793,12 +2822,12 @@ export default function HomeClient({
 
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
         <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
-        <strong>{currentDailyTaskEntry ? `${formatTimeLabel(currentDailyTaskEntry.task.time)}開始 ${currentDailyTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
-        {currentDailyTaskEntry && (
+        <strong>{currentTaskEntry ? `${formatTimeLabel(currentTaskEntry.time)}開始 ${currentTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
+        {currentTaskEntry && (
           <button
             className="currentTaskCompleteButton"
             type="button"
-            onClick={() => toggleDailyTask(currentDailyTaskEntry.group.key, currentDailyTaskEntry.task.id)}
+            onClick={() => currentTaskEntry.source === "daily" ? toggleDailyTask(currentTaskEntry.group.key, currentTaskEntry.task.id) : completeInboxTask(currentTaskEntry.task.id)}
           >
             完了
           </button>
