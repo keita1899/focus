@@ -927,11 +927,28 @@ export default function HomeClient({
   const scheduledInboxTasks = planner.inboxTasks.filter((task) => task.scheduledDate);
   const todayInboxTasks = scheduledInboxTasks.filter((task) => task.scheduledDate === todayKey);
   const weekInboxTasks = scheduledInboxTasks.filter(
-    (task) => task.scheduledDate !== todayKey && task.scheduledDate! >= weekStartKey && task.scheduledDate! <= weekEndKey,
+    (task) => task.scheduledDate! > todayKey && task.scheduledDate! >= weekStartKey && task.scheduledDate! <= weekEndKey,
   );
   const monthInboxTasks = scheduledInboxTasks.filter(
-    (task) => task.scheduledDate?.startsWith(todayKey.slice(0, 7)) && (task.scheduledDate! < weekStartKey || task.scheduledDate! > weekEndKey),
+    (task) => task.scheduledDate! > todayKey && task.scheduledDate?.startsWith(todayKey.slice(0, 7)) && (task.scheduledDate! < weekStartKey || task.scheduledDate! > weekEndKey),
   );
+  const currentWeekday = currentTime.getDay();
+  const currentWeekdayIndex = (currentWeekday + 6) % 7;
+  const currentDayOfMonth = currentTime.getDate();
+  const overdueWeeklyTasks = planner.weeklyTasks.filter(
+    (task) =>
+      (task.weekday + 6) % 7 < currentWeekdayIndex &&
+      !task.completedWeeks.includes(getWeeklySlotKey(currentWeekKey, task.weekday)),
+  );
+  const overdueMonthlyTasks = planner.monthlyTasks.filter(
+    (task) =>
+      task.dayOfMonth < currentDayOfMonth &&
+      !task.completedMonths.includes(getMonthlySlotKey(currentMonthKey, task.dayOfMonth)),
+  );
+  const overdueInboxTasks = scheduledInboxTasks.filter(
+    (task) => task.scheduledDate! < todayKey,
+  );
+  const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -2442,18 +2459,30 @@ export default function HomeClient({
                 </div>
 
                 <aside className="todayTaskColumn" aria-label="実行日を指定したInboxタスク">
-                  <section className="todayTaskSection">
-                    <div className="sectionHeader"><h3>今日のタスク</h3></div>
-                    <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今日のタスクはありません。</p>}</div>
-                  </section>
-                  <section className="todayTaskSection">
-                    <div className="sectionHeader"><h3>今週のタスク</h3></div>
-                    <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今週のタスクはありません。</p>}</div>
-                  </section>
-                  <section className="todayTaskSection">
-                    <div className="sectionHeader"><h3>今月のタスク</h3></div>
-                    <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今月のタスクはありません。</p>}</div>
-                  </section>
+                  {hasOverdueTasks && (
+                    <section className="todayOverdueSection" aria-label="期限切れタスク">
+                      <div className="sectionHeader"><h3>期限切れタスク</h3></div>
+                      <div className="taskList">
+                        {overdueWeeklyTasks.map((task) => renderWeeklyTask(task, task.weekday))}
+                        {overdueMonthlyTasks.map((task) => renderMonthlyTask(task, task.dayOfMonth))}
+                        {overdueInboxTasks.map(renderScheduledInboxTask)}
+                      </div>
+                    </section>
+                  )}
+                  <div className="todayScheduledGroup" aria-label="今日・今週・今月のタスク">
+                    <section className="todayTaskSection todayTaskTodaySection">
+                      <div className="sectionHeader"><h3>今日のタスク</h3></div>
+                      <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今日のタスクはありません。</p>}</div>
+                    </section>
+                    <section className="todayTaskSection todayTaskWeekSection">
+                      <div className="sectionHeader"><h3>今週のタスク</h3></div>
+                      <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今週のタスクはありません。</p>}</div>
+                    </section>
+                    <section className="todayTaskSection todayTaskMonthSection">
+                      <div className="sectionHeader"><h3>今月のタスク</h3></div>
+                      <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今月のタスクはありません。</p>}</div>
+                    </section>
+                  </div>
                 </aside>
               </div>
             </section>

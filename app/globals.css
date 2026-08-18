@@ -673,7 +673,8 @@ h2 {
 .dailySectionCard,
 .weeklySection,
 .todayTaskSection,
-.todayInboxSection {
+.todayInboxSection,
+.todayOverdueSection {
   display: grid;
   gap: 10px;
   border: 1px solid var(--line);
@@ -1191,6 +1192,43 @@ select {
 .todayTaskColumn {
   border-left: 0;
   padding-left: 0;
+}
+
+.todayOverdueSection {
+  margin-bottom: 12px;
+  background: #fff4f2;
+  border-color: #f0c5be;
+}
+
+.todayScheduledGroup {
+  display: grid;
+  gap: 0;
+  align-items: start;
+}
+
+.todayScheduledGroup .todayTaskSection {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.todayScheduledGroup .todayTaskTodaySection {
+  width: calc(100% - 40px);
+  margin-left: 40px;
+  border-radius: 8px 8px 0 0;
+  background: #dcefe2;
+}
+
+.todayScheduledGroup .todayTaskWeekSection {
+  width: calc(100% - 20px);
+  margin-left: 20px;
+  border-top: 0;
+  background: #e8f5eb;
+}
+
+.todayScheduledGroup .todayTaskMonthSection {
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #f3f9f4;
 }
 
 .todayTaskList {
