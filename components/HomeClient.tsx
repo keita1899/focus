@@ -1980,26 +1980,6 @@ export default function HomeClient({
           <h3>{groupLabel} <span className="dailyGroupTime">{formatTimeLabel(group.startTime)}〜{formatTimeLabel(group.endTime)}</span></h3>
           <span className="sectionMeta">{group.theme || "テーマ未設定"}</span>
         </div>
-        <form
-          className="taskForm dailyTaskForm todayDailyTaskForm"
-          onSubmit={(event) => {
-            event.preventDefault();
-            addTodayThemeTask(group.key);
-          }}
-        >
-          <input
-            aria-label={`${groupLabel}の今日タスクを追加`}
-            value={newTodayThemeTaskTitles[group.key] || ""}
-            onChange={(event) => updateNewTodayThemeTaskTitle(group.key, event.target.value)}
-          />
-          <button
-            className="recurringAddButton"
-            type="submit"
-            aria-label={`${groupLabel}の今日タスクを追加`}
-          >
-            +
-          </button>
-        </form>
         <div className="taskList">
           {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && tasks.length === 0 && (
             <p className="emptyText">タスクはありません。</p>

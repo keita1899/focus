@@ -223,9 +223,10 @@ body > .topbar + .shell {
 
 .roadmapPageTabs {
   display: flex;
+  justify-content: center;
   gap: 8px;
   width: min(1180px, calc(100% - 32px));
-  margin: 0 auto;
+  margin: 28px auto 0;
 }
 
 .roadmapPageTabs button {
@@ -1251,7 +1252,7 @@ select {
 .priorityList,
 .taskList {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .completedTaskGroup {
@@ -2887,6 +2888,10 @@ select {
   padding: 18px;
 }
 
+.visionPage {
+  width: min(680px, calc(100% - 32px));
+}
+
 .visionList ol,
 .visionReminderList {
   display: grid;
@@ -2942,6 +2947,15 @@ select {
   background: #fff5f3;
   color: var(--danger);
   font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.visionListItem:hover > button,
+.visionListItem:focus-within > button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .visionInsertPoint {
@@ -2960,6 +2974,8 @@ select {
   background: white;
   color: var(--accent-strong);
   font-weight: 900;
+  line-height: 1;
+  padding: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms ease;
@@ -2972,7 +2988,7 @@ select {
 }
 
 .visionAddButton {
-  justify-self: start;
+  justify-self: end;
   min-height: 40px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -4132,6 +4148,7 @@ select {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 8px;
+  margin-top: 18px;
 }
 
 .roadmap2MonthPicker button {
