@@ -25,6 +25,7 @@ type DailyReport = {
 
 type DailyReportsState = {
   reports: DailyReport[];
+  deletedReports: DailyReport[];
 };
 
 type DailyReportClientProps = {
@@ -151,7 +152,7 @@ function normalizeDailyReportsState(value: unknown): DailyReportsState {
     try {
       return normalizeDailyReportsState(JSON.parse(value) as unknown);
     } catch {
-      return { reports: [createReport()] };
+      return { reports: [createReport()], deletedReports: [] };
     }
   }
 
@@ -182,8 +183,24 @@ function normalizeDailyReportsState(value: unknown): DailyReportsState {
     })
     .filter((report): report is DailyReport => Boolean(report));
 
+  const rawDeletedReports = Array.isArray(source.deletedReports) ? source.deletedReports : [];
+  const deletedReports = rawDeletedReports
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const report = item as Partial<DailyReport>;
+      const title = typeof report.title === "string" && report.title.trim() ? report.title : getTodayReportTitle();
+      return {
+        id: typeof report.id === "string" && report.id ? report.id : `deleted-daily-report-${index + 1}`,
+        title,
+        markdown: typeof report.markdown === "string" ? report.markdown : getDefaultMarkdown(title),
+        updatedAt: typeof report.updatedAt === "string" ? report.updatedAt : new Date().toISOString(),
+      };
+    })
+    .filter((report): report is DailyReport => Boolean(report));
+
   return {
-    reports: reports.length > 0 ? reports : [createReport()],
+    reports: Array.isArray(source.reports) ? reports : reports.length > 0 ? reports : [createReport()],
+    deletedReports,
   };
 }
 
@@ -217,14 +234,18 @@ export default function DailyReportClient({
   const [reports, setReports] = useState<DailyReport[]>(
     () => initialReportsState.reports,
   );
+  const [deletedReports, setDeletedReports] = useState<DailyReport[]>(
+    () => initialReportsState.deletedReports,
+  );
+  const [isTrashView, setIsTrashView] = useState(false);
   const [activeReportId, setActiveReportId] = useState(() => reports[0]?.id || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
   const [viewMode, setViewMode] = useState<ReportViewMode>("split");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const visibleReports = useMemo(
-    () => sortReportsByUpdatedAtDesc(reports),
-    [reports],
+    () => sortReportsByUpdatedAtDesc(isTrashView ? deletedReports : reports),
+    [deletedReports, isTrashView, reports],
   );
 
   const activeReport = useMemo(
@@ -271,6 +292,7 @@ export default function DailyReportClient({
         if (data.value) {
           const loadedState = normalizeDailyReportsState(data.value);
           setReports(loadedState.reports);
+          setDeletedReports(loadedState.deletedReports);
           setActiveReportId(loadedState.reports[0]?.id || "");
           return;
         }
@@ -280,6 +302,7 @@ export default function DailyReportClient({
 
         const loadedState = normalizeDailyReportsState(JSON.parse(stored));
         setReports(loadedState.reports);
+        setDeletedReports(loadedState.deletedReports);
         setActiveReportId(loadedState.reports[0]?.id || "");
         await fetch("/api/daily-report", {
           method: "PUT",
@@ -293,6 +316,7 @@ export default function DailyReportClient({
         try {
           const loadedState = normalizeDailyReportsState(JSON.parse(stored));
           setReports(loadedState.reports);
+          setDeletedReports(loadedState.deletedReports);
           setActiveReportId(loadedState.reports[0]?.id || "");
         } catch {
           setReports([createReport()]);
@@ -309,9 +333,9 @@ export default function DailyReportClient({
     fetch("/api/daily-report", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reports }),
+      body: JSON.stringify({ reports, deletedReports }),
     }).catch(() => undefined);
-  }, [isReady, reports]);
+  }, [deletedReports, isReady, reports]);
 
   function resizeMemoTextarea(
     textarea: HTMLTextAreaElement | null,
@@ -529,19 +553,35 @@ export default function DailyReportClient({
 
   function deleteReport(reportId: string) {
     setReports((current) => {
+      const deletedReport = current.find((report) => report.id === reportId);
       const nextReports = current.filter((report) => report.id !== reportId);
-      if (nextReports.length === 0) {
-        const fallback = createReport();
-        setActiveReportId(fallback.id);
-        return [fallback];
-      }
+      if (deletedReport) setDeletedReports((deleted) => [deletedReport, ...deleted]);
 
       if (activeReportId === reportId) {
-        setActiveReportId(nextReports[0].id);
+        setActiveReportId(nextReports[0]?.id || "");
       }
 
       return nextReports;
     });
+  }
+
+  function restoreReport(reportId: string) {
+    const report = deletedReports.find((item) => item.id === reportId);
+    if (!report) return;
+    setDeletedReports((current) => current.filter((item) => item.id !== reportId));
+    setReports((current) => [report, ...current]);
+    setIsTrashView(false);
+    setActiveReportId(report.id);
+  }
+
+  function permanentlyDeleteReport(reportId: string) {
+    setDeletedReports((current) => current.filter((report) => report.id !== reportId));
+    if (activeReportId === reportId) setActiveReportId("");
+  }
+
+  function emptyTrash() {
+    setDeletedReports([]);
+    setActiveReportId("");
   }
 
   return (
@@ -558,13 +598,18 @@ export default function DailyReportClient({
             <h2>日報</h2>
           </div>
           <div className="notesListHeader">
-            <button className="notesAddButton" type="button" onClick={addReport}>
-              新規作成
+            {isTrashView ? (
+              <button className="notesAddButton" type="button" onClick={emptyTrash} disabled={deletedReports.length === 0}>すべて削除</button>
+            ) : (
+              <button className="notesAddButton" type="button" onClick={addReport}>新規作成</button>
+            )}
+            <button className="notesTrashButton" type="button" onClick={() => setIsTrashView((current) => !current)} aria-pressed={isTrashView}>
+              {isTrashView ? "日報一覧" : `ゴミ箱${deletedReports.length ? ` (${deletedReports.length})` : ""}`}
             </button>
           </div>
-          <section className="notesListPanel" aria-label="日報">
+          <section className="notesListPanel" aria-label={isTrashView ? "日報のゴミ箱" : "日報"}>
             {visibleReports.length === 0 ? (
-              <p className="emptyText compact">日報がありません。</p>
+              <p className="emptyText compact">{isTrashView ? "ゴミ箱は空です。" : "日報がありません。"}</p>
             ) : (
               visibleReports.map((report) => (
                 <div
@@ -575,19 +620,18 @@ export default function DailyReportClient({
                   }
                   key={report.id}
                 >
-                  <button type="button" onClick={() => setActiveReportId(report.id)}>
+                  <button type="button" onClick={() => !isTrashView && setActiveReportId(report.id)}>
                     <strong>{report.title || "無題の日報"}</strong>
                     <span>{formatUpdatedAt(report.updatedAt)}</span>
                   </button>
-                  <button
-                    className="notesListDelete"
-                    type="button"
-                    onClick={() => deleteReport(report.id)}
-                    aria-label={`${report.title || "日報"}を削除`}
-                    title="削除"
-                  >
-                    ×
-                  </button>
+                  {isTrashView ? (
+                    <span className="dailyReportTrashActions">
+                      <button type="button" onClick={() => restoreReport(report.id)}>復元</button>
+                      <button className="notesListDelete" type="button" onClick={() => permanentlyDeleteReport(report.id)} aria-label={`${report.title || "日報"}を完全に削除`} title="完全に削除">×</button>
+                    </span>
+                  ) : (
+                    <button className="notesListDelete" type="button" onClick={() => deleteReport(report.id)} aria-label={`${report.title || "日報"}を削除`} title="削除">×</button>
+                  )}
                 </div>
               ))
             )}
@@ -595,7 +639,7 @@ export default function DailyReportClient({
         </aside>
 
         <section className="notesEditorPanel" aria-label="日報編集">
-          {activeReport && (
+          {activeReport && !isTrashView && (
             <>
               <div className="notesEditorHeader">
                 <input
@@ -668,6 +712,7 @@ export default function DailyReportClient({
               </div>
             </>
           )}
+          {isTrashView && <p className="emptyText">ゴミ箱から日報を復元するか、完全に削除できます。</p>}
         </section>
       </section>
     </main>

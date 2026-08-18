@@ -51,9 +51,6 @@ export default function AppHeader() {
           <a className="navLink" href="/roadmap">
             ロードマップ
           </a>
-          <a className="navLink" href="/cutouts">
-            切り抜き
-          </a>
           <a className="navLink" href="/learnings">
             学習
           </a>

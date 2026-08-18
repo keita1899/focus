@@ -9,6 +9,7 @@ import {
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
 type PeriodGoalMap = Record<GoalKey, Record<string, string>>;
+type GoalCompletionMap = Record<GoalKey, Record<string, boolean>>;
 type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "today"
@@ -83,6 +84,8 @@ type PlannerState = {
   goals: GoalMap;
   goalsByPeriod: PeriodGoalMap;
   annualGoalsByPeriod: Record<string, string[]>;
+  goalCompletionByPeriod: GoalCompletionMap;
+  annualGoalCompletionByPeriod: Record<string, boolean[]>;
   birthday: string;
   achievementTasks: AchievementTask[];
   todayTasks: PriorityTask[];
@@ -185,6 +188,8 @@ const initialState: PlannerState = {
     week: {},
   },
   annualGoalsByPeriod: {},
+  goalCompletionByPeriod: { year: {}, month: {}, week: {} },
+  annualGoalCompletionByPeriod: {},
   birthday: "",
   achievementTasks: [],
   todayTasks: [],
@@ -703,6 +708,25 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         : [],
     ]),
   );
+  const storedGoalCompletion: GoalCompletionMap =
+    value.goalCompletionByPeriod && typeof value.goalCompletionByPeriod === "object"
+      ? value.goalCompletionByPeriod
+      : {} as GoalCompletionMap;
+  const goalCompletionByPeriod: GoalCompletionMap = {
+    year: { ...(storedGoalCompletion.year || {}) },
+    month: { ...(storedGoalCompletion.month || {}) },
+    week: { ...(storedGoalCompletion.week || {}) },
+  };
+  const storedAnnualGoalCompletion =
+    value.annualGoalCompletionByPeriod && typeof value.annualGoalCompletionByPeriod === "object"
+      ? value.annualGoalCompletionByPeriod
+      : {};
+  const annualGoalCompletionByPeriod = Object.fromEntries(
+    Object.entries(storedAnnualGoalCompletion).map(([year, completed]) => [
+      year,
+      Array.isArray(completed) ? completed.map(Boolean).slice(0, 5) : [],
+    ]),
+  );
 
   (Object.keys(initialState.goals) as GoalKey[]).forEach((key) => {
     const periodKey = currentPeriodInfo.keys[key];
@@ -725,6 +749,8 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
     },
     goalsByPeriod,
     annualGoalsByPeriod,
+    goalCompletionByPeriod,
+    annualGoalCompletionByPeriod,
     birthday: typeof value.birthday === "string" ? value.birthday : "",
     achievementTasks: rawAchievementTasks.map((task, index) => ({
       id: task.id || `achievement-task-${index + 1}`,
@@ -1528,6 +1554,36 @@ export default function HomeClient({
         },
       };
     });
+  }
+
+  function toggleAnnualGoalCompletion(index: number) {
+    const yearKey = periodKeys.year;
+    setPlanner((current) => {
+      const currentCompletion = current.annualGoalCompletionByPeriod[yearKey] || [];
+      const nextCompletion = [...currentCompletion];
+      nextCompletion[index] = !nextCompletion[index];
+      return {
+        ...current,
+        annualGoalCompletionByPeriod: {
+          ...current.annualGoalCompletionByPeriod,
+          [yearKey]: nextCompletion,
+        },
+      };
+    });
+  }
+
+  function toggleGoalCompletion(key: Exclude<GoalKey, "year">) {
+    const periodKey = periodKeys[key];
+    setPlanner((current) => ({
+      ...current,
+      goalCompletionByPeriod: {
+        ...current.goalCompletionByPeriod,
+        [key]: {
+          ...current.goalCompletionByPeriod[key],
+          [periodKey]: !current.goalCompletionByPeriod[key][periodKey],
+        },
+      },
+    }));
   }
 
   function changePeriod(key: GoalKey, direction: -1 | 1) {
@@ -2415,6 +2471,12 @@ export default function HomeClient({
                 {(planner.annualGoalsByPeriod[periodKeys.year] || [""]).map((goal, index) => (
                   <div className="homeAnnualGoalRow" key={`${periodKeys.year}-${index}`}>
                     <span aria-hidden="true">{index + 1}.</span>
+                    <button
+                      className={`checkButton${planner.annualGoalCompletionByPeriod[periodKeys.year]?.[index] ? " checked" : ""}`}
+                      type="button"
+                      onClick={() => toggleAnnualGoalCompletion(index)}
+                      aria-label={`年の目標 ${index + 1}の完了を切り替え`}
+                    >✓</button>
                     <input
                       className="goalLineInput"
                       aria-label={`年の目標 ${index + 1}`}
@@ -2429,6 +2491,8 @@ export default function HomeClient({
                   <button className="homeAnnualGoalAdd" type="button" onClick={addAnnualGoal}>＋ 目標を追加</button>
                 )}
               </div>
+            </section>
+            <div className="goalSecondaryColumn">
               <section className="goalPanel goalMonthPanel">
                 <div className="goalHeading">
                   <span>
@@ -2459,13 +2523,17 @@ export default function HomeClient({
                     </button>
                   </span>
                 </div>
-                <input
-                  className="goalLineInput"
-                  aria-label="月の目標"
-                  placeholder={`${getGoalLabel("month", periodOffsets.month, periodLabels.month)}を入力してください`}
-                  value={planner.goalsByPeriod.month[periodKeys.month] || ""}
-                  onChange={(event) => updateGoal("month", event.target.value)}
-                />
+                <div className="goalInputRow">
+                  <button className={`checkButton${planner.goalCompletionByPeriod.month[periodKeys.month] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("month")} aria-label="月の目標の完了を切り替え">✓</button>
+                  <input
+                    className="goalLineInput"
+                    aria-label="月の目標"
+                    placeholder={`${getGoalLabel("month", periodOffsets.month, periodLabels.month)}を入力してください`}
+                    value={planner.goalsByPeriod.month[periodKeys.month] || ""}
+                    onChange={(event) => updateGoal("month", event.target.value)}
+                  />
+                </div>
+              </section>
                 <section className="goalPanel goalWeekPanel">
                   <div className="goalHeading">
                     <span>
@@ -2496,16 +2564,18 @@ export default function HomeClient({
                       </button>
                     </span>
                   </div>
-                  <input
-                    className="goalWeekInput"
-                    aria-label="週の目標"
-                    placeholder={`${getGoalLabel("week", periodOffsets.week, periodLabels.week)}を入力してください`}
-                    value={planner.goalsByPeriod.week[periodKeys.week] || ""}
-                    onChange={(event) => updateGoal("week", event.target.value)}
-                  />
+                  <div className="goalInputRow">
+                    <button className={`checkButton${planner.goalCompletionByPeriod.week[periodKeys.week] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("week")} aria-label="週の目標の完了を切り替え">✓</button>
+                    <input
+                      className="goalWeekInput"
+                      aria-label="週の目標"
+                      placeholder={`${getGoalLabel("week", periodOffsets.week, periodLabels.week)}を入力してください`}
+                      value={planner.goalsByPeriod.week[periodKeys.week] || ""}
+                      onChange={(event) => updateGoal("week", event.target.value)}
+                    />
+                  </div>
                 </section>
-              </section>
-            </section>
+            </div>
           </div>
         </section>
 

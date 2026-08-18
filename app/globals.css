@@ -631,6 +631,70 @@ h2 {
   border-top-right-radius: 0;
 }
 
+.goalNest {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.goalSecondaryColumn {
+  display: grid;
+  gap: 12px;
+}
+
+.goalYearPanel,
+.goalMonthPanel,
+.goalWeekPanel {
+  width: 100%;
+  margin: 0;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.goalYearPanel {
+  align-content: start;
+}
+
+.goalMonthPanel,
+.goalWeekPanel,
+.goalMonthPanel > .goalWeekPanel {
+  border-radius: 8px;
+}
+
+.goalInputRow {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.homeAnnualGoalRow {
+  grid-template-columns: 22px 38px minmax(0, 1fr) 34px;
+}
+
+.goalInputRow .checkButton,
+.homeAnnualGoalRow .checkButton {
+  display: grid;
+  place-items: center;
+}
+
+.goalInputRow .checkButton.checked,
+.homeAnnualGoalRow .checkButton.checked {
+  background: var(--accent);
+  color: white;
+}
+
+.goalInputRow .checkButton.checked + input,
+.homeAnnualGoalRow .checkButton.checked + input {
+  text-decoration: line-through;
+}
+
+.dailySectionCard > .sectionHeader {
+  margin: -16px -16px 0;
+  padding: 12px 16px;
+  background: rgba(23, 107, 85, 0.12);
+}
+
 .recurringColumn {
   display: grid;
   gap: 12px;
@@ -1212,15 +1276,15 @@ select {
 }
 
 .todayScheduledGroup .todayTaskTodaySection {
-  width: calc(100% - 40px);
-  margin-left: 40px;
+  width: 100%;
+  margin-left: 0;
   border-radius: 8px 8px 0 0;
   background: #dcefe2;
 }
 
 .todayScheduledGroup .todayTaskWeekSection {
-  width: calc(100% - 20px);
-  margin-left: 20px;
+  width: 100%;
+  margin-left: 0;
   border-top: 0;
   background: #e8f5eb;
 }
@@ -2947,7 +3011,6 @@ select {
 .notesPage,
 .roadmap2Page,
 .roadmapPage,
-.cutoutsPage,
 .learningsPage,
 .visionPage {
   display: grid;
@@ -2960,7 +3023,6 @@ select {
 
 .roadmap2Page,
 .roadmapPage,
-.cutoutsPage,
 .learningsPage,
 .visionPage {
   width: min(1180px, calc(100% - 32px));
@@ -2977,7 +3039,6 @@ select {
 .notesHeader h1,
 .roadmap2Header h1,
 .roadmapHeader h1,
-.cutoutsHeader h1,
 .learningsHeader h1,
 .visionHeader h1 {
   margin-top: 10px;
@@ -2989,20 +3050,12 @@ select {
 .notesHeader,
 .roadmap2Header,
 .roadmapHeader,
-.cutoutsHeader,
 .learningsHeader,
 .visionHeader {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: end;
   gap: 18px;
-}
-
-.cutoutsToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .learningsWorkspace {
@@ -3342,127 +3395,16 @@ select {
 .learningMemoWorkspace textarea { min-height: 500px; border: 0; border-right: 1px solid var(--line); padding: 16px; resize: vertical; line-height: 1.7; outline: none; }
 .learningMemoPreview { overflow: auto; padding: 16px; }
 
-.cutoutsTabs {
-  display: flex;
-  gap: 8px;
-}
-
-.cutoutsTabs button,
-.cutoutsAddButton,
-.cutoutsRemoveButton {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
-  color: var(--accent-strong);
-  font-weight: 900;
-}
-
-.cutoutsTabs button,
-.cutoutsAddButton {
-  min-height: 42px;
-  padding: 0 16px;
-}
-
-.cutoutsTabs button.active,
-.cutoutsAddButton {
-  border-color: var(--accent-strong);
-  background: var(--accent-strong);
-  color: white;
-}
-
-.cutoutsTableWrap {
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: var(--shadow);
-}
-
-.cutoutsTable {
-  width: 100%;
-  min-width: 720px;
-  border-collapse: collapse;
-}
-
-.cutoutsTable th,
-.cutoutsTable td {
-  border-bottom: 1px solid var(--line);
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.cutoutsTable th {
-  background: #fbfcfa;
-  color: var(--muted);
-  font-size: 0.82rem;
-  white-space: nowrap;
-}
-
-.cutoutsTable tr:last-child td {
-  border-bottom: 0;
-}
-
-.cutoutsTable tr.isToday td {
-  background: #fff8e8;
-}
-
-.cutoutsTable tr.isPosted td {
-  background: #e7f2ec;
-}
-
-.cutoutsTable td:first-child,
-.cutoutsTable td:nth-last-child(2),
-.cutoutsTable td:last-child,
-.cutoutsTable th:first-child,
-.cutoutsTable th:nth-last-child(2),
-.cutoutsTable th:last-child {
-  text-align: center;
-}
-
-.cutoutsTable input[type="text"],
-.cutoutsTable input[type="datetime-local"],
-.cutoutsTable td:nth-child(2) input {
-  width: 100%;
-  min-height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: white;
-  padding: 0 10px;
-}
-
-.cutoutsTable input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent-strong);
-}
-
-.cutoutsRemoveButton {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  color: var(--danger);
-}
-
-.cutoutsTable tbody .cutoutsRemoveButton,
 .roadmap2ItemRow .roadmap2RemoveButton {
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms ease;
 }
 
-.cutoutsTable tbody tr:hover .cutoutsRemoveButton,
-.cutoutsTable tbody tr:focus-within .cutoutsRemoveButton,
 .roadmap2ItemRow:hover .roadmap2RemoveButton,
 .roadmap2ItemRow:focus-within .roadmap2RemoveButton {
   opacity: 1;
   pointer-events: auto;
-}
-
-.cutoutsEmpty {
-  color: var(--muted);
-  text-align: center !important;
 }
 
 .srOnly {
@@ -3927,6 +3869,37 @@ select {
   text-align: center;
 }
 
+.dailyReportListColumn .notesTrashButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: 38px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--muted);
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.dailyReportTrashActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dailyReportTrashActions > button:first-child {
+  width: auto;
+  min-height: 34px;
+  padding: 0 8px;
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
 .notesListPanel .emptyText.compact {
   border: 0;
   border-radius: 0;
@@ -4352,8 +4325,12 @@ select {
 }
 
 .roadmap2Header {
-  justify-items: center;
-  text-align: center;
+  justify-items: start;
+  text-align: left;
+}
+
+.roadmap2AnnualHeader {
+  align-items: center;
 }
 
 .roadmap2AnnualGoalList,
@@ -4384,7 +4361,7 @@ select {
 
 .roadmap2AnnualAddButton,
 .homeAnnualGoalAdd {
-  justify-self: start;
+  justify-self: end;
   margin-top: 10px;
   border: 0;
   border-radius: 8px;
@@ -5411,7 +5388,6 @@ select {
   .notesHeader,
   .roadmap2Header,
   .roadmapHeader,
-  .cutoutsHeader,
   .learningsHeader {
     grid-template-columns: 1fr;
     align-items: start;
@@ -5582,6 +5558,10 @@ select {
   .goalMonthPanel,
   .goalWeekPanel {
     margin-left: 0;
+  }
+
+  .goalNest {
+    grid-template-columns: 1fr;
   }
 
   .goalYearPanel,

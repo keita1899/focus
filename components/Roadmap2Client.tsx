@@ -183,15 +183,17 @@ export default function Roadmap2Client({ initialValue, initialPlannerValue }: Ro
     <main className="shell roadmap2Page">
       <section className="roadmapHeader roadmap2Header" aria-label="年間ロードマップ">
         <h1>年間ロードマップ</h1>
-        <div className="roadmap2YearSwitcher" aria-label="年の切り替え">
-          <button type="button" onClick={() => ensureYear(roadmap.selectedYear - 1)} aria-label="前年へ">&lt;</button>
-          <strong>{roadmap.selectedYear}年</strong>
-          <button type="button" onClick={() => ensureYear(roadmap.selectedYear + 1)} aria-label="翌年へ">&gt;</button>
-        </div>
       </section>
 
       <section className="roadmap2AnnualCard" aria-label="年間目標">
-        <header className="sectionHeader"><h2>年間目標</h2></header>
+        <header className="sectionHeader roadmap2AnnualHeader">
+          <h2>年間目標</h2>
+          <div className="roadmap2YearSwitcher" aria-label="年の切り替え">
+            <button type="button" onClick={() => ensureYear(roadmap.selectedYear - 1)} aria-label="前年へ">&lt;</button>
+            <strong>{roadmap.selectedYear}年</strong>
+            <button type="button" onClick={() => ensureYear(roadmap.selectedYear + 1)} aria-label="翌年へ">&gt;</button>
+          </div>
+        </header>
         <div className="roadmap2AnnualGoalList">
           {activeYear.annualGoals.map((goal, index) => (
             <div className="roadmap2AnnualGoalRow" key={`${activeYearKey}-${index}`}>
