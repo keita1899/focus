@@ -895,6 +895,7 @@ export default function HomeClient({
     getTodayDiaryBody(initialDiaryEntries),
   );
   const [isDiaryReady, setIsDiaryReady] = useState(initialDiaryValue !== null);
+  const [collapsedTodayDailyGroups, setCollapsedTodayDailyGroups] = useState<Record<string, boolean>>({});
   const [editingTaskTarget, setEditingTaskTarget] =
     useState<TaskEditTarget>(null);
   const [newAchievementTitle, setNewAchievementTitle] = useState("");
@@ -2140,18 +2141,24 @@ export default function HomeClient({
     const tasks = group.tasks
       .filter((task) => task.pattern === todayPattern)
       .sort((first, second) => first.time.localeCompare(second.time));
+    const isCollapsed = Boolean(collapsedTodayDailyGroups[group.key]);
 
     return (
       <section
-        className={`dailyGroupCard ${`dailyGroupTone-${group.key}`}`}
+        className={`dailyGroupCard ${`dailyGroupTone-${group.key}`}${isCollapsed ? " isCollapsed" : ""}`}
         key={group.key}
         aria-label={`${groupLabel}の今日のタスク`}
       >
-        <div className="sectionHeader dailyGroupHeader">
-          <h3>{groupLabel} <span className="dailyGroupTime">{formatTimeLabel(group.startTime)}〜{formatTimeLabel(group.endTime)}</span></h3>
-          <span className="sectionMeta">{group.theme || "テーマ未設定"}</span>
-        </div>
-        <div className="taskList">
+        <button
+          className="sectionHeader dailyGroupHeader dailyGroupToggle"
+          type="button"
+          aria-expanded={!isCollapsed}
+          onClick={() => setCollapsedTodayDailyGroups((current) => ({ ...current, [group.key]: !current[group.key] }))}
+        >
+          <span><strong>{groupLabel}</strong> <span className="dailyGroupTime">{formatTimeLabel(group.startTime)}〜{formatTimeLabel(group.endTime)}</span></span>
+          <span className="dailyGroupHeaderRight"><span className="sectionMeta">{group.theme || "テーマ未設定"}</span><span className="dailyGroupChevron" aria-hidden="true">⌄</span></span>
+        </button>
+        {!isCollapsed && <div className="taskList">
           {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && tasks.length === 0 && (
             <p className="emptyText">タスクはありません。</p>
           )}
@@ -2256,7 +2263,7 @@ export default function HomeClient({
               </article>
             );
           })}
-        </div>
+        </div>}
       </section>
     );
   }

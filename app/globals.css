@@ -632,7 +632,7 @@ h2 {
 }
 
 .goalNest {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
   align-items: stretch;
 }
@@ -2316,6 +2316,10 @@ select {
   padding: 14px 14px 0;
 }
 
+.todayLayout .dailyGroupCard.isCollapsed {
+  padding-bottom: 14px;
+}
+
 .todayLayout .dailyGroupCard > .taskList {
   width: calc(100% + 28px);
   margin: 0 -14px;
@@ -2353,6 +2357,41 @@ select {
 
 .dailyGroupHeader {
   align-items: center;
+}
+
+.dailyGroupToggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.dailyGroupToggle > span:first-child {
+  min-width: 0;
+}
+
+.dailyGroupHeaderRight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dailyGroupChevron {
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent-strong);
+  font-size: 1.15rem;
+  font-weight: 900;
+  transition: transform 150ms ease;
+}
+
+.dailyGroupCard.isCollapsed .dailyGroupChevron {
+  transform: rotate(-90deg);
 }
 
 .dailyThemeInput {
