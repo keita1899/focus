@@ -743,6 +743,18 @@ h2 {
   gap: 12px;
 }
 
+.todayTaskLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.todayRecurringColumn {
+  display: grid;
+  gap: 12px;
+}
+
 .todayTaskFullWidth {
   width: 100%;
 }
@@ -1187,6 +1199,41 @@ select {
 .todayTaskList {
   display: grid;
   gap: 10px;
+}
+
+.inboxTaskItem {
+  grid-template-columns: 38px minmax(0, 1fr) 142px auto;
+}
+
+.inboxTaskDate {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px;
+  background: white !important;
+  padding: 0 8px !important;
+  color: var(--ink);
+}
+
+.inboxTaskItem .priorityActions {
+  grid-column: 4;
+}
+
+.inboxTaskItem:hover .priorityActions,
+.inboxTaskItem:focus-within .priorityActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scheduledInboxTask {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+}
+
+.scheduledInboxDate {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .todayDashboardTask {
@@ -5086,6 +5133,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .todayTaskLayout {
+    grid-template-columns: 1fr;
+  }
+
   .scheduleOpenShell > .topbar,
   .scheduleOpenShell > .workspaceGrid {
     width: 100%;
@@ -5400,6 +5451,18 @@ select {
 
   .taskItem {
     grid-template-columns: 38px minmax(0, 1fr) 42px;
+  }
+
+  .inboxTaskItem {
+    grid-template-columns: 38px minmax(0, 1fr) 42px;
+  }
+
+  .inboxTaskDate {
+    grid-column: 2 / -1;
+  }
+
+  .inboxTaskItem .priorityActions {
+    grid-column: 2 / 3;
   }
 
   .priority {

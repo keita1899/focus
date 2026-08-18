@@ -20,6 +20,7 @@ type PriorityTask = {
   id: string;
   title: string;
   done: boolean;
+  scheduledDate?: string;
   projectName?: string;
 };
 
@@ -725,6 +726,9 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
         id: task.id || `inbox-task-${index + 1}`,
         title: task.title || "",
         done: false,
+        scheduledDate: typeof task.scheduledDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(task.scheduledDate)
+          ? task.scheduledDate
+          : undefined,
         projectName: task.projectName || undefined,
       })),
     dailyTaskGroups: normalizeDailyTaskGroups(legacyValue),
@@ -919,6 +923,19 @@ export default function HomeClient({
     ({ task }) => task.time <= currentTimeValue,
   );
   const currentDailyTaskEntry = currentOrPreviousDailyTasks.at(-1) || availableDailyTasks[0];
+  const weekStart = getWeekStartDate();
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const weekStartKey = formatDateKey(weekStart);
+  const weekEndKey = formatDateKey(weekEnd);
+  const scheduledInboxTasks = planner.inboxTasks.filter((task) => task.scheduledDate);
+  const todayInboxTasks = scheduledInboxTasks.filter((task) => task.scheduledDate === todayKey);
+  const weekInboxTasks = scheduledInboxTasks.filter(
+    (task) => task.scheduledDate !== todayKey && task.scheduledDate! >= weekStartKey && task.scheduledDate! <= weekEndKey,
+  );
+  const monthInboxTasks = scheduledInboxTasks.filter(
+    (task) => task.scheduledDate?.startsWith(todayKey.slice(0, 7)) && (task.scheduledDate! < weekStartKey || task.scheduledDate! > weekEndKey),
+  );
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
@@ -1422,6 +1439,15 @@ export default function HomeClient({
       ...current,
       inboxTasks: current.inboxTasks.map((task) =>
         task.id === id ? { ...task, title } : task,
+      ),
+    }));
+  }
+
+  function updateInboxTaskScheduledDate(id: string, scheduledDate: string) {
+    setPlanner((current) => ({
+      ...current,
+      inboxTasks: current.inboxTasks.map((task) =>
+        task.id === id ? { ...task, scheduledDate: scheduledDate || undefined } : task,
       ),
     }));
   }
@@ -2217,6 +2243,23 @@ export default function HomeClient({
     );
   }
 
+  function renderScheduledInboxTask(task: PriorityTask) {
+    return (
+      <article className="taskItem scheduledInboxTask" key={task.id}>
+        <button
+          className="checkButton"
+          type="button"
+          onClick={() => completeInboxTask(task.id)}
+          aria-label={`${task.title || "無題のタスク"}を完了`}
+        >
+          ✓
+        </button>
+        <div className="taskTitleView">{task.title || " "}</div>
+        {task.scheduledDate && <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time>}
+      </article>
+    );
+  }
+
   function updateTodayDiary(body: string) {
     const now = new Date().toISOString();
     setTodayDiaryBody(body);
@@ -2382,10 +2425,11 @@ export default function HomeClient({
 
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
-              <div className="recurringGrid" aria-label="繰り返しタスク">
+              <div className="todayTaskLayout" aria-label="今日のタスク">
+                <div className="todayRecurringColumn">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
-                    <h3>今日のタスク</h3>
+                    <h3>毎日のタスク</h3>
                   </div>
                   <div className="dailyGroupGrid">
                     {dailyTaskGroupsByTime
@@ -2394,37 +2438,51 @@ export default function HomeClient({
                   </div>
                 </section>
 
-                <div className="recurringStack">
-                  <section className="weeklySection" aria-label="毎週のタスク">
-                    <div className="sectionHeader">
-                      <h3>毎週のタスク</h3>
-                      <span className="sectionMeta">{getWeekdayLabel(new Date().getDay())}</span>
-                    </div>
-                    <div className="taskList">
-                      {planner.weeklyTasks.filter((task) => task.weekday === new Date().getDay()).length === 0 && (
-                        <p className="emptyText">毎週のタスクはありません。</p>
-                      )}
-                      {planner.weeklyTasks
-                        .filter((task) => task.weekday === new Date().getDay())
-                        .map((task) => renderWeeklyTask(task, new Date().getDay()))}
-                    </div>
-                  </section>
+                <section className="weeklySection" aria-label="毎週のタスク">
+                  <div className="sectionHeader">
+                    <h3>毎週のタスク</h3>
+                    <span className="sectionMeta">{getWeekdayLabel(new Date().getDay())}</span>
+                  </div>
+                  <div className="taskList">
+                    {planner.weeklyTasks.filter((task) => task.weekday === new Date().getDay()).length === 0 && (
+                      <p className="emptyText">毎週のタスクはありません。</p>
+                    )}
+                    {planner.weeklyTasks
+                      .filter((task) => task.weekday === new Date().getDay())
+                      .map((task) => renderWeeklyTask(task, new Date().getDay()))}
+                  </div>
+                </section>
 
-                  <section className="monthlySection" aria-label="毎月のタスク">
-                    <div className="sectionHeader">
-                      <h3>毎月のタスク</h3>
-                      <span className="sectionMeta">{new Date().getDate()}日</span>
-                    </div>
-                    <div className="taskList">
-                      {planner.monthlyTasks.filter((task) => task.dayOfMonth === new Date().getDate()).length === 0 && (
-                        <p className="emptyText">毎月のタスクはありません。</p>
-                      )}
-                      {planner.monthlyTasks
-                        .filter((task) => task.dayOfMonth === new Date().getDate())
-                        .map((task) => renderMonthlyTask(task, new Date().getDate()))}
-                    </div>
-                  </section>
+                <section className="monthlySection" aria-label="毎月のタスク">
+                  <div className="sectionHeader">
+                    <h3>毎月のタスク</h3>
+                    <span className="sectionMeta">{new Date().getDate()}日</span>
+                  </div>
+                  <div className="taskList">
+                    {planner.monthlyTasks.filter((task) => task.dayOfMonth === new Date().getDate()).length === 0 && (
+                      <p className="emptyText">毎月のタスクはありません。</p>
+                    )}
+                    {planner.monthlyTasks
+                      .filter((task) => task.dayOfMonth === new Date().getDate())
+                      .map((task) => renderMonthlyTask(task, new Date().getDate()))}
+                  </div>
+                </section>
                 </div>
+
+                <aside className="todayTaskColumn" aria-label="実行日を指定したInboxタスク">
+                  <section className="todayTaskSection">
+                    <div className="sectionHeader"><h3>今日のタスク</h3></div>
+                    <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今日のタスクはありません。</p>}</div>
+                  </section>
+                  <section className="todayTaskSection">
+                    <div className="sectionHeader"><h3>今週のタスク</h3></div>
+                    <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今週のタスクはありません。</p>}</div>
+                  </section>
+                  <section className="todayTaskSection">
+                    <div className="sectionHeader"><h3>今月のタスク</h3></div>
+                    <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今月のタスクはありません。</p>}</div>
+                  </section>
+                </aside>
               </div>
             </section>
           )}
@@ -2572,7 +2630,7 @@ export default function HomeClient({
                   <p className="emptyText">Inboxタスクはありません。</p>
                 )}
                 {planner.inboxTasks.map((task) => (
-                  <article className={task.done ? "taskItem done" : "taskItem"} key={task.id}>
+                  <article className={task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"} key={task.id}>
                     {(() => {
                       const editTarget = { kind: "inbox", id: task.id } as const;
                       const isEditing = isTaskBeingEdited(editTarget);
@@ -2609,6 +2667,13 @@ export default function HomeClient({
                               {task.title || " "}
                             </div>
                           )}
+                          <input
+                            className="inboxTaskDate"
+                            type="date"
+                            aria-label={`${task.title || "Inboxタスク"}の実行日`}
+                            value={task.scheduledDate || ""}
+                            onChange={(event) => updateInboxTaskScheduledDate(task.id, event.currentTarget.value)}
+                          />
                           <div className="priorityActions">
                             <button
                               className="focusButton"
