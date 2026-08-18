@@ -191,7 +191,7 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
       <aside className="learningsSidebar" aria-label="教材のセクションとタスク">
         <div className="learningsSidebarHeader">
           {activeSubject && <input className="learningSubjectTitle" aria-label="教材名を編集" value={activeSubject.title} onChange={(event) => { const title = event.currentTarget.value; updateSubject(activeSubject.id, (current) => ({ ...current, title })); }} />}
-          {activeSubject && <button className="learningSubjectDelete" type="button" onClick={() => removeSubject(activeSubject.id)}>教材を削除</button>}
+          {activeSubject && <button className="learningSubjectDelete" type="button" onClick={() => removeSubject(activeSubject.id)} aria-label={`${activeSubject.title || "教材"}を削除`}>×</button>}
         </div>
         <form className="learningAddSection" onSubmit={(event) => { event.preventDefault(); addSection(); }}><input aria-label="セクション名" placeholder="セクション名" value={newSectionTitle} onChange={(event) => setNewSectionTitle(event.currentTarget.value)} /><button type="submit">＋</button></form>
         {activeSubject?.sections.map((section) => {
@@ -204,7 +204,7 @@ export default function LearningsClient({ initialValue }: LearningsClientProps) 
             <button className="learningAddTask" type="button" onClick={() => addTask(section.id)}>＋ タスクを追加</button></>}</section>;
         })}
       </aside>
-      <section className="learningsContent" aria-label="学習メモ">{activeTask ? <><div className="learningTaskHeader"><input className="learningTaskTitle" aria-label="タスク名" value={activeTask.title} onChange={(event) => { const title = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, title })); }} /><button className="learningTaskDelete" type="button" onClick={() => removeTask(activeTask.id)}>削除</button></div><div className="learningMemoWorkspace"><textarea aria-label="マークダウンメモ" value={activeTask.markdown} onChange={(event) => { const markdown = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, markdown })); }} /><article className="learningMemoPreview"><MarkdownPreview markdown={activeTask.markdown} onToggleChecklist={toggleChecklist} /></article></div></> : <p className="emptyText">セクションを追加してからタスクを選択してください。</p>}</section>
+      <section className="learningsContent" aria-label="学習メモ">{activeTask ? <><div className="learningTaskHeader"><input className="learningTaskTitle" aria-label="タスク名" value={activeTask.title} onChange={(event) => { const title = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, title })); }} /><button className="learningTaskDelete" type="button" onClick={() => removeTask(activeTask.id)} aria-label={`${activeTask.title || "タスク"}を削除`}>×</button></div><div className="learningMemoWorkspace"><textarea aria-label="マークダウンメモ" value={activeTask.markdown} onChange={(event) => { const markdown = event.currentTarget.value; updateTask(activeTask.id, (current) => ({ ...current, markdown })); }} /><article className="learningMemoPreview"><MarkdownPreview markdown={activeTask.markdown} onToggleChecklist={toggleChecklist} /></article></div></> : <p className="emptyText">セクションを追加してからタスクを選択してください。</p>}</section>
     </section>
   </main>;
 }

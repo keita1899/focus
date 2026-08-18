@@ -98,11 +98,6 @@ type DiaryEntry = {
   updatedAt: string;
 };
 
-type FocusTarget = {
-  kind: "priority";
-  id: string;
-} | null;
-
 type TaskEditTarget =
   | { kind: "achievement"; id: string }
   | { kind: "today"; id: string }
@@ -846,7 +841,6 @@ export default function HomeClient({
     getTodayDiaryBody(initialDiaryEntries),
   );
   const [isDiaryReady, setIsDiaryReady] = useState(initialDiaryValue !== null);
-  const [focusTarget, setFocusTarget] = useState<FocusTarget>(null);
   const [editingTaskTarget, setEditingTaskTarget] =
     useState<TaskEditTarget>(null);
   const [newAchievementTitle, setNewAchievementTitle] = useState("");
@@ -879,6 +873,7 @@ export default function HomeClient({
   const [newDailyGroupStartTime, setNewDailyGroupStartTime] = useState("09:00");
   const [newDailyGroupEndTime, setNewDailyGroupEndTime] = useState("10:00");
   const [newDailyGroupTheme, setNewDailyGroupTheme] = useState("");
+  const [isDailyGroupModalOpen, setIsDailyGroupModalOpen] = useState(false);
   const [newTodayThemeTaskTitles, setNewTodayThemeTaskTitles] = useState(() =>
     createEmptyTodayThemeTaskTitleMap(),
   );
@@ -1113,14 +1108,6 @@ export default function HomeClient({
     }
   }, [expandedAchievementParents]);
 
-  const focusedTask = useMemo(() => {
-    if (!focusTarget) return null;
-    return (
-      planner.todayTasks.find((task) => task.id === focusTarget.id) ||
-      planner.inboxTasks.find((task) => task.id === focusTarget.id) ||
-      null
-    );
-  }, [focusTarget, planner.inboxTasks, planner.todayTasks]);
   const achievementParents = planner.achievementTasks.filter(
     (task) => !task.parentId && task.year === achievementYear,
   );
@@ -1279,9 +1266,6 @@ export default function HomeClient({
       ...current,
       todayTasks: current.todayTasks.filter((task) => task.id !== id),
     }));
-    if (focusTarget?.id === id) {
-      setFocusTarget(null);
-    }
   }
 
   function renderAchievementTask(
@@ -1457,17 +1441,6 @@ export default function HomeClient({
       ...current,
       inboxTasks: current.inboxTasks.filter((task) => task.id !== id),
     }));
-    if (focusTarget?.id === id) {
-      setFocusTarget(null);
-    }
-  }
-
-  function completePriority(id: string) {
-    if (planner.todayTasks.some((task) => task.id === id)) {
-      completeTodayTask(id);
-      return;
-    }
-    completeInboxTask(id);
   }
 
   function updateNewDailyTaskTitle(groupKey: DailyGroupKey, title: string) {
@@ -1636,6 +1609,7 @@ export default function HomeClient({
     setNewDailyTaskTitles((current) => ({ ...current, [key]: "" }));
     setNewDailyGroupTitle("");
     setNewDailyGroupTheme("");
+    setIsDailyGroupModalOpen(false);
   }
 
   function removeDailyTaskGroup(groupKey: DailyGroupKey) {
@@ -2479,11 +2453,7 @@ export default function HomeClient({
                     </div>
                   </div>
                   {renderDailyPatternWeekdayToggles()}
-                  <form className="dailyGroupCreateForm" onSubmit={(event) => { event.preventDefault(); addDailyTaskGroup(); }}>
-                    <div className="dailyGroupNameTimeFields"><input aria-label="グループ名" placeholder="グループ名" value={newDailyGroupTitle} onChange={(event) => setNewDailyGroupTitle(event.currentTarget.value)} /><input aria-label="開始時刻" type="time" value={newDailyGroupStartTime} onChange={(event) => setNewDailyGroupStartTime(event.currentTarget.value)} /><span>〜</span><input aria-label="終了時刻" type="time" value={newDailyGroupEndTime} onChange={(event) => setNewDailyGroupEndTime(event.currentTarget.value)} /></div>
-                    <input aria-label="テーマ" placeholder="テーマ" value={newDailyGroupTheme} onChange={(event) => setNewDailyGroupTheme(event.currentTarget.value)} />
-                    <button className="recurringAddButton" type="submit">＋</button>
-                  </form>
+                  <button className="recurringAddButton" type="button" onClick={() => setIsDailyGroupModalOpen(true)} aria-label="グループを追加">＋</button>
                   <div className="dailyGroupGrid">
                     {dailyTaskGroupsByTime.filter((group) => group.pattern === selectedDailyPattern).map((group) =>
                       renderDailyTaskGroup(group, selectedDailyPattern),
@@ -2654,18 +2624,6 @@ export default function HomeClient({
                             value={task.scheduledDate || ""}
                             onChange={(event) => updateInboxTaskScheduledDate(task.id, event.currentTarget.value)}
                           />
-                          <div className="priorityActions">
-                            <button
-                              className="focusButton"
-                              type="button"
-                              onClick={() =>
-                                setFocusTarget({ kind: "priority", id: task.id })
-                              }
-                              aria-label={`${task.title || "無題のタスク"}に集中する`}
-                            >
-                              focus
-                            </button>
-                          </div>
                         </>
                       );
                     })()}
@@ -2692,22 +2650,6 @@ export default function HomeClient({
         </section>
       </section>
 
-      {focusedTask && (
-        <div className="focusOverlay" role="dialog" aria-modal="true">
-          <article className="focusCard">
-            <strong>{focusedTask.title || "無題のタスク"}</strong>
-            <div className="focusActions">
-              <button type="button" onClick={() => completePriority(focusedTask.id)}>
-                完了
-              </button>
-              <button type="button" onClick={() => setFocusTarget(null)}>
-                戻る
-              </button>
-            </div>
-          </article>
-        </div>
-      )}
-
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
         <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
         <strong>{currentDailyTaskEntry ? `${formatTimeLabel(currentDailyTaskEntry.task.time)}開始 ${currentDailyTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
@@ -2721,6 +2663,17 @@ export default function HomeClient({
           </button>
         )}
       </aside>
+
+      {isDailyGroupModalOpen && (
+        <div className="dailyGroupModalBackdrop" role="presentation">
+          <form className="dailyGroupCreateModal" onSubmit={(event) => { event.preventDefault(); addDailyTaskGroup(); }}>
+            <h2>グループを追加</h2>
+            <div className="dailyGroupNameTimeFields"><input aria-label="グループ名" placeholder="グループ名" value={newDailyGroupTitle} onChange={(event) => setNewDailyGroupTitle(event.currentTarget.value)} autoFocus /><input aria-label="開始時刻" type="time" value={newDailyGroupStartTime} onChange={(event) => setNewDailyGroupStartTime(event.currentTarget.value)} /><span>〜</span><input aria-label="終了時刻" type="time" value={newDailyGroupEndTime} onChange={(event) => setNewDailyGroupEndTime(event.currentTarget.value)} /></div>
+            <input aria-label="テーマ" placeholder="テーマ" value={newDailyGroupTheme} onChange={(event) => setNewDailyGroupTheme(event.currentTarget.value)} />
+            <div className="dailyGroupModalActions"><button type="button" onClick={() => setIsDailyGroupModalOpen(false)}>キャンセル</button><button type="submit">追加</button></div>
+          </form>
+        </div>
+      )}
     </main>
   );
 }

@@ -43,6 +43,7 @@ button {
 
 .shell {
   width: min(820px, calc(100% - 32px));
+  min-height: calc(100vh - 130px);
   margin: 0 auto;
   padding: 28px 0 40px;
 }
@@ -218,6 +219,7 @@ body > .topbar + .shell {
 
 .roadmapTabsPage {
   display: grid;
+  min-height: calc(100vh - 130px);
   gap: 18px;
 }
 
@@ -1193,8 +1195,8 @@ select {
 }
 
 .todayTaskColumn {
-  border-left: 1px solid var(--line);
-  padding-left: 14px;
+  border-left: 0;
+  padding-left: 0;
 }
 
 .todayTaskList {
@@ -1253,6 +1255,24 @@ select {
 .taskList {
   display: grid;
   gap: 0;
+}
+
+.taskList > .taskItem {
+  border-radius: 0;
+}
+
+.taskList > .taskItem:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.taskList > .taskItem:last-child {
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.taskList > .taskItem + .taskItem {
+  border-top: 0;
 }
 
 .completedTaskGroup {
@@ -1968,6 +1988,68 @@ select {
 
 .dailyGroupCreateForm {
   grid-template-columns: minmax(0, 1fr) 42px;
+}
+
+.dailyGroupModalBackdrop {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 32, 28, 0.48);
+}
+
+.dailyGroupCreateModal {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.dailyGroupCreateModal h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dailyGroupCreateModal .dailyGroupNameTimeFields input {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.dailyGroupCreateModal > input {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+.dailyGroupModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dailyGroupModalActions button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  padding: 0 14px;
+  font-weight: 900;
+}
+
+.dailyGroupModalActions button[type="submit"] {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
 }
 
 .dailyGroupCreateForm .dailyGroupNameTimeFields {
@@ -3099,15 +3181,32 @@ select {
 
 .learningSubjectTitle:focus { border-color: var(--accent); background: white; }
 
-.learningSubjectDelete {
-  min-height: 32px;
-  border: 1px solid rgba(168, 61, 52, .25);
+.learningSubjectDelete,
+.learningSectionDelete,
+.learningTaskDelete {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
   border-radius: 8px;
-  background: #fff5f3;
+  background: transparent;
   color: var(--danger);
-  padding: 0 9px;
-  font-size: .78rem;
+  font-size: 1.15rem;
   font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.learningsSidebarHeader:hover .learningSubjectDelete,
+.learningsSidebarHeader:focus-within .learningSubjectDelete,
+.learningSection:hover .learningSectionDelete,
+.learningSection:focus-within .learningSectionDelete,
+.learningTaskHeader:hover .learningTaskDelete,
+.learningTaskHeader:focus-within .learningTaskDelete {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .learningAddTask {
@@ -3139,7 +3238,6 @@ select {
 
 .learningSectionToggle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .learningSectionToggle em { border-radius: 999px; background: #e7f2ec; color: var(--accent-strong); padding: 2px 7px; font-size: .75rem; font-style: normal; font-weight: 900; }
-.learningSectionDelete { width: 30px; height: 30px; border: 0; border-radius: 6px; background: transparent; color: var(--danger); font-size: 1.05rem; font-weight: 900; }
 
 .learningSectionName {
   width: 100%;
@@ -3176,7 +3274,7 @@ select {
 .learningsContent { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; }
 .learningTaskHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; border-bottom: 1px solid var(--line); padding-right: 10px; }
 .learningTaskTitle { width: 100%; min-height: 62px; border: 0; background: transparent; padding: 10px 16px; color: var(--ink); font-size: 1.2rem; font-weight: 900; }
-.learningTaskDelete { align-self: center; min-height: 36px; border: 1px solid rgba(168, 61, 52, .25); border-radius: 8px; background: #fff5f3; color: var(--danger); padding: 0 12px; font-weight: 900; }
+.learningTaskDelete { align-self: center; }
 .learningMemoWorkspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
 .learningMemoWorkspace textarea { min-height: 500px; border: 0; border-right: 1px solid var(--line); padding: 16px; resize: vertical; line-height: 1.7; outline: none; }
 .learningMemoPreview { overflow: auto; padding: 16px; }
@@ -3282,6 +3380,21 @@ select {
   height: 32px;
   place-items: center;
   color: var(--danger);
+}
+
+.cutoutsTable tbody .cutoutsRemoveButton,
+.roadmap2ItemRow .roadmap2RemoveButton {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.cutoutsTable tbody tr:hover .cutoutsRemoveButton,
+.cutoutsTable tbody tr:focus-within .cutoutsRemoveButton,
+.roadmap2ItemRow:hover .roadmap2RemoveButton,
+.roadmap2ItemRow:focus-within .roadmap2RemoveButton {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .cutoutsEmpty {
@@ -5461,8 +5574,8 @@ select {
 
   .todayTaskColumn {
     border-left: 0;
-    border-top: 1px solid var(--line);
-    padding-top: 14px;
+    border-top: 0;
+    padding-top: 0;
     padding-left: 0;
   }
 
