@@ -633,13 +633,13 @@ h2 {
 
 .goalNest {
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: 12px;
+  gap: 8px;
   align-items: stretch;
 }
 
 .goalSecondaryColumn {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .goalYearPanel,
@@ -648,7 +648,7 @@ h2 {
   width: 100%;
   margin: 0;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px;
 }
 
 .goalYearPanel {
@@ -669,13 +669,28 @@ h2 {
 }
 
 .homeAnnualGoalRow {
-  grid-template-columns: 22px 38px minmax(0, 1fr) 34px;
+  grid-template-columns: 20px 34px minmax(0, 1fr) 28px;
 }
 
 .goalInputRow .checkButton,
 .homeAnnualGoalRow .checkButton {
   display: grid;
   place-items: center;
+}
+
+.goalInputRow .checkButton {
+  width: 34px;
+}
+
+.homeAnnualGoalRow .checkButton {
+  width: 30px;
+}
+
+.goalInputRow .goalLineInput,
+.goalInputRow .goalWeekInput,
+.homeAnnualGoalRow .goalLineInput {
+  min-height: 34px;
+  padding: 6px 8px;
 }
 
 .goalInputRow .checkButton.checked,
@@ -4342,14 +4357,21 @@ select {
 .roadmap2AnnualGoalRow,
 .homeAnnualGoalRow {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 34px;
   align-items: center;
   gap: 8px;
 }
 
+.roadmap2AnnualGoalRow {
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+}
+
+.homeAnnualGoalRow {
+  grid-template-columns: 20px 34px minmax(0, 1fr) 28px;
+}
+
 .roadmap2AnnualGoalRow + .roadmap2AnnualGoalRow,
 .homeAnnualGoalRow + .homeAnnualGoalRow {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .roadmap2AnnualGoalRow > span,
@@ -4362,13 +4384,13 @@ select {
 .roadmap2AnnualAddButton,
 .homeAnnualGoalAdd {
   justify-self: end;
-  margin-top: 10px;
+  margin-top: 6px;
   border: 0;
   border-radius: 8px;
   background: var(--accent);
   color: white;
   font-weight: 900;
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .roadmap2MonthHeader {

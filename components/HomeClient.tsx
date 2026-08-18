@@ -953,9 +953,7 @@ export default function HomeClient({
   const remainingDays = periodInfo.remainingDays;
   const currentWeekKey = getCurrentWeekKey();
   const achievementYear = currentYear + achievementYearOffset;
-  const currentWeeklySlotKey = getWeeklySlotKey(currentWeekKey, selectedWeeklyWeekday);
   const currentMonthKey = getCurrentMonthKey();
-  const currentMonthlySlotKey = getMonthlySlotKey(currentMonthKey, selectedMonthlyDay);
   const dailyTaskGroupsByTime = useMemo(
     () => [...planner.dailyTaskGroups].sort((first, second) => first.startTime.localeCompare(second.startTime)),
     [planner.dailyTaskGroups],
@@ -1904,18 +1902,19 @@ export default function HomeClient({
     setSelectedWeeklyWeekday(weekday);
   }
 
-  function toggleWeeklyTask(id: string) {
+  function toggleWeeklyTask(id: string, weekday = selectedWeeklyWeekday) {
     setPlanner((current) => ({
       ...current,
       weeklyTasks: current.weeklyTasks.map((task) => {
         if (task.id !== id) return task;
-        if (task.weekday !== selectedWeeklyWeekday) return task;
-        const isCompleted = task.completedWeeks.includes(currentWeeklySlotKey);
+        if (task.weekday !== weekday) return task;
+        const weeklySlotKey = getWeeklySlotKey(currentWeekKey, weekday);
+        const isCompleted = task.completedWeeks.includes(weeklySlotKey);
         return {
           ...task,
           completedWeeks: isCompleted
-            ? task.completedWeeks.filter((slot) => slot !== currentWeeklySlotKey)
-            : [...task.completedWeeks, currentWeeklySlotKey],
+            ? task.completedWeeks.filter((slot) => slot !== weeklySlotKey)
+            : [...task.completedWeeks, weeklySlotKey],
         };
       }),
     }));
@@ -1941,18 +1940,19 @@ export default function HomeClient({
     setSelectedMonthlyDay(dayOfMonth);
   }
 
-  function toggleMonthlyTask(id: string) {
+  function toggleMonthlyTask(id: string, dayOfMonth = selectedMonthlyDay) {
     setPlanner((current) => ({
       ...current,
       monthlyTasks: current.monthlyTasks.map((task) => {
         if (task.id !== id) return task;
-        if (task.dayOfMonth !== selectedMonthlyDay) return task;
-        const isCompleted = task.completedMonths.includes(currentMonthlySlotKey);
+        if (task.dayOfMonth !== dayOfMonth) return task;
+        const monthlySlotKey = getMonthlySlotKey(currentMonthKey, dayOfMonth);
+        const isCompleted = task.completedMonths.includes(monthlySlotKey);
         return {
           ...task,
           completedMonths: isCompleted
-            ? task.completedMonths.filter((slot) => slot !== currentMonthlySlotKey)
-            : [...task.completedMonths, currentMonthlySlotKey],
+            ? task.completedMonths.filter((slot) => slot !== monthlySlotKey)
+            : [...task.completedMonths, monthlySlotKey],
         };
       }),
     }));
@@ -2279,7 +2279,7 @@ export default function HomeClient({
         {showCompletion && <button
           className="checkButton"
           type="button"
-          onClick={() => toggleWeeklyTask(task.id)}
+          onClick={() => toggleWeeklyTask(task.id, activeWeekday)}
           disabled={!isTodayScheduled}
           aria-label={
             isTodayScheduled
@@ -2345,7 +2345,7 @@ export default function HomeClient({
         {showCompletion && <button
           className="checkButton"
           type="button"
-          onClick={() => toggleMonthlyTask(task.id)}
+          onClick={() => toggleMonthlyTask(task.id, activeDayOfMonth)}
           disabled={!isTodayScheduled}
           aria-label={
             isTodayScheduled
