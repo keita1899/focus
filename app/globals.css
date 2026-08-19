@@ -1452,14 +1452,38 @@ select {
 }
 
 .scheduledInboxTask {
-  grid-template-columns: 38px minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: auto auto;
 }
 
-.scheduledInboxDate {
+.scheduledInboxTask > .checkButton {
+  grid-column: 1;
+  grid-row: 1 / -1;
+}
+
+.scheduledInboxTask > .taskTitleView {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.scheduledInboxMeta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-column: 2;
+  grid-row: 2;
+  gap: 8px;
+}
+
+.scheduledInboxDate,
+.scheduledInboxTime {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.scheduledInboxTime {
+  text-align: right;
 }
 
 .emptyScheduleButton {

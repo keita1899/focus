@@ -2435,7 +2435,10 @@ export default function HomeClient({
           ✓
         </button>
         <div className="taskTitleView">{task.title || " "}</div>
-        {task.scheduledDate && <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}{task.scheduledTime ? ` ${formatTimeLabel(task.scheduledTime)}` : ""}</time>}
+        {task.scheduledDate && <div className="scheduledInboxMeta">
+          <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time>
+          <time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time>
+        </div>}
       </article>
     );
   }
