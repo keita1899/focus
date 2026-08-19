@@ -223,6 +223,10 @@ body > .topbar + .shell {
   gap: 0;
 }
 
+.roadmapTabPanel[hidden] {
+  display: none;
+}
+
 .roadmapPageTabs {
   display: flex;
   justify-content: center;

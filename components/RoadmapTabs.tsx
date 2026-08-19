@@ -48,6 +48,17 @@ export default function RoadmapTabs({
       <button className={activeTab === "vision" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "vision"} onClick={() => setActiveTab("vision")}>ビジョン</button>
       <button className={activeTab === "wants" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "wants"} onClick={() => setActiveTab("wants")}>やりたいこと</button>
     </div>
-    {activeTab === "roadmap" ? <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} /> : activeTab === "annual" ? <Roadmap2Client initialValue={initialRoadmap2Value} initialPlannerValue={initialPlannerValue} /> : activeTab === "vision" ? <VisionClient initialValue={initialVisionValue} /> : <WantsClient initialValue={initialWantsValue} />}
+    <div className="roadmapTabPanel" hidden={activeTab !== "roadmap"}>
+      <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} />
+    </div>
+    <div className="roadmapTabPanel" hidden={activeTab !== "annual"}>
+      <Roadmap2Client initialValue={initialRoadmap2Value} initialPlannerValue={initialPlannerValue} />
+    </div>
+    <div className="roadmapTabPanel" hidden={activeTab !== "vision"}>
+      <VisionClient initialValue={initialVisionValue} />
+    </div>
+    <div className="roadmapTabPanel" hidden={activeTab !== "wants"}>
+      <WantsClient initialValue={initialWantsValue} />
+    </div>
   </main>;
 }
