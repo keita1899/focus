@@ -760,6 +760,14 @@ h2 {
   border-radius: 8px;
 }
 
+.goalMonthPanel {
+  border-bottom-left-radius: 0;
+}
+
+.goalWeekPanel {
+  border-top-left-radius: 0;
+}
+
 .goalInputRow {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
@@ -2700,36 +2708,25 @@ select {
 }
 
 .todayInboxSection {
-  width: min(640px, 100%);
+  width: min(560px, 100%);
   margin-inline: auto;
 }
 
 .todayInboxSection .inboxTaskItem {
-  grid-template-columns: 38px minmax(0, 1fr);
-}
-
-.todayInboxSection .inboxTaskItem .taskTitleView,
-.todayInboxSection .inboxTaskItem textarea,
-.todayInboxSection .inboxTaskDate,
-.todayInboxSection .inboxTaskTime {
-  grid-column: 2;
-}
-
-.todayInboxSection .inboxTaskDate,
-.todayInboxSection .inboxTaskTime {
-  width: min(100%, 260px);
-}
-
-.todayInboxSection .inboxTaskDate {
-  grid-row: 2;
-}
-
-.todayInboxSection .inboxTaskTime {
-  grid-row: 3;
+  grid-template-columns: 38px minmax(0, 1fr) 132px 96px;
 }
 
 .todayInboxSection {
   margin-top: 12px;
+}
+
+.inboxTaskCreateForm {
+  grid-template-columns: minmax(0, 1fr) 132px 96px 42px;
+}
+
+.inboxTaskCreateForm input[type="date"],
+.inboxTaskCreateForm input[type="time"] {
+  min-width: 0;
 }
 
 .taskItemImportant {
@@ -5790,6 +5787,15 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .goalMonthPanel {
+    border-radius: 0;
+  }
+
+  .goalWeekPanel {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
   .goalYearPanel,
   .goalMonthPanel {
     grid-template-columns: 1fr;
@@ -5896,6 +5902,33 @@ select {
 
   .inboxTaskItem {
     grid-template-columns: 38px minmax(0, 1fr) 104px;
+  }
+
+  .todayInboxSection .inboxTaskItem {
+    grid-template-columns: 38px minmax(0, 1fr) 104px;
+  }
+
+  .todayInboxSection .inboxTaskItem .taskTitleView,
+  .todayInboxSection .inboxTaskItem textarea {
+    grid-column: 2 / -1;
+  }
+
+  .todayInboxSection .inboxTaskDate {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .todayInboxSection .inboxTaskTime {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .inboxTaskCreateForm {
+    grid-template-columns: minmax(0, 1fr) 96px 42px;
+  }
+
+  .inboxTaskCreateForm > input:first-child {
+    grid-column: 1 / -1;
   }
 
   .inboxTaskItem .taskTitleView,

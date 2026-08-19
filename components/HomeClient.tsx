@@ -921,6 +921,8 @@ export default function HomeClient({
   });
   const [achievementYearOffset, setAchievementYearOffset] = useState(0);
   const [newInboxTaskTitle, setNewInboxTaskTitle] = useState("");
+  const [newInboxTaskDate, setNewInboxTaskDate] = useState("");
+  const [newInboxTaskTime, setNewInboxTaskTime] = useState("");
   const [newDailyTaskTitles, setNewDailyTaskTitles] = useState(() =>
     createEmptyDailyTaskTitleMap(),
   );
@@ -1592,10 +1594,10 @@ export default function HomeClient({
       ...current,
       inboxTasks: [
         ...current.inboxTasks,
-        { id: createId("inbox-task"), title, done: false },
+        { id: createId("inbox-task"), title, done: false, scheduledDate: newInboxTaskDate || undefined, scheduledTime: newInboxTaskTime || undefined },
       ],
-    }));
-    setNewInboxTaskTitle("");
+  }));
+  setNewInboxTaskTitle("");
   }
 
   function openScheduledInboxTaskForm(bucket: ScheduledInboxBucket) {
@@ -2831,7 +2833,7 @@ export default function HomeClient({
                 <h3>Inbox</h3>
               </div>
               <form
-                className="taskForm"
+                className="taskForm inboxTaskCreateForm"
                 onSubmit={(event) => {
                   event.preventDefault();
                   addInboxTask();
@@ -2842,6 +2844,18 @@ export default function HomeClient({
                   placeholder="Inboxタスク"
                   value={newInboxTaskTitle}
                   onChange={(event) => setNewInboxTaskTitle(event.target.value)}
+                />
+                <input
+                  type="date"
+                  aria-label="Inboxタスクの実行日"
+                  value={newInboxTaskDate}
+                  onChange={(event) => setNewInboxTaskDate(event.target.value)}
+                />
+                <input
+                  type="time"
+                  aria-label="Inboxタスクの実行時刻"
+                  value={newInboxTaskTime}
+                  onChange={(event) => setNewInboxTaskTime(event.target.value)}
                 />
                 <button type="submit" aria-label="Inboxのタスクを追加">
                   +
