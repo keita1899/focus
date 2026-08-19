@@ -2142,7 +2142,7 @@ export default function HomeClient({
           onClick={() => setCollapsedTodayDailyGroups((current) => ({ ...current, [group.key]: !current[group.key] }))}
         >
           <span><strong>{groupLabel}</strong> <span className="dailyGroupTime">{formatTimeLabel(group.startTime)}〜{formatTimeLabel(group.endTime)}</span></span>
-          <span className="dailyGroupHeaderRight"><span className="sectionMeta">{group.theme || "テーマ未設定"}</span><span className="dailyGroupChevron" aria-hidden="true">⌄</span></span>
+          <span className="dailyGroupHeaderRight"><span className="sectionMeta">{group.theme || "テーマ未設定"}</span><span className="dailyGroupChevron" aria-hidden="true">⌃</span></span>
         </button>
         {!isCollapsed && <div className="taskList">
           {(!todayThemeGroup || todayThemeGroup.tasks.length === 0) && tasks.length === 0 && (

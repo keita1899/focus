@@ -220,7 +220,7 @@ body > .topbar + .shell {
 .roadmapTabsPage {
   display: grid;
   min-height: calc(100vh - 130px);
-  gap: 18px;
+  gap: 0;
 }
 
 .roadmapPageTabs {
@@ -228,7 +228,7 @@ body > .topbar + .shell {
   justify-content: center;
   gap: 8px;
   width: min(1180px, calc(100% - 32px));
-  margin: 28px auto 0;
+  margin: 28px auto 20px;
 }
 
 .roadmapPageTabs button {
@@ -238,6 +238,7 @@ body > .topbar + .shell {
   background: white;
   color: var(--accent-strong);
   padding: 0 16px;
+  font-size: 0.95rem;
   font-weight: 900;
 }
 
@@ -1369,8 +1370,12 @@ select {
 
 .todayOverdueSection {
   margin-bottom: 12px;
-  background: #fff4f2;
-  border-color: #f0c5be;
+  background: white;
+  border-color: var(--line);
+}
+
+.todayOverdueSection .sectionHeader h3 {
+  color: var(--danger);
 }
 
 .todayScheduledGroup {
@@ -1388,20 +1393,20 @@ select {
   width: 100%;
   margin-left: 0;
   border-radius: 8px 8px 0 0;
-  background: #e8f5eb;
+  background: white;
 }
 
 .todayScheduledGroup .todayTaskWeekSection {
   width: 100%;
   margin-left: 0;
   border-top: 0;
-  background: #e8f5eb;
+  background: white;
 }
 
 .todayScheduledGroup .todayTaskMonthSection {
   border-top: 0;
   border-radius: 0 0 8px 8px;
-  background: #e8f5eb;
+  background: white;
 }
 
 .todayTaskList {
@@ -1448,14 +1453,9 @@ select {
 .taskItem.isCurrentTask {
   position: relative;
   z-index: 1;
-  border-color: var(--accent-strong);
+  border-color: var(--line);
   background: #dff3e6;
   box-shadow: 0 0 0 2px rgba(23, 107, 85, 0.16);
-}
-
-.taskList > .taskItem.isCurrentTask,
-.taskList > .taskItem.isCurrentTask + .taskItem {
-  border-top: 1px solid var(--accent-strong);
 }
 
 .todayDashboardTask {
@@ -2485,7 +2485,7 @@ select {
 }
 
 .dailyGroupCard.isCollapsed .dailyGroupChevron {
-  transform: rotate(-90deg);
+  transform: rotate(90deg);
 }
 
 .dailyThemeInput {
@@ -2536,7 +2536,7 @@ select {
   place-items: center;
   width: 20px;
   height: 20px;
-  color: var(--accent-strong);
+  color: #7c3aed;
   font-size: 1rem;
   font-weight: 900;
   line-height: 1;
@@ -3248,6 +3248,7 @@ select {
 
 .visionList ol {
   list-style: none;
+  gap: 0;
   padding-left: 0;
 }
 
@@ -3306,7 +3307,7 @@ select {
 
 .visionInsertPoint {
   display: grid;
-  height: 20px;
+  height: 28px;
   place-items: center;
 }
 
@@ -3336,10 +3337,10 @@ select {
 .visionAddButton {
   justify-self: end;
   min-height: 40px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--accent-strong);
   border-radius: 8px;
-  background: white;
-  color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
   padding: 0 14px;
   font-weight: 900;
 }
