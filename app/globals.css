@@ -761,11 +761,18 @@ h2 {
 }
 
 .goalMonthPanel {
+  border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
 .goalWeekPanel {
   border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.goalYearPanel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .goalInputRow {
@@ -2464,6 +2471,14 @@ select {
   background: #eef6f1;
   color: var(--accent-strong);
   box-shadow: none;
+}
+
+.dailyGroupAddButton {
+  justify-self: start;
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 900;
 }
 
 .dailyGroupGrid {
@@ -5809,6 +5824,11 @@ select {
 
   .goalNest {
     grid-template-columns: 1fr;
+  }
+
+  .goalYearPanel {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .goalMonthPanel {

@@ -2730,7 +2730,7 @@ export default function HomeClient({
                     </div>
                   </div>
                   {renderDailyPatternWeekdayToggles()}
-                  <button className="recurringAddButton" type="button" onClick={() => setIsDailyGroupModalOpen(true)} aria-label="グループを追加">＋</button>
+                  <button className="recurringAddButton dailyGroupAddButton" type="button" onClick={() => setIsDailyGroupModalOpen(true)}>＋ グループを追加</button>
                   <div className="dailyGroupGrid">
                     {dailyTaskGroupsByTime.filter((group) => group.pattern === selectedDailyPattern).map((group) =>
                       renderDailyTaskGroup(group, selectedDailyPattern),
