@@ -909,6 +909,18 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   </div>
                 );
               })}
+              <button
+                className={
+                  activeFolderId === trashFolderId
+                    ? "notesFolderButton notesTrashButton active"
+                    : "notesFolderButton notesTrashButton"
+                }
+                type="button"
+                onClick={() => selectFolder(trashFolderId)}
+              >
+                <strong>{trashFolder.name}</strong>
+                <span>{noteCounts.get(trashFolderId) || 0}</span>
+              </button>
               <form
                 className="notesFolderForm"
                 onSubmit={(event) => {
@@ -926,18 +938,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   +
                 </button>
               </form>
-              <button
-                className={
-                  activeFolderId === trashFolderId
-                    ? "notesFolderButton notesTrashButton active"
-                    : "notesFolderButton notesTrashButton"
-                }
-                type="button"
-                onClick={() => selectFolder(trashFolderId)}
-              >
-                <strong>{trashFolder.name}</strong>
-                <span>{noteCounts.get(trashFolderId) || 0}</span>
-              </button>
             </section>
           )}
         </aside>

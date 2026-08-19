@@ -3839,9 +3839,7 @@ select {
 }
 
 .notesTrashButton {
-  margin-top: 4px;
-  border-top: 1px dashed var(--line);
-  padding-top: 14px;
+  margin: 4px 0;
 }
 
 .notesFolderColumn strong,
