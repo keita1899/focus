@@ -2920,6 +2920,14 @@ export default function HomeClient({
                             value={task.scheduledTime || ""}
                             onChange={(event) => updateInboxTaskScheduledTime(task.id, event.currentTarget.value)}
                           />
+                          <button
+                            className="iconButton"
+                            type="button"
+                            onClick={() => completeInboxTask(task.id)}
+                            aria-label={`${task.title || "無題のタスク"}を削除`}
+                          >
+                            ×
+                          </button>
                         </>
                       );
                     })()}

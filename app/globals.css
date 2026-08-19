@@ -1397,6 +1397,12 @@ select {
   color: var(--danger);
 }
 
+.todayOverdueSection > .sectionHeader {
+  margin: -16px -16px 0;
+  padding: 12px 16px;
+  background: #fff0ee;
+}
+
 .todayScheduledGroup {
   display: grid;
   gap: 0;
@@ -2747,12 +2753,12 @@ select {
 }
 
 .todayInboxSection {
-  width: min(560px, 100%);
+  width: 100%;
   margin-inline: auto;
 }
 
 .todayInboxSection .inboxTaskItem {
-  grid-template-columns: 38px minmax(0, 1fr) 132px 96px;
+  grid-template-columns: 38px minmax(0, 1fr) 132px 96px 42px;
 }
 
 .todayInboxSection {
@@ -5965,6 +5971,11 @@ select {
   .todayInboxSection .inboxTaskTime {
     grid-column: 3;
     grid-row: 2;
+  }
+
+  .todayInboxSection .inboxTaskItem .iconButton {
+    grid-column: 3;
+    grid-row: 3;
   }
 
   .inboxTaskCreateForm {
