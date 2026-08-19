@@ -1518,21 +1518,6 @@ export default function HomeClient({
     });
   }
 
-  function addAnnualGoal() {
-    const yearKey = periodKeys.year;
-    setPlanner((current) => {
-      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
-      if (currentGoals.length >= 5) return current;
-      return {
-        ...current,
-        annualGoalsByPeriod: {
-          ...current.annualGoalsByPeriod,
-          [yearKey]: [...currentGoals, ""],
-        },
-      };
-    });
-  }
-
   function removeAnnualGoal(index: number) {
     const yearKey = periodKeys.year;
     setPlanner((current) => {
@@ -2495,9 +2480,6 @@ export default function HomeClient({
                     <button className="iconButton" type="button" onClick={() => removeAnnualGoal(index)} aria-label={`年の目標 ${index + 1}を削除`}>×</button>
                   </div>
                 ))}
-                {(planner.annualGoalsByPeriod[periodKeys.year] || [""]).length < 5 && (
-                  <button className="homeAnnualGoalAdd" type="button" onClick={addAnnualGoal}>＋ 目標を追加</button>
-                )}
               </div>
             </section>
             <div className="goalSecondaryColumn">

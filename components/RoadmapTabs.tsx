@@ -9,13 +9,15 @@ import {
 } from "./MarkdownMemoClient";
 import Roadmap2Client from "./Roadmap2Client";
 import VisionClient from "./VisionClient";
+import WantsClient from "./WantsClient";
 
 type RoadmapTabsProps = {
   initialMemoValue: unknown;
   initialRoadmap2Value: unknown;
   initialPlannerValue: unknown;
   initialVisionValue: unknown;
-  initialTab?: "roadmap" | "annual" | "vision";
+  initialWantsValue: unknown;
+  initialTab?: "roadmap" | "annual" | "vision" | "wants";
 };
 
 export default function RoadmapTabs({
@@ -23,6 +25,7 @@ export default function RoadmapTabs({
   initialRoadmap2Value,
   initialPlannerValue,
   initialVisionValue,
+  initialWantsValue,
   initialTab = "roadmap",
 }: RoadmapTabsProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -30,7 +33,7 @@ export default function RoadmapTabs({
   useEffect(() => {
     try {
       const storedTab = window.localStorage.getItem("roadmap-active-tab-v1");
-      if (storedTab === "roadmap" || storedTab === "annual" || storedTab === "vision") setActiveTab(storedTab);
+      if (storedTab === "roadmap" || storedTab === "annual" || storedTab === "vision" || storedTab === "wants") setActiveTab(storedTab);
     } catch {}
   }, []);
 
@@ -43,7 +46,8 @@ export default function RoadmapTabs({
       <button className={activeTab === "roadmap" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "roadmap"} onClick={() => setActiveTab("roadmap")}>ロードマップ</button>
       <button className={activeTab === "annual" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "annual"} onClick={() => setActiveTab("annual")}>年間ロードマップ</button>
       <button className={activeTab === "vision" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "vision"} onClick={() => setActiveTab("vision")}>ビジョン</button>
+      <button className={activeTab === "wants" ? "active" : undefined} type="button" role="tab" aria-selected={activeTab === "wants"} onClick={() => setActiveTab("wants")}>やりたいこと</button>
     </div>
-    {activeTab === "roadmap" ? <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} /> : activeTab === "annual" ? <Roadmap2Client initialValue={initialRoadmap2Value} initialPlannerValue={initialPlannerValue} /> : <VisionClient initialValue={initialVisionValue} />}
+    {activeTab === "roadmap" ? <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} /> : activeTab === "annual" ? <Roadmap2Client initialValue={initialRoadmap2Value} initialPlannerValue={initialPlannerValue} /> : activeTab === "vision" ? <VisionClient initialValue={initialVisionValue} /> : <WantsClient initialValue={initialWantsValue} />}
   </main>;
 }
