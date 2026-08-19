@@ -633,13 +633,13 @@ h2 {
 
 .goalNest {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px;
+  gap: 0;
   align-items: stretch;
 }
 
 .goalSecondaryColumn {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .goalYearPanel,
@@ -5730,12 +5730,25 @@ select {
   }
 
   .inboxTaskItem {
-    grid-template-columns: 38px minmax(0, 1fr) 42px;
+    grid-template-columns: 38px minmax(0, 1fr) 104px;
+  }
+
+  .inboxTaskItem .taskTitleView,
+  .inboxTaskItem textarea {
+    grid-column: 2 / -1;
   }
 
   .inboxTaskDate,
   .inboxTaskTime {
-    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+
+  .inboxTaskDate {
+    grid-column: 2;
+  }
+
+  .inboxTaskTime {
+    grid-column: 3;
   }
 
   .inboxTaskItem .priorityActions {

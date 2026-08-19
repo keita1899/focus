@@ -220,7 +220,7 @@ function useCurrentTime() {
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
   useEffect(() => {
-    const timerId = window.setInterval(() => setCurrentTime(new Date()), 30_000);
+    const timerId = window.setInterval(() => setCurrentTime(new Date()), 1_000);
     return () => window.clearInterval(timerId);
   }, []);
 
@@ -962,6 +962,7 @@ export default function HomeClient({
   const currentTime = useCurrentTime();
   const todayDailyPattern = planner.dailyPatternByWeekday[currentTime.getDay()];
   const currentTimeValue = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
+  const currentTimeWithSeconds = `${currentTimeValue}:${String(currentTime.getSeconds()).padStart(2, "0")}`;
   const availableDailyTasks = dailyTaskGroupsByTime
     .filter((group) => group.pattern === todayDailyPattern)
     .flatMap((group) => group.tasks.map((task) => ({ group, task })))
@@ -2898,7 +2899,7 @@ export default function HomeClient({
       </section>
 
       <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
-        <time dateTime={currentTimeValue}>{formatTimeLabel(currentTimeValue)}</time>
+        <time dateTime={currentTimeWithSeconds}>{formatTimeLabel(currentTimeWithSeconds)}</time>
         <strong>{currentTaskEntry ? `${formatTimeLabel(currentTaskEntry.time)}開始 ${currentTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
         {currentTaskEntry && (
           <button
