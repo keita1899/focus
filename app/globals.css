@@ -1454,6 +1454,45 @@ select {
   white-space: nowrap;
 }
 
+.emptyScheduleButton {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+}
+
+.emptyScheduleButton:hover,
+.emptyScheduleButton:focus-visible {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+.scheduledInboxAddForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px 92px 48px;
+  gap: 6px;
+}
+
+.scheduledInboxAddForm input {
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  padding: 0 8px;
+}
+
+.scheduledInboxAddForm button {
+  border: 0;
+  border-radius: 7px;
+  background: var(--accent);
+  color: white;
+  font-weight: 900;
+}
+
 .taskItem.isCurrentTask {
   position: relative;
   z-index: 1;
@@ -2658,6 +2697,35 @@ select {
 .todayImportantSection {
   display: grid;
   gap: 10px;
+}
+
+.todayInboxSection {
+  width: min(640px, 100%);
+  margin-inline: auto;
+}
+
+.todayInboxSection .inboxTaskItem {
+  grid-template-columns: 38px minmax(0, 1fr);
+}
+
+.todayInboxSection .inboxTaskItem .taskTitleView,
+.todayInboxSection .inboxTaskItem textarea,
+.todayInboxSection .inboxTaskDate,
+.todayInboxSection .inboxTaskTime {
+  grid-column: 2;
+}
+
+.todayInboxSection .inboxTaskDate,
+.todayInboxSection .inboxTaskTime {
+  width: min(100%, 260px);
+}
+
+.todayInboxSection .inboxTaskDate {
+  grid-row: 2;
+}
+
+.todayInboxSection .inboxTaskTime {
+  grid-row: 3;
 }
 
 .todayInboxSection {

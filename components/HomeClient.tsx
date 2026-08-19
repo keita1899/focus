@@ -16,6 +16,7 @@ type HomeTab =
   | "recurring"
   | "inbox"
   | "diary";
+type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
   id: string;
@@ -938,6 +939,12 @@ export default function HomeClient({
   );
   const [selectedDailyPattern, setSelectedDailyPattern] = useState<DailyPattern>("work");
   const [newMonthlyTaskTitle, setNewMonthlyTaskTitle] = useState("");
+  const [scheduledInboxDrafts, setScheduledInboxDrafts] = useState<Record<ScheduledInboxBucket, { title: string; date: string; time: string }>>({
+    today: { title: "", date: "", time: "" },
+    week: { title: "", date: "", time: "" },
+    month: { title: "", date: "", time: "" },
+  });
+  const [openScheduledInboxForm, setOpenScheduledInboxForm] = useState<ScheduledInboxBucket | null>(null);
   const [selectedMonthlyDay, setSelectedMonthlyDay] = useState(
     () => new Date().getDate(),
   );
@@ -1589,6 +1596,34 @@ export default function HomeClient({
       ],
     }));
     setNewInboxTaskTitle("");
+  }
+
+  function openScheduledInboxTaskForm(bucket: ScheduledInboxBucket) {
+    const defaults: Record<ScheduledInboxBucket, string> = {
+      today: todayKey,
+      week: weekEndKey,
+      month: formatDateKey(new Date(currentTime.getFullYear(), currentTime.getMonth() + 1, 0)),
+    };
+    setScheduledInboxDrafts((current) => ({
+      ...current,
+      [bucket]: { ...current[bucket], date: current[bucket].date || defaults[bucket] },
+    }));
+    setOpenScheduledInboxForm(bucket);
+  }
+
+  function addScheduledInboxTask(bucket: ScheduledInboxBucket) {
+    const draft = scheduledInboxDrafts[bucket];
+    const title = draft.title.trim();
+    if (!title || !draft.date) return;
+    setPlanner((current) => ({
+      ...current,
+      inboxTasks: [
+        ...current.inboxTasks,
+        { id: createId("inbox-task"), title, done: false, scheduledDate: draft.date, scheduledTime: draft.time || undefined },
+      ],
+    }));
+    setScheduledInboxDrafts((current) => ({ ...current, [bucket]: { title: "", date: "", time: current[bucket].time } }));
+    setOpenScheduledInboxForm(null);
   }
 
   function updateInboxTaskTitle(id: string, title: string) {
@@ -2403,6 +2438,20 @@ export default function HomeClient({
     );
   }
 
+  function renderScheduledInboxEmptyState(bucket: ScheduledInboxBucket, label: string) {
+    const draft = scheduledInboxDrafts[bucket];
+    if (openScheduledInboxForm !== bucket) {
+      return <button className="emptyScheduleButton" type="button" onClick={() => openScheduledInboxTaskForm(bucket)}>タスクはありません。</button>;
+    }
+
+    return <form className="scheduledInboxAddForm" onSubmit={(event) => { event.preventDefault(); addScheduledInboxTask(bucket); }}>
+      <input aria-label={`${label}のタスク名`} placeholder="タスク名" value={draft.title} onChange={(event) => setScheduledInboxDrafts((current) => ({ ...current, [bucket]: { ...current[bucket], title: event.target.value } }))} autoFocus />
+      <input aria-label={`${label}の実行日`} type="date" value={draft.date} onChange={(event) => setScheduledInboxDrafts((current) => ({ ...current, [bucket]: { ...current[bucket], date: event.target.value } }))} />
+      <input aria-label={`${label}の実行時刻`} type="time" value={draft.time} onChange={(event) => setScheduledInboxDrafts((current) => ({ ...current, [bucket]: { ...current[bucket], time: event.target.value } }))} />
+      <button type="submit">追加</button>
+    </form>;
+  }
+
   function updateTodayDiary(body: string) {
     const now = new Date().toISOString();
     setTodayDiaryBody(body);
@@ -2648,15 +2697,15 @@ export default function HomeClient({
                   <div className="todayScheduledGroup" aria-label="今日・今週・今月のタスク">
                     <section className="todayTaskSection todayTaskTodaySection">
                       <div className="sectionHeader"><h3>今日のタスク</h3></div>
-                      <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今日のタスクはありません。</p>}</div>
+                      <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("today", "今日")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskWeekSection">
                       <div className="sectionHeader"><h3>今週のタスク</h3></div>
-                      <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今週のタスクはありません。</p>}</div>
+                      <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("week", "今週")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskMonthSection">
                       <div className="sectionHeader"><h3>今月のタスク</h3></div>
-                      <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : <p className="emptyText">今月のタスクはありません。</p>}</div>
+                      <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("month", "今月")}</div>
                     </section>
                   </div>
                 </aside>
