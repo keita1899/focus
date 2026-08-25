@@ -5,7 +5,6 @@ import {
   ReactElement,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -308,7 +307,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
   const [viewMode, setViewMode] = useState<NotesViewMode>("split");
   const [isFolderColumnOpen, setIsFolderColumnOpen] = useState(true);
   const [isListColumnOpen, setIsListColumnOpen] = useState(true);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const noteCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1023,11 +1021,6 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                   onChange={(event) =>
                     updateNoteTitle(activeNote.id, event.currentTarget.value)
                   }
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    textareaRef.current?.focus();
-                  }}
                 />
                 <div className="notesViewTabs" role="tablist" aria-label="表示モード">
                   {viewModeOptions.map((option) => (
@@ -1051,10 +1044,7 @@ export default function NotesClient({ initialValue }: NotesClientProps) {
                 {viewMode !== "preview" && (
                   <textarea
                     aria-label="メモ本文"
-                    ref={(node) => {
-                      textareaRef.current = node;
-                      resizeMemoTextarea(node);
-                    }}
+                    ref={(node) => resizeMemoTextarea(node)}
                     value={activeNote.markdown}
                     onKeyDown={handleMarkdownKeyDown}
                     onChange={(event) => {
