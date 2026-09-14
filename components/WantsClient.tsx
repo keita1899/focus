@@ -40,6 +40,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const [itemEditor, setItemEditor] = useState<{ id: string | null; draft: ItemDraft } | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [lastCategoryId, setLastCategoryId] = useState(wants.categories[0].id);
   const [sortDirections, setSortDirections] = useState<Record<WantsSortKey, "asc" | "desc">>({ year: "asc", month: "asc", category: "asc" });
   const hasMountedRef = useRef(false);
   const sortedItems = useMemo(() => {
@@ -59,13 +60,14 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
     return () => window.clearTimeout(timeoutId);
   }, [wants]);
 
-  function openNewItem() { setItemEditor({ id: null, draft: createItemDraft(wants.categories[0].id) }); }
+  function openNewItem() { setItemEditor({ id: null, draft: createItemDraft(wants.categories.some((category) => category.id === lastCategoryId) ? lastCategoryId : wants.categories[0].id) }); }
   function openEditItem(item: WantItem) { setItemEditor({ id: item.id, draft: { categoryId: item.categoryId, title: item.title, done: item.done, scheduledYear: item.scheduledYear, scheduledMonth: item.scheduledMonth } }); }
   function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!itemEditor || !itemEditor.draft.title.trim()) return;
     const item = { ...itemEditor.draft, title: itemEditor.draft.title.trim(), scheduledYear: itemEditor.draft.scheduledYear || undefined, scheduledMonth: itemEditor.draft.scheduledMonth || undefined };
     setWants((current) => itemEditor.id ? { ...current, items: current.items.map((entry) => entry.id === itemEditor.id ? { ...entry, ...item } : entry) } : { ...current, items: [...current.items, { ...item, id: createId("want-item") }] });
+    if (!itemEditor.id) setLastCategoryId(item.categoryId);
     setItemEditor(null);
   }
   function updateCategory(id: string, value: Partial<WantCategory>) { setWants((current) => ({ ...current, categories: current.categories.map((category) => category.id === id ? { ...category, ...value } : category) })); }
@@ -74,10 +76,12 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
     setWants((current) => ({ ...current, categories: [...current.categories, { id: createId("want-category"), name, color: defaultCategoryColor }] })); setNewCategoryName("");
   }
   function removeCategory(id: string) {
+    const fallbackId = wants.categories.find((category) => category.id !== id)?.id;
+    if (lastCategoryId === id && fallbackId) setLastCategoryId(fallbackId);
     setWants((current) => {
       if (current.categories.length === 1) return current;
-      const fallbackId = current.categories.find((category) => category.id !== id)!.id;
-      return { categories: current.categories.filter((category) => category.id !== id), items: current.items.map((item) => item.categoryId === id ? { ...item, categoryId: fallbackId } : item) };
+      const nextCategoryId = current.categories.find((category) => category.id !== id)!.id;
+      return { categories: current.categories.filter((category) => category.id !== id), items: current.items.map((item) => item.categoryId === id ? { ...item, categoryId: nextCategoryId } : item) };
     });
   }
   function toggleSort(key: WantsSortKey) { setSortDirections((current) => ({ ...current, [key]: current[key] === "asc" ? "desc" : "asc" })); }
