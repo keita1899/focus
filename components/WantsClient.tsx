@@ -7,6 +7,7 @@ type WantItem = { id: string; categoryId: string; title: string; done: boolean; 
 type WantsState = { categories: WantCategory[]; items: WantItem[] };
 type ItemDraft = Omit<WantItem, "id">;
 type WantsClientProps = { initialValue: unknown };
+type WantsSortMode = "schedule" | "category";
 
 const defaultCategoryColor = "#176b55";
 
@@ -33,8 +34,16 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const [itemEditor, setItemEditor] = useState<{ id: string | null; draft: ItemDraft } | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [sortMode, setSortMode] = useState<WantsSortMode>("schedule");
   const hasMountedRef = useRef(false);
-  const sortedItems = useMemo(() => [...wants.items].sort((left, right) => (left.scheduledYearMonth || "9999-12").localeCompare(right.scheduledYearMonth || "9999-12")), [wants.items]);
+  const sortedItems = useMemo(() => {
+    const categoryOrder = new Map(wants.categories.map((category, index) => [category.id, index]));
+    return [...wants.items].sort((left, right) => {
+      const scheduleComparison = (left.scheduledYearMonth || "9999-12").localeCompare(right.scheduledYearMonth || "9999-12");
+      if (sortMode === "schedule") return scheduleComparison || left.title.localeCompare(right.title, "ja");
+      return (categoryOrder.get(left.categoryId) || 0) - (categoryOrder.get(right.categoryId) || 0) || scheduleComparison || left.title.localeCompare(right.title, "ja");
+    });
+  }, [sortMode, wants.categories, wants.items]);
 
   useEffect(() => {
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
@@ -67,7 +76,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   return <main className="shell wantsPage">
     <section className="roadmapHeader wantsHeader"><h1>やりたいこと</h1></section>
     <section className="wantsTablePanel" aria-label="やりたいこと一覧">
-      <div className="wantsTableActions"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ やりたいことを追加</button></div>
+      <div className="wantsTableActions"><div className="wantsTableControls"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><label>並び順<select value={sortMode} onChange={(event) => setSortMode(event.target.value as WantsSortMode)}><option value="schedule">予定年月順</option><option value="category">カテゴリー順</option></select></label></div><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ やりたいことを追加</button></div>
       <div className="wantsTableScroll"><table className="wantsTable"><thead><tr><th>完了</th><th>予定年月</th><th>カテゴリー</th><th>やりたいこと名</th><th>削除</th></tr></thead><tbody>
         {sortedItems.length === 0 ? <tr><td className="wantsEmpty" colSpan={5}>やりたいことはありません。追加ボタンから登録してください。</td></tr> : sortedItems.map((item) => {
           const category = wants.categories.find((entry) => entry.id === item.categoryId) || wants.categories[0];
