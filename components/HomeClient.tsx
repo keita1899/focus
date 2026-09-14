@@ -193,7 +193,7 @@ const initialState: PlannerState = {
   goals: {
     year: "収益性のある個人プロダクトを1つ公開する",
     month: "MVPを完成させ、利用者10人から感想をもらう",
-    week: "核となる画面と保存機能を完成させる",
+    week: "",
   },
   goalsByPeriod: {
     year: {},
