@@ -5,7 +5,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import Roadmap2Client from "./Roadmap2Client";
 
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
@@ -16,8 +15,7 @@ type HomeTab =
   | "today"
   | "recurring"
   | "inbox"
-  | "diary"
-  | "annual";
+  | "diary";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
@@ -123,8 +121,6 @@ type TaskEditTarget =
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialDiaryValue: unknown;
-  initialRoadmap2Value: unknown;
-  initialHomeTab?: HomeTab;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
@@ -895,8 +891,6 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 export default function HomeClient({
   initialPlannerValue,
   initialDiaryValue,
-  initialRoadmap2Value,
-  initialHomeTab = "today",
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
@@ -969,7 +963,7 @@ export default function HomeClient({
     () => new Date().getDate(),
   );
   const [selectedHomeTab, setSelectedHomeTab] =
-    useState<HomeTab>(initialHomeTab);
+    useState<HomeTab>("today");
   const [isCurrentTaskPanelOpen, setIsCurrentTaskPanelOpen] = useState(true);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
@@ -1047,13 +1041,11 @@ export default function HomeClient({
     { key: "inbox", label: "Inbox" },
     { key: "recurring", label: "繰り返し" },
     { key: "diary", label: "日記" },
-    { key: "annual", label: "年間ロードマップ" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
-  const showAnnualTab = selectedHomeTab === "annual";
 
   useEffect(() => {
     try {
@@ -1062,8 +1054,7 @@ export default function HomeClient({
         storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
-        storedTab === "diary" ||
-        storedTab === "annual"
+        storedTab === "diary"
       ) {
         setSelectedHomeTab(storedTab);
       }
@@ -1551,6 +1542,15 @@ export default function HomeClient({
         },
       };
     });
+  }
+
+  function selectRoadmapMonth(month: number) {
+    const targetYear = currentYear + periodOffsets.year;
+    const currentMonth = new Date().getMonth();
+    setPeriodOffsets((current) => ({
+      ...current,
+      month: (targetYear - currentYear) * 12 + (month - 1 - currentMonth),
+    }));
   }
 
   function removeAnnualGoal(index: number) {
@@ -2517,7 +2517,7 @@ export default function HomeClient({
             <section className="goalPanel goalYearPanel">
               <div className="goalHeading">
                 <span>
-                  {getGoalLabel("year", periodOffsets.year, periodLabels.year)}
+                  年間ロードマップ
                 </span>
                 <span className="periodSwitcher">
                   <button
@@ -2561,6 +2561,12 @@ export default function HomeClient({
                   </div>
                 ))}
               </div>
+              <nav className="homeRoadmapMonthPicker" aria-label="月間目標を選択">
+                {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => {
+                  const isSelected = periodKeys.month === `${currentYear + periodOffsets.year}-${String(month).padStart(2, "0")}`;
+                  return <button className={isSelected ? "active" : undefined} key={month} type="button" aria-pressed={isSelected} onClick={() => selectRoadmapMonth(month)}>{month}月</button>;
+                })}
+              </nav>
             </section>
             <div className="goalSecondaryColumn">
               <section className="goalPanel goalMonthPanel">
@@ -2978,17 +2984,12 @@ export default function HomeClient({
             </section>
           )}
 
-          {showAnnualTab && (
-            <section className="homeTabPanel homeAnnualRoadmap" aria-label="年間ロードマップ">
-              <Roadmap2Client embedded initialValue={initialRoadmap2Value} initialPlannerValue={planner} />
-            </section>
-          )}
         </section>
       </section>
 
       <aside className={`currentTaskModal${isCurrentTaskPanelOpen ? "" : " isCollapsed"}`} aria-live="polite" aria-label="現在のタスク">
         <button className="currentTaskPanelToggle" type="button" onClick={() => setIsCurrentTaskPanelOpen((current) => !current)} aria-label={isCurrentTaskPanelOpen ? "現在のタスクを隠す" : "現在のタスクを表示"} aria-expanded={isCurrentTaskPanelOpen}>
-          {isCurrentTaskPanelOpen ? "›" : "‹"}
+          {isCurrentTaskPanelOpen ? "×" : "‹"}
         </button>
         <div className="currentTaskPanelContent">
           <time dateTime={currentTimeWithSeconds}>{formatTimeLabel(currentTimeWithSeconds)}</time>
