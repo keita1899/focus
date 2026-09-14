@@ -367,9 +367,6 @@ body > .topbar + .shell {
   gap: 10px;
 }
 
-.wantsTableControls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.wantsTableControls label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 900; }
-.wantsTableControls select { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); padding: 0 8px; font: inherit; }
 
 .wantsAddCategory {
   grid-template-columns: minmax(180px, 280px) auto;
@@ -408,6 +405,9 @@ body > .topbar + .shell {
   font-size: .86rem;
   font-weight: 900;
 }
+
+.wantsSortHeader { border: 0; background: transparent; color: inherit; padding: 0; font: inherit; font-weight: inherit; cursor: pointer; }
+.wantsSortHeader:hover { text-decoration: underline; }
 
 .wantsTable th:first-child,
 .wantsTable td:first-child,
@@ -457,6 +457,7 @@ body > .topbar + .shell {
 .wantsModal label { display: grid; gap: 6px; color: var(--muted); font-size: .8rem; font-weight: 900; }
 .wantsModal input, .wantsModal select { min-height: 40px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 10px; color: var(--ink); font: inherit; }
 .wantsModalActions { display: flex; justify-content: flex-end; gap: 8px; }
+.wantsDateFields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .wantsModalActions button:first-child { border: 1px solid var(--line); background: white; color: var(--accent-strong); }
 .wantsCategoryEditorList { display: grid; gap: 8px; }
 .wantsCategoryEditorList > div { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px; gap: 8px; align-items: center; }
