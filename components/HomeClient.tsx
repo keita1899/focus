@@ -1523,7 +1523,7 @@ export default function HomeClient({
   function updateAnnualGoal(index: number, value: string) {
     const yearKey = periodKeys.year;
     setPlanner((current) => {
-      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
+      const currentGoals = [...(current.annualGoalsByPeriod[yearKey] || []), "", "", ""].slice(0, 3);
       const nextGoals = currentGoals.map((goal, goalIndex) =>
         goalIndex === index ? value : goal,
       );
@@ -1556,9 +1556,8 @@ export default function HomeClient({
   function removeAnnualGoal(index: number) {
     const yearKey = periodKeys.year;
     setPlanner((current) => {
-      const currentGoals = current.annualGoalsByPeriod[yearKey] || [""];
-      const nextGoals = currentGoals.filter((_, goalIndex) => goalIndex !== index);
-      const normalizedGoals = nextGoals.length > 0 ? nextGoals : [""];
+      const currentGoals = [...(current.annualGoalsByPeriod[yearKey] || []), "", "", ""].slice(0, 3);
+      const normalizedGoals = currentGoals.map((goal, goalIndex) => goalIndex === index ? "" : goal);
       return {
         ...current,
         annualGoalsByPeriod: {
@@ -2541,7 +2540,7 @@ export default function HomeClient({
                 </span>
               </div>
               <div className="homeAnnualGoalList">
-                {(planner.annualGoalsByPeriod[periodKeys.year] || [""]).map((goal, index) => (
+                {[...(planner.annualGoalsByPeriod[periodKeys.year] || []), "", "", ""].slice(0, 3).map((goal, index) => (
                   <div className="homeAnnualGoalRow" key={`${periodKeys.year}-${index}`}>
                     <span aria-hidden="true">{index + 1}.</span>
                     <button
@@ -2550,12 +2549,13 @@ export default function HomeClient({
                       onClick={() => toggleAnnualGoalCompletion(index)}
                       aria-label={`年の目標 ${index + 1}の完了を切り替え`}
                     >✓</button>
-                    <input
+                    <textarea
                       className="goalLineInput"
                       aria-label={`年の目標 ${index + 1}`}
                       placeholder={`${getGoalLabel("year", periodOffsets.year, periodLabels.year)}を入力してください`}
                       value={goal}
                       onChange={(event) => updateAnnualGoal(index, event.target.value)}
+                      rows={2}
                     />
                     <button className="iconButton" type="button" onClick={() => removeAnnualGoal(index)} aria-label={`年の目標 ${index + 1}を削除`}>×</button>
                   </div>
@@ -2601,12 +2601,13 @@ export default function HomeClient({
                 </div>
                 <div className="goalInputRow">
                   <button className={`checkButton${planner.goalCompletionByPeriod.month[periodKeys.month] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("month")} aria-label="月の目標の完了を切り替え">✓</button>
-                  <input
+                  <textarea
                     className="goalLineInput"
                     aria-label="月の目標"
                     placeholder={`${getGoalLabel("month", periodOffsets.month, periodLabels.month)}を入力してください`}
                     value={planner.goalsByPeriod.month[periodKeys.month] || ""}
                     onChange={(event) => updateGoal("month", event.target.value)}
+                    rows={2}
                   />
                 </div>
               </section>
@@ -2642,12 +2643,13 @@ export default function HomeClient({
                   </div>
                   <div className="goalInputRow">
                     <button className={`checkButton${planner.goalCompletionByPeriod.week[periodKeys.week] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("week")} aria-label="週の目標の完了を切り替え">✓</button>
-                    <input
+                    <textarea
                       className="goalWeekInput"
                       aria-label="週の目標"
                       placeholder={`${getGoalLabel("week", periodOffsets.week, periodLabels.week)}を入力してください`}
                       value={planner.goalsByPeriod.week[periodKeys.week] || ""}
                       onChange={(event) => updateGoal("week", event.target.value)}
+                      rows={2}
                     />
                   </div>
                 </section>
