@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import Roadmap2Client from "./Roadmap2Client";
 
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
@@ -15,7 +16,8 @@ type HomeTab =
   | "today"
   | "recurring"
   | "inbox"
-  | "diary";
+  | "diary"
+  | "annual";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
@@ -121,6 +123,8 @@ type TaskEditTarget =
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialDiaryValue: unknown;
+  initialRoadmap2Value: unknown;
+  initialHomeTab?: HomeTab;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
@@ -246,6 +250,18 @@ function formatDateKey(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function sortInboxTasksBySchedule(tasks: PriorityTask[]) {
+  return [...tasks].sort((first, second) => {
+    const firstSchedule = first.scheduledDate
+      ? `${first.scheduledDate}T${first.scheduledTime || "23:59"}`
+      : "9999-12-31T23:59";
+    const secondSchedule = second.scheduledDate
+      ? `${second.scheduledDate}T${second.scheduledTime || "23:59"}`
+      : "9999-12-31T23:59";
+    return firstSchedule.localeCompare(secondSchedule);
+  });
 }
 
 function getTodayLabel() {
@@ -879,6 +895,8 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 export default function HomeClient({
   initialPlannerValue,
   initialDiaryValue,
+  initialRoadmap2Value,
+  initialHomeTab = "today",
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
@@ -951,7 +969,8 @@ export default function HomeClient({
     () => new Date().getDate(),
   );
   const [selectedHomeTab, setSelectedHomeTab] =
-    useState<HomeTab>("today");
+    useState<HomeTab>(initialHomeTab);
+  const [isCurrentTaskPanelOpen, setIsCurrentTaskPanelOpen] = useState(true);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -994,7 +1013,13 @@ export default function HomeClient({
   weekEnd.setDate(weekStart.getDate() + 6);
   const weekStartKey = formatDateKey(weekStart);
   const weekEndKey = formatDateKey(weekEnd);
-  const scheduledInboxTasks = planner.inboxTasks.filter((task) => task.scheduledDate);
+  const isInboxTaskOverdue = (task: PriorityTask) => {
+    if (!task.scheduledDate) return false;
+    if (task.scheduledDate < todayKey) return true;
+    return task.scheduledDate === todayKey && Boolean(task.scheduledTime) && task.scheduledTime! < currentTimeValue;
+  };
+  const sortedInboxTasks = sortInboxTasksBySchedule(planner.inboxTasks);
+  const scheduledInboxTasks = sortedInboxTasks.filter((task) => task.scheduledDate);
   const todayInboxTasks = scheduledInboxTasks.filter((task) => task.scheduledDate === todayKey);
   const weekInboxTasks = scheduledInboxTasks.filter(
     (task) => task.scheduledDate! > todayKey && task.scheduledDate! >= weekStartKey && task.scheduledDate! <= weekEndKey,
@@ -1015,20 +1040,20 @@ export default function HomeClient({
       task.dayOfMonth < currentDayOfMonth &&
       !task.completedMonths.includes(getMonthlySlotKey(currentMonthKey, task.dayOfMonth)),
   );
-  const overdueInboxTasks = scheduledInboxTasks.filter(
-    (task) => task.scheduledDate! < todayKey,
-  );
+  const overdueInboxTasks = scheduledInboxTasks.filter(isInboxTaskOverdue);
   const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
     { key: "inbox", label: "Inbox" },
     { key: "recurring", label: "繰り返し" },
     { key: "diary", label: "日記" },
+    { key: "annual", label: "年間ロードマップ" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
+  const showAnnualTab = selectedHomeTab === "annual";
 
   useEffect(() => {
     try {
@@ -1037,7 +1062,8 @@ export default function HomeClient({
         storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
-        storedTab === "diary"
+        storedTab === "diary" ||
+        storedTab === "annual"
       ) {
         setSelectedHomeTab(storedTab);
       }
@@ -2425,7 +2451,7 @@ export default function HomeClient({
 
   function renderScheduledInboxTask(task: PriorityTask) {
     return (
-      <article className={`taskItem scheduledInboxTask${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
+      <article className={`taskItem scheduledInboxTask${isInboxTaskOverdue(task) ? " taskItemImportant" : ""}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
         <button
           className="checkButton"
           type="button"
@@ -2868,8 +2894,8 @@ export default function HomeClient({
                 {planner.inboxTasks.length === 0 && (
                   <p className="emptyText">Inboxタスクはありません。</p>
                 )}
-                {planner.inboxTasks.map((task) => (
-                  <article className={`${task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
+                {sortedInboxTasks.map((task) => (
+                  <article className={`${task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"}${isInboxTaskOverdue(task) ? " taskItemImportant" : ""}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
                     {(() => {
                       const editTarget = { kind: "inbox", id: task.id } as const;
                       const isEditing = isTaskBeingEdited(editTarget);
@@ -2951,21 +2977,32 @@ export default function HomeClient({
               />
             </section>
           )}
+
+          {showAnnualTab && (
+            <section className="homeTabPanel homeAnnualRoadmap" aria-label="年間ロードマップ">
+              <Roadmap2Client embedded initialValue={initialRoadmap2Value} initialPlannerValue={planner} />
+            </section>
+          )}
         </section>
       </section>
 
-      <aside className="currentTaskModal" aria-live="polite" aria-label="現在のタスク">
-        <time dateTime={currentTimeWithSeconds}>{formatTimeLabel(currentTimeWithSeconds)}</time>
-        <strong>{currentTaskEntry ? `${formatTimeLabel(currentTaskEntry.time)}開始 ${currentTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
-        {currentTaskEntry && (
-          <button
-            className="currentTaskCompleteButton"
-            type="button"
-            onClick={() => currentTaskEntry.source === "daily" ? toggleDailyTask(currentTaskEntry.group.key, currentTaskEntry.task.id) : completeInboxTask(currentTaskEntry.task.id)}
-          >
-            完了
-          </button>
-        )}
+      <aside className={`currentTaskModal${isCurrentTaskPanelOpen ? "" : " isCollapsed"}`} aria-live="polite" aria-label="現在のタスク">
+        <button className="currentTaskPanelToggle" type="button" onClick={() => setIsCurrentTaskPanelOpen((current) => !current)} aria-label={isCurrentTaskPanelOpen ? "現在のタスクを隠す" : "現在のタスクを表示"} aria-expanded={isCurrentTaskPanelOpen}>
+          {isCurrentTaskPanelOpen ? "›" : "‹"}
+        </button>
+        <div className="currentTaskPanelContent">
+          <time dateTime={currentTimeWithSeconds}>{formatTimeLabel(currentTimeWithSeconds)}</time>
+          <strong>{currentTaskEntry ? `${formatTimeLabel(currentTaskEntry.time)}開始 ${currentTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
+          {currentTaskEntry && (
+            <button
+              className="currentTaskCompleteButton"
+              type="button"
+              onClick={() => currentTaskEntry.source === "daily" ? toggleDailyTask(currentTaskEntry.group.key, currentTaskEntry.task.id) : completeInboxTask(currentTaskEntry.task.id)}
+            >
+              完了
+            </button>
+          )}
+        </div>
       </aside>
 
       {isDailyGroupModalOpen && (

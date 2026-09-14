@@ -25,6 +25,7 @@ type PlannerGoals = {
 type Roadmap2ClientProps = {
   initialValue: unknown;
   initialPlannerValue: unknown;
+  embedded?: boolean;
 };
 
 const monthLabels = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
@@ -105,7 +106,7 @@ function normalizeRoadmap2State(value: unknown, plannerValue: unknown): Roadmap2
   return { selectedYear, years };
 }
 
-export default function Roadmap2Client({ initialValue, initialPlannerValue }: Roadmap2ClientProps) {
+export default function Roadmap2Client({ initialValue, initialPlannerValue, embedded = false }: Roadmap2ClientProps) {
   const [roadmap, setRoadmap] = useState<Roadmap2State>(() => normalizeRoadmap2State(initialValue, initialPlannerValue));
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
   const [isComposing, setIsComposing] = useState(false);
@@ -180,7 +181,7 @@ export default function Roadmap2Client({ initialValue, initialPlannerValue }: Ro
   }
 
   return (
-    <main className="shell roadmap2Page">
+    <section className={embedded ? "roadmap2Page roadmap2Embedded" : "shell roadmap2Page"}>
       <section className="roadmapHeader roadmap2Header" aria-label="年間ロードマップ">
         <h1>年間ロードマップ</h1>
       </section>
@@ -236,6 +237,6 @@ export default function Roadmap2Client({ initialValue, initialPlannerValue }: Ro
           />
         </div>
       </section>
-    </main>
+    </section>
   );
 }

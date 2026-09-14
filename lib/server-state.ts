@@ -4,9 +4,7 @@ import { prisma } from "./prisma";
 const plannerKey = "focus-planner-state-v1";
 const diaryKey = "diary-v1";
 const notesKey = "simple-notes-v1";
-const dailyReportKey = "daily-report-v1";
 const roadmap2Key = "roadmap-2-v1";
-const learningsKey = "learnings-v1";
 const visionKey = "vision-v1";
 const wantsKey = "wants-v1";
 const achievementsKey = "achievements-v1";
@@ -53,17 +51,6 @@ export async function getNotesState() {
   return state ? JSON.parse(state.value) : null;
 }
 
-export async function getDailyReportState() {
-  const userId = await getUserId();
-  if (!userId) return null;
-
-  const state = await prisma.appState.findUnique({
-    where: { key: getScopedKey(userId, dailyReportKey) },
-  });
-
-  return state ? JSON.parse(state.value) : null;
-}
-
 export async function getMemoState() {
   const userId = await getUserId();
   if (!userId) return [];
@@ -89,15 +76,6 @@ export async function getRoadmap2State() {
     where: { key: getScopedKey(userId, roadmap2Key) },
   });
 
-  return state ? JSON.parse(state.value) : null;
-}
-
-export async function getLearningsState() {
-  const userId = await getUserId();
-  if (!userId) return null;
-  const state = await prisma.appState.findUnique({
-    where: { key: getScopedKey(userId, learningsKey) },
-  });
   return state ? JSON.parse(state.value) : null;
 }
 

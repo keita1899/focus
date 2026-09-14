@@ -1,7 +1,7 @@
 import HomeClient from "../components/HomeClient";
-import { getDiaryState, getPlannerState } from "../lib/server-state";
+import { getDiaryState, getPlannerState, getRoadmap2State } from "../lib/server-state";
 
-export default async function HomePage() {
-  const [planner, diary] = await Promise.all([getPlannerState(), getDiaryState()]);
-  return <HomeClient initialPlannerValue={planner} initialDiaryValue={diary} />;
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const [planner, diary, roadmap2, { tab }] = await Promise.all([getPlannerState(), getDiaryState(), getRoadmap2State(), searchParams]);
+  return <HomeClient initialPlannerValue={planner} initialDiaryValue={diary} initialRoadmap2Value={roadmap2} initialHomeTab={tab === "annual" ? "annual" : "today"} />;
 }
