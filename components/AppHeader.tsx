@@ -48,9 +48,6 @@ export default function AppHeader() {
           <a className="navLink homeNavLink" href="/" aria-label="ホーム" title="ホーム">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v9.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9.5 21v-6h5v6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
           </a>
-          <a className="navLink" href="/roadmap">
-            ロードマップ
-          </a>
           <a className="navLink" href="/notes">
             メモ
           </a>

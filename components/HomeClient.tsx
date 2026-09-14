@@ -5,6 +5,10 @@ import {
   useMemo,
   useState,
 } from "react";
+import AchievementsClient from "./AchievementsClient";
+import { MarkdownMemoPage, defaultMemoMarkdown, memoStorageKey } from "./MarkdownMemoClient";
+import VisionClient from "./VisionClient";
+import WantsClient from "./WantsClient";
 
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
@@ -15,7 +19,11 @@ type HomeTab =
   | "today"
   | "recurring"
   | "inbox"
-  | "diary";
+  | "diary"
+  | "roadmap"
+  | "vision"
+  | "wants"
+  | "achievements";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
@@ -121,6 +129,10 @@ type TaskEditTarget =
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialDiaryValue: unknown;
+  initialMemoValue: unknown;
+  initialVisionValue: unknown;
+  initialWantsValue: unknown;
+  initialAchievementsValue: unknown;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
@@ -263,6 +275,12 @@ function sortInboxTasksBySchedule(tasks: PriorityTask[]) {
 function getTodayLabel() {
   const today = new Date();
   return `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+}
+
+function GoalTextField({ ariaLabel, className, placeholder, value, onChange }: { ariaLabel: string; className: string; placeholder: string; value: string; onChange: (value: string) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) return <input className={className} aria-label={ariaLabel} placeholder={placeholder} autoFocus value={value} onChange={(event) => onChange(event.currentTarget.value)} onBlur={() => setIsEditing(false)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />;
+  return <div className={`${className} goalTextDisplay${value ? "" : " isEmpty"}`} role="button" tabIndex={0} aria-label={`${ariaLabel}を編集`} onClick={() => setIsEditing(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setIsEditing(true); }}>{value || placeholder}</div>;
 }
 
 function isValidTimeValue(value: unknown): value is string {
@@ -891,6 +909,10 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 export default function HomeClient({
   initialPlannerValue,
   initialDiaryValue,
+  initialMemoValue,
+  initialVisionValue,
+  initialWantsValue,
+  initialAchievementsValue,
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
@@ -1041,11 +1063,19 @@ export default function HomeClient({
     { key: "inbox", label: "Inbox" },
     { key: "recurring", label: "繰り返し" },
     { key: "diary", label: "日記" },
+    { key: "roadmap", label: "ロードマップ" },
+    { key: "vision", label: "ビジョン" },
+    { key: "wants", label: "やりたいこと" },
+    { key: "achievements", label: "達成すること" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
   const showRecurringTab = selectedHomeTab === "recurring";
   const showDiaryTab = selectedHomeTab === "diary";
+  const showRoadmapTab = selectedHomeTab === "roadmap";
+  const showVisionTab = selectedHomeTab === "vision";
+  const showWantsTab = selectedHomeTab === "wants";
+  const showAchievementsTab = selectedHomeTab === "achievements";
 
   useEffect(() => {
     try {
@@ -1054,7 +1084,7 @@ export default function HomeClient({
         storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
-        storedTab === "diary"
+        storedTab === "diary" || storedTab === "roadmap" || storedTab === "vision" || storedTab === "wants" || storedTab === "achievements"
       ) {
         setSelectedHomeTab(storedTab);
       }
@@ -2549,13 +2579,12 @@ export default function HomeClient({
                       onClick={() => toggleAnnualGoalCompletion(index)}
                       aria-label={`年の目標 ${index + 1}の完了を切り替え`}
                     >✓</button>
-                    <textarea
+                    <GoalTextField
                       className="goalLineInput"
-                      aria-label={`年の目標 ${index + 1}`}
+                      ariaLabel={`年の目標 ${index + 1}`}
                       placeholder={`${getGoalLabel("year", periodOffsets.year, periodLabels.year)}を入力してください`}
                       value={goal}
-                      onChange={(event) => updateAnnualGoal(index, event.target.value)}
-                      rows={2}
+                      onChange={(value) => updateAnnualGoal(index, value)}
                     />
                     <button className="iconButton" type="button" onClick={() => removeAnnualGoal(index)} aria-label={`年の目標 ${index + 1}を削除`}>×</button>
                   </div>
@@ -2601,13 +2630,12 @@ export default function HomeClient({
                 </div>
                 <div className="goalInputRow">
                   <button className={`checkButton${planner.goalCompletionByPeriod.month[periodKeys.month] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("month")} aria-label="月の目標の完了を切り替え">✓</button>
-                  <textarea
+                  <GoalTextField
                     className="goalLineInput"
-                    aria-label="月の目標"
+                    ariaLabel="月の目標"
                     placeholder={`${getGoalLabel("month", periodOffsets.month, periodLabels.month)}を入力してください`}
                     value={planner.goalsByPeriod.month[periodKeys.month] || ""}
-                    onChange={(event) => updateGoal("month", event.target.value)}
-                    rows={2}
+                    onChange={(value) => updateGoal("month", value)}
                   />
                 </div>
               </section>
@@ -2643,13 +2671,12 @@ export default function HomeClient({
                   </div>
                   <div className="goalInputRow">
                     <button className={`checkButton${planner.goalCompletionByPeriod.week[periodKeys.week] ? " checked" : ""}`} type="button" onClick={() => toggleGoalCompletion("week")} aria-label="週の目標の完了を切り替え">✓</button>
-                    <textarea
+                    <GoalTextField
                       className="goalWeekInput"
-                      aria-label="週の目標"
+                      ariaLabel="週の目標"
                       placeholder={`${getGoalLabel("week", periodOffsets.week, periodLabels.week)}を入力してください`}
                       value={planner.goalsByPeriod.week[periodKeys.week] || ""}
-                      onChange={(event) => updateGoal("week", event.target.value)}
-                      rows={2}
+                      onChange={(value) => updateGoal("week", value)}
                     />
                   </div>
                 </section>
@@ -2985,6 +3012,11 @@ export default function HomeClient({
               />
             </section>
           )}
+
+          {showRoadmapTab && <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} />}
+          {showVisionTab && <VisionClient initialValue={initialVisionValue} />}
+          {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
+          {showAchievementsTab && <AchievementsClient initialValue={initialAchievementsValue} />}
 
         </section>
       </section>

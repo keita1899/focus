@@ -385,6 +385,8 @@ body > .topbar + .shell {
   font-weight: 900;
 }
 
+.wantsAddButtonBottom { justify-self: center; }
+
 .wantsTableScroll { overflow-x: auto; }
 
 .wantsTable {
@@ -461,8 +463,8 @@ body > .topbar + .shell {
 .wantsCategoryEditorList input[type="color"] { min-height: 38px; padding: 3px; }
 .wantsCategoryAddForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 
-.goalPanel textarea { width: 100%; min-height: 46px; border: 0; background: transparent; color: var(--ink); padding: 6px 8px; resize: vertical; font: inherit; line-height: 1.45; }
-.goalPanel textarea:focus { outline: 1px solid var(--accent); border-radius: 6px; }
+.goalTextDisplay { min-height: 34px; width: 100%; cursor: text; padding: 6px 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+.goalTextDisplay.isEmpty { color: var(--muted); }
 
 @media (max-width: 700px) {
   .wantsWorkspace { grid-template-columns: 1fr; }
@@ -5956,7 +5958,7 @@ select {
 
   .homeTabList {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
     overflow: visible;
   }
 
