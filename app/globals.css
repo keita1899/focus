@@ -258,6 +258,8 @@ body > .topbar + .shell {
 
 .roadmapPageTabs button:not(.active):hover { background: var(--surface-strong); }
 
+.homeTabWorkspace > .shell > .roadmapHeader { display: none; }
+
 .wantsPage {
   width: min(980px, calc(100% - 32px));
 }

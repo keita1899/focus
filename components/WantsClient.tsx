@@ -40,7 +40,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const [itemEditor, setItemEditor] = useState<{ id: string | null; draft: ItemDraft } | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [sort, setSort] = useState<{ key: WantsSortKey; direction: "asc" | "desc" }>({ key: "year", direction: "asc" });
+  const [sortDirections, setSortDirections] = useState<Record<WantsSortKey, "asc" | "desc">>({ year: "asc", month: "asc", category: "asc" });
   const hasMountedRef = useRef(false);
   const sortedItems = useMemo(() => {
     const categoryOrder = new Map(wants.categories.map((category, index) => [category.id, index]));
@@ -48,10 +48,10 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
       const yearComparison = (left.scheduledYear || 9999) - (right.scheduledYear || 9999);
       const monthComparison = (left.scheduledMonth || 99) - (right.scheduledMonth || 99);
       const categoryComparison = (categoryOrder.get(left.categoryId) || 0) - (categoryOrder.get(right.categoryId) || 0);
-      const comparison = sort.key === "year" ? yearComparison || monthComparison : sort.key === "month" ? monthComparison || yearComparison : categoryComparison || yearComparison || monthComparison;
-      return (sort.direction === "asc" ? comparison : -comparison) || left.title.localeCompare(right.title, "ja");
+      const withDirection = (value: number, key: WantsSortKey) => sortDirections[key] === "asc" ? value : -value;
+      return withDirection(categoryComparison, "category") || withDirection(yearComparison, "year") || withDirection(monthComparison, "month") || left.title.localeCompare(right.title, "ja");
     });
-  }, [sort, wants.categories, wants.items]);
+  }, [sortDirections, wants.categories, wants.items]);
 
   useEffect(() => {
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
@@ -80,8 +80,8 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
       return { categories: current.categories.filter((category) => category.id !== id), items: current.items.map((item) => item.categoryId === id ? { ...item, categoryId: fallbackId } : item) };
     });
   }
-  function toggleSort(key: WantsSortKey) { setSort((current) => current.key === key ? { key, direction: current.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" }); }
-  function sortLabel(key: WantsSortKey) { return sort.key === key ? sort.direction === "asc" ? " ↑" : " ↓" : ""; }
+  function toggleSort(key: WantsSortKey) { setSortDirections((current) => ({ ...current, [key]: current[key] === "asc" ? "desc" : "asc" })); }
+  function sortLabel(key: WantsSortKey) { return sortDirections[key] === "asc" ? " ↑" : " ↓"; }
 
   return <main className="shell wantsPage">
     <section className="roadmapHeader wantsHeader"><h1>やりたいこと</h1></section>
