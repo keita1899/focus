@@ -64,7 +64,12 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
     return () => window.clearTimeout(timeoutId);
   }, [wants]);
 
-  function openNewItem() { setItemEditor({ id: null, draft: createItemDraft(wants.categories.some((category) => category.id === lastCategoryId) ? lastCategoryId : wants.categories[0].id) }); }
+  function openNewItem() {
+    const categoryId = selectedCategoryId !== "all" && wants.categories.some((category) => category.id === selectedCategoryId)
+      ? selectedCategoryId
+      : wants.categories.some((category) => category.id === lastCategoryId) ? lastCategoryId : wants.categories[0].id;
+    setItemEditor({ id: null, draft: createItemDraft(categoryId) });
+  }
   function openEditItem(item: WantItem) { setItemEditor({ id: item.id, draft: { categoryId: item.categoryId, title: item.title, done: item.done, scheduledYear: item.scheduledYear, scheduledMonth: item.scheduledMonth } }); }
   function saveItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
