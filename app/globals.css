@@ -1058,7 +1058,15 @@ h2 {
 
 .homeTabPanel {
   display: grid;
+  width: 100%;
   gap: 10px;
+}
+
+.homeTabWorkspace > .shell {
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .todayLayout {
