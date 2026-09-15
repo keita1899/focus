@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import AchievementsClient from "./AchievementsClient";
 import { MarkdownMemoPage, defaultMemoMarkdown, memoStorageKey } from "./MarkdownMemoClient";
+import ShoppingListClient from "./ShoppingListClient";
 import VisionClient from "./VisionClient";
 import WantsClient from "./WantsClient";
 
@@ -24,7 +24,7 @@ type HomeTab =
   | "roadmap"
   | "vision"
   | "wants"
-  | "achievements";
+  | "shopping-list";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
@@ -133,7 +133,7 @@ type HomeClientProps = {
   initialMemoValue: unknown;
   initialVisionValue: unknown;
   initialWantsValue: unknown;
-  initialAchievementsValue: unknown;
+  initialShoppingListValue: unknown;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
@@ -922,7 +922,7 @@ export default function HomeClient({
   initialMemoValue,
   initialVisionValue,
   initialWantsValue,
-  initialAchievementsValue,
+  initialShoppingListValue,
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
@@ -1079,7 +1079,7 @@ export default function HomeClient({
     { key: "roadmap", label: "ロードマップ" },
     { key: "vision", label: "ビジョン" },
     { key: "wants", label: "やりたいこと" },
-    { key: "achievements", label: "達成すること" },
+    { key: "shopping-list", label: "買い物リスト" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showInboxTab = selectedHomeTab === "inbox";
@@ -1088,7 +1088,7 @@ export default function HomeClient({
   const showRoadmapTab = selectedHomeTab === "roadmap";
   const showVisionTab = selectedHomeTab === "vision";
   const showWantsTab = selectedHomeTab === "wants";
-  const showAchievementsTab = selectedHomeTab === "achievements";
+  const showShoppingListTab = selectedHomeTab === "shopping-list";
 
   useEffect(() => {
     try {
@@ -1097,7 +1097,7 @@ export default function HomeClient({
         storedTab === "today" ||
         storedTab === "recurring" ||
         storedTab === "inbox" ||
-        storedTab === "diary" || storedTab === "roadmap" || storedTab === "vision" || storedTab === "wants" || storedTab === "achievements"
+        storedTab === "diary" || storedTab === "roadmap" || storedTab === "vision" || storedTab === "wants" || storedTab === "shopping-list"
       ) {
         setSelectedHomeTab(storedTab);
       }
@@ -3025,7 +3025,7 @@ export default function HomeClient({
           {showRoadmapTab && <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} />}
           {showVisionTab && <VisionClient initialValue={initialVisionValue} />}
           {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
-          {showAchievementsTab && <AchievementsClient initialValue={initialAchievementsValue} />}
+          {showShoppingListTab && <ShoppingListClient initialValue={initialShoppingListValue} />}
 
         </section>
       </section>

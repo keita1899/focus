@@ -7,7 +7,7 @@ const notesKey = "simple-notes-v1";
 const roadmap2Key = "roadmap-2-v1";
 const visionKey = "vision-v1";
 const wantsKey = "wants-v1";
-const achievementsKey = "achievements-v1";
+const shoppingListKey = "shopping-list-v1";
 
 function getScopedKey(userId: string, key: string) {
   return `${userId}:${key}`;
@@ -97,11 +97,11 @@ export async function getWantsState() {
   return state ? JSON.parse(state.value) : null;
 }
 
-export async function getAchievementsState() {
+export async function getShoppingListState() {
   const userId = await getUserId();
   if (!userId) return null;
   const state = await prisma.appState.findUnique({
-    where: { key: getScopedKey(userId, achievementsKey) },
+    where: { key: getScopedKey(userId, shoppingListKey) },
   });
   return state ? JSON.parse(state.value) : null;
 }
