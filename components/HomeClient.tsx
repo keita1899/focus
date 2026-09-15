@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import AchievementsClient from "./AchievementsClient";
@@ -170,6 +171,15 @@ const dailyGroupDefinitions: Array<Pick<DailyTaskGroup, "key" | "title" | "start
 ];
 
 const dailyPatterns: DailyPattern[] = ["work", "holiday"];
+
+function savePlanner(value: string) {
+  return fetch("/api/planner", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: value,
+    keepalive: true,
+  }).catch(() => undefined);
+}
 
 function getDailyGroupPatternKey(pattern: DailyPattern, key: DailyGroupKey) {
   return `${pattern}-${key}`;
@@ -924,6 +934,9 @@ export default function HomeClient({
     initialPlannerValue ? normalizePlanner(initialPlannerValue) : initialState,
   );
   const [isReady, setIsReady] = useState(Boolean(initialPlannerValue));
+  const hasStartedPlannerSavingRef = useRef(false);
+  const plannerSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingPlannerSaveRef = useRef<string | null>(null);
   const [diaryEntries, setDiaryEntries] =
     useState<DiaryEntry[]>(initialDiaryEntries);
   const [todayDiaryBody, setTodayDiaryBody] = useState(() =>
@@ -1178,14 +1191,25 @@ export default function HomeClient({
   }, [initialPlannerValue]);
 
   useEffect(() => {
-    if (isReady) {
-      fetch("/api/planner", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(planner),
-      }).catch(() => undefined);
+    if (!isReady) return;
+    if (!hasStartedPlannerSavingRef.current) {
+      hasStartedPlannerSavingRef.current = true;
+      return;
     }
+
+    const value = JSON.stringify(planner);
+    pendingPlannerSaveRef.current = value;
+    plannerSaveQueueRef.current = plannerSaveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        await savePlanner(value);
+        if (pendingPlannerSaveRef.current === value) pendingPlannerSaveRef.current = null;
+      });
   }, [isReady, planner]);
+
+  useEffect(() => () => {
+    if (pendingPlannerSaveRef.current) void savePlanner(pendingPlannerSaveRef.current);
+  }, []);
 
   useEffect(() => {
     if (initialDiaryValue !== null) return;
@@ -1572,15 +1596,6 @@ export default function HomeClient({
         },
       };
     });
-  }
-
-  function selectRoadmapMonth(month: number) {
-    const targetYear = currentYear + periodOffsets.year;
-    const currentMonth = new Date().getMonth();
-    setPeriodOffsets((current) => ({
-      ...current,
-      month: (targetYear - currentYear) * 12 + (month - 1 - currentMonth),
-    }));
   }
 
   function removeAnnualGoal(index: number) {
@@ -2546,7 +2561,7 @@ export default function HomeClient({
             <section className="goalPanel goalYearPanel">
               <div className="goalHeading">
                 <span>
-                  年間ロードマップ
+                  年間目標
                 </span>
                 <span className="periodSwitcher">
                   <button
@@ -2590,12 +2605,6 @@ export default function HomeClient({
                   </div>
                 ))}
               </div>
-              <nav className="homeRoadmapMonthPicker" aria-label="月間目標を選択">
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => {
-                  const isSelected = periodKeys.month === `${currentYear + periodOffsets.year}-${String(month).padStart(2, "0")}`;
-                  return <button className={isSelected ? "active" : undefined} key={month} type="button" aria-pressed={isSelected} onClick={() => selectRoadmapMonth(month)}>{month}月</button>;
-                })}
-              </nav>
             </section>
             <div className="goalSecondaryColumn">
               <section className="goalPanel goalMonthPanel">

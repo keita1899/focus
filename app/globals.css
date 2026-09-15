@@ -2421,29 +2421,6 @@ select {
 
 .currentTaskPanelContent { display: grid; gap: 8px; min-width: 236px; }
 
-.homeRoadmapMonthPicker {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 5px;
-  margin-top: 10px;
-}
-
-.homeRoadmapMonthPicker button {
-  min-height: 30px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: white;
-  color: var(--accent-strong);
-  font-size: .78rem;
-  font-weight: 900;
-}
-
-.homeRoadmapMonthPicker button.active {
-  border-color: var(--accent-strong);
-  background: var(--accent-strong);
-  color: white;
-}
-
 .currentTaskModal time {
   color: rgba(255, 255, 255, 0.82);
   font-size: 1.4rem;
