@@ -369,6 +369,10 @@ body > .topbar + .shell {
   gap: 10px;
 }
 
+.wantsTableFilters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.wantsTableFilters label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 900; }
+.wantsTableFilters select { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); padding: 0 8px; font: inherit; }
+
 
 .wantsAddCategory {
   grid-template-columns: minmax(180px, 280px) auto;

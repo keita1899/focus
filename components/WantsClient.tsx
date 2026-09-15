@@ -41,20 +41,22 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [lastCategoryId, setLastCategoryId] = useState(wants.categories[0].id);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [sortDirections, setSortDirections] = useState<Record<WantsSortKey, "asc" | "desc">>({ year: "asc", month: "asc" });
   const [categorySortMode, setCategorySortMode] = useState<"grouped" | "created">("grouped");
   const hasMountedRef = useRef(false);
   const sortedItems = useMemo(() => {
-    if (categorySortMode === "created") return wants.items;
+    const filteredItems = selectedCategoryId === "all" ? wants.items : wants.items.filter((item) => item.categoryId === selectedCategoryId);
+    if (categorySortMode === "created") return filteredItems;
     const categoryOrder = new Map(wants.categories.map((category, index) => [category.id, index]));
-    return [...wants.items].sort((left, right) => {
+    return [...filteredItems].sort((left, right) => {
       const yearComparison = (left.scheduledYear || 9999) - (right.scheduledYear || 9999);
       const monthComparison = (left.scheduledMonth || 99) - (right.scheduledMonth || 99);
       const categoryComparison = (categoryOrder.get(left.categoryId) || 0) - (categoryOrder.get(right.categoryId) || 0);
       const withDirection = (value: number, key: WantsSortKey) => sortDirections[key] === "asc" ? value : -value;
       return categoryComparison || withDirection(yearComparison, "year") || withDirection(monthComparison, "month") || left.title.localeCompare(right.title, "ja");
     });
-  }, [categorySortMode, sortDirections, wants.categories, wants.items]);
+  }, [categorySortMode, selectedCategoryId, sortDirections, wants.categories, wants.items]);
 
   useEffect(() => {
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
@@ -80,6 +82,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   function removeCategory(id: string) {
     const fallbackId = wants.categories.find((category) => category.id !== id)?.id;
     if (lastCategoryId === id && fallbackId) setLastCategoryId(fallbackId);
+    if (selectedCategoryId === id) setSelectedCategoryId("all");
     setWants((current) => {
       if (current.categories.length === 1) return current;
       const nextCategoryId = current.categories.find((category) => category.id !== id)!.id;
@@ -93,7 +96,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   return <main className="shell wantsPage">
     <section className="roadmapHeader wantsHeader"><h1>やりたいこと</h1></section>
     <section className="wantsTablePanel" aria-label="やりたいこと一覧">
-      <div className="wantsTableActions"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ やりたいことを追加</button></div>
+      <div className="wantsTableActions"><div className="wantsTableFilters"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><label>表示<select value={selectedCategoryId} onChange={(event) => setSelectedCategoryId(event.currentTarget.value)}><option value="all">すべて</option>{wants.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label></div><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ やりたいことを追加</button></div>
       <div className="wantsTableScroll"><table className="wantsTable"><thead><tr><th>完了</th><th><button className="wantsSortHeader" type="button" onClick={() => toggleSort("year")}>予定年{sortLabel("year")}</button></th><th><button className="wantsSortHeader" type="button" onClick={() => toggleSort("month")}>予定月{sortLabel("month")}</button></th><th><button className="wantsSortHeader" type="button" onClick={toggleCategorySortMode}>{categorySortMode === "grouped" ? "カテゴリーごと" : "追加順"}</button></th><th>やりたいこと名</th><th>削除</th></tr></thead><tbody>
         {sortedItems.length === 0 ? <tr><td className="wantsEmpty" colSpan={6}>やりたいことはありません。追加ボタンから登録してください。</td></tr> : sortedItems.map((item) => {
           const category = wants.categories.find((entry) => entry.id === item.categoryId) || wants.categories[0];
