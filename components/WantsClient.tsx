@@ -15,6 +15,15 @@ function createId(prefix: string) { return `${prefix}-${Date.now()}-${Math.rando
 function createDefaultState(): WantsState { return { categories: [{ id: "want-category-default", name: "やりたいこと", color: defaultCategoryColor }], items: [] }; }
 function createItemDraft(categoryId: string): ItemDraft { return { categoryId, title: "", done: false }; }
 
+function saveWants(value: string) {
+  return fetch("/api/wants", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: value,
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 function normalizeState(value: unknown): WantsState {
   if (!value || typeof value !== "object") return createDefaultState();
   const source = value as Partial<WantsState>;
@@ -45,6 +54,7 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const [sortDirections, setSortDirections] = useState<Record<WantsSortKey, "asc" | "desc">>({ year: "asc", month: "asc" });
   const [categorySortMode, setCategorySortMode] = useState<"grouped" | "created">("grouped");
   const hasMountedRef = useRef(false);
+  const pendingSaveRef = useRef<string | null>(null);
   const sortedItems = useMemo(() => {
     const filteredItems = selectedCategoryId === "all" ? wants.items : wants.items.filter((item) => item.categoryId === selectedCategoryId);
     if (categorySortMode === "created") return filteredItems;
@@ -60,9 +70,19 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
 
   useEffect(() => {
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
-    const timeoutId = window.setTimeout(() => fetch("/api/wants", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(wants) }).catch(() => undefined), 400);
+    const value = JSON.stringify(wants);
+    pendingSaveRef.current = value;
+    const timeoutId = window.setTimeout(() => {
+      void saveWants(value).then(() => {
+        if (pendingSaveRef.current === value) pendingSaveRef.current = null;
+      });
+    }, 400);
     return () => window.clearTimeout(timeoutId);
   }, [wants]);
+
+  useEffect(() => () => {
+    if (pendingSaveRef.current) void saveWants(pendingSaveRef.current);
+  }, []);
 
   function openNewItem() {
     const categoryId = selectedCategoryId !== "all" && wants.categories.some((category) => category.id === selectedCategoryId)
