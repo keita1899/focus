@@ -1451,7 +1451,7 @@ export default function HomeClient({
   ) {
     const editTarget = { kind: "achievement", id: task.id } as const;
     const isEditing = isTaskBeingEdited(editTarget);
-    const titleLabel = isChild ? "達成リストの子項目" : "達成リスト";
+    const titleLabel = isChild ? "最優先タスクの行動" : "今週の最優先タスク";
     return (
       <article
         className={
@@ -1469,7 +1469,7 @@ export default function HomeClient({
           className="checkButton"
           type="button"
           onClick={() => toggleAchievementTask(task.id)}
-          aria-label={`${task.title || "無題の達成項目"}の完了を切り替え`}
+          aria-label={`${task.title || "無題の最優先タスク"}の完了を切り替え`}
         >
           ✓
         </button>
@@ -1500,7 +1500,7 @@ export default function HomeClient({
           className="iconButton"
           type="button"
           onClick={() => removeAchievementTask(task.id)}
-          aria-label={`${task.title || "無題の達成項目"}を削除`}
+            aria-label={`${task.title || "無題の最優先タスク"}を削除`}
         >
           ×
         </button>
@@ -1514,7 +1514,7 @@ export default function HomeClient({
             type="button"
             onClick={() => toggleAchievementChildren(task.id)}
             aria-expanded={expandedAchievementParents[task.id] ?? false}
-            aria-label={`${task.title || "達成項目"}の子項目を開閉`}
+            aria-label={`${task.title || "最優先タスク"}の行動を開閉`}
             title="開閉"
           >
             ⌄
@@ -1545,7 +1545,7 @@ export default function HomeClient({
           >
             <input
               aria-label={`${task.title || "達成項目"}の子項目を追加`}
-              placeholder="子項目を追加"
+              placeholder="このタスクの次の行動を追加"
               value={newAchievementChildTitles[task.id] || ""}
               onChange={(event) =>
                 updateNewAchievementChildTitle(task.id, event.target.value)
@@ -2690,6 +2690,21 @@ export default function HomeClient({
                   </div>
                 </section>
             </div>
+            <section className="goalTaskPanel" aria-label="今週の最優先タスク">
+              <div className="sectionHeader">
+                <div>
+                  <h3>今週の最優先タスク</h3>
+                  <p>{planner.goalsByPeriod.week[periodKeys.week] || "今週の目標を入力すると、ここに達成のためのタスクを整理できます。"}</p>
+                </div>
+              </div>
+              <form className="taskForm goalTaskCreateForm" onSubmit={(event) => { event.preventDefault(); addAchievementTask(); }}>
+                <input aria-label="今週の最優先タスクを追加" placeholder="今週、前に進めるタスク" value={newAchievementTitle} onChange={(event) => setNewAchievementTitle(event.target.value)} />
+                <button type="submit" aria-label="今週の最優先タスクを追加">＋</button>
+              </form>
+              <div className="taskList">
+                {achievementParents.length === 0 ? <p className="emptyText">最優先タスクはありません。</p> : achievementParents.map(renderAchievementGroup)}
+              </div>
+            </section>
           </div>
         </section>
 
@@ -2718,7 +2733,7 @@ export default function HomeClient({
                 <div className="todayRecurringColumn">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
-                    <h3>毎日のタスク</h3>
+                    <h3>今日のスケジュール（繰り返し）</h3>
                   </div>
                   <div className="dailyGroupGrid">
                     {dailyTaskGroupsByTime
@@ -2758,7 +2773,7 @@ export default function HomeClient({
                 </section>
                 </div>
 
-                <aside className="todayTaskColumn" aria-label="実行日を指定したInboxタスク">
+                <aside className="todayTaskColumn" aria-label="単発タスク">
                   {hasOverdueTasks && (
                     <section className="todayOverdueSection" aria-label="期限切れタスク">
                       <div className="sectionHeader"><h3>期限切れタスク</h3></div>
@@ -2771,15 +2786,15 @@ export default function HomeClient({
                   )}
                   <div className="todayScheduledGroup" aria-label="今日・今週・今月のタスク">
                     <section className="todayTaskSection todayTaskTodaySection">
-                      <div className="sectionHeader"><h3>今日のタスク</h3></div>
+                      <div className="sectionHeader"><h3>単発：今日やること</h3></div>
                       <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("today", "今日")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskWeekSection">
-                      <div className="sectionHeader"><h3>今週のタスク</h3></div>
+                      <div className="sectionHeader"><h3>単発：今週中</h3></div>
                       <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("week", "今週")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskMonthSection">
-                      <div className="sectionHeader"><h3>今月のタスク</h3></div>
+                      <div className="sectionHeader"><h3>単発：今月中</h3></div>
                       <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("month", "今月")}</div>
                     </section>
                   </div>

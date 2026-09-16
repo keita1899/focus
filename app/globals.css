@@ -800,7 +800,7 @@ h2 {
 .goalNest {
   display: grid;
   width: 100%;
-  gap: 0;
+  gap: 12px;
 }
 
 .goalPanel,
@@ -863,14 +863,39 @@ h2 {
 }
 
 .goalNest {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
   align-items: stretch;
 }
 
 .goalSecondaryColumn {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.goalTaskPanel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(23, 107, 85, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 16px;
+}
+
+.goalTaskPanel .sectionHeader {
+  align-items: start;
+}
+
+.goalTaskPanel .sectionHeader p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.goalTaskCreateForm {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .goalYearPanel,
@@ -6004,6 +6029,16 @@ select {
   .goalWeekPanel {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+  }
+
+  .goalSecondaryColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .goalYearPanel,
+  .goalMonthPanel,
+  .goalWeekPanel {
+    border-radius: 8px;
   }
 
   .goalYearPanel,
