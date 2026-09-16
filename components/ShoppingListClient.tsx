@@ -126,7 +126,7 @@ export default function ShoppingListClient({ initialValue }: ShoppingListClientP
         {sortedItems.length === 0 ? <tr><td className="wantsEmpty" colSpan={7}>買い物はありません。追加ボタンから登録してください。</td></tr> : sortedItems.map((item) => {
           const category = shopping.categories.find((entry) => entry.id === item.categoryId) || shopping.categories[0];
           return <tr className={item.done ? "done" : ""} key={item.id} onDoubleClick={() => openEditItem(item)} title="ダブルクリックで編集">
-            <td><button className="checkButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.map((entry) => entry.id === item.id ? { ...entry, done: !entry.done } : entry) }))} aria-label={`${item.title || "買い物"}の完了を切り替え`}>✓</button></td>
+            <td><button className="checkButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.filter((entry) => entry.id !== item.id) }))} aria-label={`${item.title || "買い物"}を購入済みにして削除`}>✓</button></td>
             <td>{item.scheduledYear || "—"}</td><td>{item.scheduledMonth ? `${item.scheduledMonth}月` : "—"}</td><td><span className="wantCategoryTag" style={{ ["--category-color" as string]: category.color }}>{category.name}</span></td><td className="wantTitleCell">{item.title}</td><td>{item.price === undefined ? "—" : `¥${item.price.toLocaleString("ja-JP")}`}</td>
             <td><button className="iconButton wantsDeleteButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.filter((entry) => entry.id !== item.id) }))} aria-label={`${item.title || "買い物"}を削除`}>×</button></td>
           </tr>;
