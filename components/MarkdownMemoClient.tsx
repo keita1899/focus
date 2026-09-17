@@ -8,6 +8,7 @@ import {
   cloneElement,
   isValidElement,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import ReactMarkdown from "react-markdown";
@@ -628,6 +629,15 @@ type MarkdownMemoPageProps = {
   storageKey: string;
 };
 
+function saveRoadmap(apiPath: string, value: string) {
+  return fetch(apiPath, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: value,
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 export function MarkdownMemoPage({
   apiPath,
   ariaLabel,
@@ -642,6 +652,9 @@ export function MarkdownMemoPage({
     normalizeRoadmapBlocks(initialValue, defaultMarkdown, defaultTitle, idPrefix),
   );
   const [isReady, setIsReady] = useState(initialValue !== null);
+  const hasStartedSavingRef = useRef(false);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingSaveRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (initialValue !== null) return;
@@ -693,14 +706,25 @@ export function MarkdownMemoPage({
   }, [apiPath, defaultMarkdown, defaultTitle, idPrefix, initialValue, storageKey]);
 
   useEffect(() => {
-    if (isReady) {
-      fetch(apiPath, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(roadmapBlocks),
-      }).catch(() => undefined);
+    if (!isReady) return;
+    if (!hasStartedSavingRef.current) {
+      hasStartedSavingRef.current = true;
+      return;
     }
+
+    const value = JSON.stringify(roadmapBlocks);
+    pendingSaveRef.current = value;
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        await saveRoadmap(apiPath, value);
+        if (pendingSaveRef.current === value) pendingSaveRef.current = null;
+      });
   }, [apiPath, isReady, roadmapBlocks]);
+
+  useEffect(() => () => {
+    if (pendingSaveRef.current) void saveRoadmap(apiPath, pendingSaveRef.current);
+  }, [apiPath]);
 
   function updateRoadmapMarkdown(
     blockId: string,
