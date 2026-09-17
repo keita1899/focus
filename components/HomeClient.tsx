@@ -88,6 +88,7 @@ type AchievementTask = {
   done: boolean;
   parentId?: string;
   year: number;
+  weekKey: string;
 };
 
 type PlannerState = {
@@ -799,6 +800,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
       done: Boolean(task.done),
       parentId: task.parentId || undefined,
       year: typeof task.year === "number" ? task.year : currentYear,
+      weekKey: typeof task.weekKey === "string" && task.weekKey ? task.weekKey : currentPeriodInfo.keys.week,
     })),
     todayTasks: rawTodayTasks
       .filter((task) => !task.done)
@@ -966,7 +968,6 @@ export default function HomeClient({
       return {};
     }
   });
-  const [achievementYearOffset, setAchievementYearOffset] = useState(0);
   const [newInboxTaskTitle, setNewInboxTaskTitle] = useState("");
   const [newInboxTaskDate, setNewInboxTaskDate] = useState("");
   const [newInboxTaskTime, setNewInboxTaskTime] = useState("");
@@ -1010,7 +1011,6 @@ export default function HomeClient({
   const periodKeys = periodInfo.keys;
   const remainingDays = periodInfo.remainingDays;
   const currentWeekKey = getCurrentWeekKey();
-  const achievementYear = currentYear + achievementYearOffset;
   const currentMonthKey = getCurrentMonthKey();
   const dailyTaskGroupsByTime = useMemo(
     () => [...planner.dailyTaskGroups].sort((first, second) => first.startTime.localeCompare(second.startTime)),
@@ -1285,12 +1285,12 @@ export default function HomeClient({
   }, [expandedAchievementParents]);
 
   const achievementParents = planner.achievementTasks.filter(
-    (task) => !task.parentId && task.year === achievementYear,
+    (task) => !task.parentId && task.weekKey === periodKeys.week,
   );
   const achievementChildrenByParent = planner.achievementTasks.reduce<
     Record<string, AchievementTask[]>
   >((groups, task) => {
-    if (!task.parentId || task.year !== achievementYear) return groups;
+    if (!task.parentId || task.weekKey !== periodKeys.week) return groups;
     return {
       ...groups,
       [task.parentId]: [...(groups[task.parentId] || []), task],
@@ -1354,7 +1354,8 @@ export default function HomeClient({
           title,
           done: false,
           parentId,
-          year: achievementYear,
+          year: currentYear,
+          weekKey: periodKeys.week,
         },
       ],
     }));
@@ -1372,10 +1373,6 @@ export default function HomeClient({
     }
 
     setNewAchievementTitle("");
-  }
-
-  function changeAchievementYear(direction: -1 | 1) {
-    setAchievementYearOffset((current) => current + direction);
   }
 
   function updateAchievementTaskTitle(id: string, title: string) {
