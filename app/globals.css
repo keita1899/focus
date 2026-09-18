@@ -5006,6 +5006,8 @@ select {
 .annualRoadmapMonth { gap: 0; overflow: hidden; padding: 0; }
 .annualRoadmapMonth.isCompletedMonthsStart { position: relative; margin-top: 18px; }
 .annualRoadmapMonth.isCompletedMonthsStart::before { position: absolute; top: -14px; left: 0; width: 100%; border-top: 1px solid var(--line); content: ""; }
+.annualRoadmapPastMonthsToggle { justify-self: center; border: 0; background: transparent; color: var(--muted); padding: 8px 12px; font-size: .82rem; font-weight: 800; }
+.annualRoadmapPastMonthsToggle:hover { color: var(--accent-strong); }
 .annualRoadmapMonthHeader { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 6px; width: 100%; min-height: 48px; background: var(--surface-strong); color: var(--accent-strong); padding: 0 14px; text-align: left; }
 .annualRoadmapMonthToggle { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 5px; background: transparent; color: var(--accent-strong); font-weight: 900; }
 .annualRoadmapMonthToggle:hover { background: rgba(23, 107, 85, .1); }

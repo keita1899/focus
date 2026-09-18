@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 type RoadmapTask = { id: string; title: string; children: RoadmapTask[] };
 type MonthPlan = { theme: string; mustDo: RoadmapTask[]; chores: string[]; other: string[] };
@@ -47,6 +47,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   const [roadmap, setRoadmap] = useState(() => normalizeState(initialValue, currentYear));
   const [openMonths, setOpenMonths] = useState<Record<string, boolean>>(() => ({ [String(new Date().getMonth() + 1)]: true }));
   const [editingThemeMonth, setEditingThemeMonth] = useState<string | null>(null);
+  const [showPastMonths, setShowPastMonths] = useState(false);
   const roadmapRef = useRef(roadmap); roadmapRef.current = roadmap;
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingRef = useRef<string | null>(null);
@@ -57,6 +58,9 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   const orderedMonths = selectedYear === currentYear
     ? Array.from({ length: 12 }, (_, index) => ((currentMonth - 1 + index) % 12) + 1)
     : Array.from({ length: 12 }, (_, index) => index + 1);
+  const visibleMonths = selectedYear === currentYear && !showPastMonths
+    ? orderedMonths.slice(0, 13 - currentMonth)
+    : orderedMonths;
 
   function enqueue(value: string) {
     if (pendingRef.current === value) return;
@@ -71,6 +75,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
     const nextYear = selectedYear + direction; setSelectedYear(nextYear);
     setOpenMonths(nextYear === currentYear ? { [String(currentMonth)]: true } : {});
     setEditingThemeMonth(null);
+    setShowPastMonths(false);
     update((current) => current.years[String(nextYear)] ? current : { ...current, years: { ...current.years, [String(nextYear)]: createYearPlan() } });
   }
   function updateYear(value: Partial<YearPlan>) { update((current) => ({ ...current, years: { ...current.years, [String(selectedYear)]: { ...yearPlan, ...value } } })); }
@@ -93,6 +98,6 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   return <main className="shell roadmapPage annualRoadmapPage">
     <div className="annualRoadmapToolbar"><div className="annualRoadmapYearSwitcher"><button type="button" onClick={() => changeYear(-1)} aria-label="前年へ">&lt;</button><strong>{selectedYear}年</strong>{age !== null && <span>{age}歳</span>}<button type="button" onClick={() => changeYear(1)} aria-label="翌年へ">&gt;</button></div></div>
     <section className="annualRoadmapForm"><label className="annualRoadmapTitleField"><input aria-label="年間ロードマップのタイトル" value={yearPlan.title} placeholder="この年のロードマップ" onChange={(event) => updateYear({ title: event.target.value })} /></label><fieldset><legend>年間テーマ</legend>{yearPlan.themes.map((theme, index) => <input key={index} value={theme} placeholder={`テーマ ${index + 1}`} onChange={(event) => { const themes = [...yearPlan.themes]; themes[index] = event.target.value; updateYear({ themes }); }} />)}</fieldset></section>
-    <div className="annualRoadmapMonths">{orderedMonths.map((monthNumber) => { const month = String(monthNumber); const label = `${month}月`; const plan = yearPlan.months[month]; const isOpen = Boolean(openMonths[month]); const isCompletedMonthsStart = selectedYear === currentYear && monthNumber === 1 && currentMonth !== 1; const isEditingTheme = editingThemeMonth === month; return <section className={`annualRoadmapMonth${isCompletedMonthsStart ? " isCompletedMonthsStart" : ""}`} key={month}><div className="annualRoadmapMonthHeader"><button className="annualRoadmapMonthToggle" type="button" onClick={() => setOpenMonths((current) => ({ ...current, [month]: !isOpen }))} aria-label={`${label}を${isOpen ? "閉じる" : "開く"}`} aria-expanded={isOpen}>{isOpen ? "⌃" : "⌄"}</button><div className="annualRoadmapMonthTheme" onDoubleClick={() => setEditingThemeMonth(month)}><strong>{label}</strong>{isEditingTheme ? <input autoFocus value={plan.theme} onChange={(event) => updateMonth(month, { theme: event.target.value })} onBlur={() => setEditingThemeMonth(null)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label={`${label}の月間テーマ`} /> : plan.theme && <span>{plan.theme}</span>}</div></div>{isOpen && <div className="annualRoadmapMonthBody">{taskGroup(month, "mustDo")}<div className="annualRoadmapTaskColumns">{taskGroup(month, "chores")}{taskGroup(month, "other")}</div></div>}</section>; })}</div>
+    <div className="annualRoadmapMonths">{visibleMonths.map((monthNumber) => { const month = String(monthNumber); const label = `${month}月`; const plan = yearPlan.months[month]; const isOpen = Boolean(openMonths[month]); const isCompletedMonthsStart = selectedYear === currentYear && monthNumber === 1 && currentMonth !== 1; const isEditingTheme = editingThemeMonth === month; return <Fragment key={month}><section className={`annualRoadmapMonth${isCompletedMonthsStart ? " isCompletedMonthsStart" : ""}`}><div className="annualRoadmapMonthHeader"><button className="annualRoadmapMonthToggle" type="button" onClick={() => setOpenMonths((current) => ({ ...current, [month]: !isOpen }))} aria-label={`${label}を${isOpen ? "閉じる" : "開く"}`} aria-expanded={isOpen}>{isOpen ? "⌃" : "⌄"}</button><div className="annualRoadmapMonthTheme" onDoubleClick={() => setEditingThemeMonth(month)}><strong>{label}</strong>{isEditingTheme ? <input autoFocus value={plan.theme} onChange={(event) => updateMonth(month, { theme: event.target.value })} onBlur={() => setEditingThemeMonth(null)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label={`${label}の月間テーマ`} /> : plan.theme && <span>{plan.theme}</span>}</div></div>{isOpen && <div className="annualRoadmapMonthBody">{taskGroup(month, "mustDo")}<div className="annualRoadmapTaskColumns">{taskGroup(month, "chores")}{taskGroup(month, "other")}</div></div>}</section>{selectedYear === currentYear && monthNumber === 12 && currentMonth !== 1 && <button className="annualRoadmapPastMonthsToggle" type="button" onClick={() => setShowPastMonths((current) => !current)} aria-expanded={showPastMonths}>{showPastMonths ? "過去の月を隠す" : "過去の月を見る"}</button>}</Fragment>; })}</div>
   </main>;
 }
