@@ -128,17 +128,15 @@ export default function Roadmap2Client({ initialValue, initialPlannerValue, embe
       return;
     }
     if (isComposing) return;
-    const timeoutId = window.setTimeout(() => {
-      saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
-        const response = await fetch("/api/roadmap2", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(roadmap),
-        });
-        if (!response.ok) throw new Error("ロードマップの保存に失敗しました。");
+    saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
+      const response = await fetch("/api/roadmap2", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(roadmap),
+        keepalive: true,
       });
-    }, 500);
-    return () => window.clearTimeout(timeoutId);
+      if (!response.ok) throw new Error("ロードマップの保存に失敗しました。");
+    });
   }, [isComposing, roadmap]);
 
   function ensureYear(year: number) {

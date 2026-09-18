@@ -75,12 +75,9 @@ export default function ShoppingListClient({ initialValue }: ShoppingListClientP
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
     const value = JSON.stringify(shopping);
     pendingSaveRef.current = value;
-    const timeoutId = window.setTimeout(() => {
-      void saveShoppingList(value).then(() => {
-        if (pendingSaveRef.current === value) pendingSaveRef.current = null;
-      });
-    }, 400);
-    return () => window.clearTimeout(timeoutId);
+    void saveShoppingList(value).then(() => {
+      if (pendingSaveRef.current === value) pendingSaveRef.current = null;
+    });
   }, [shopping]);
 
   useEffect(() => () => {

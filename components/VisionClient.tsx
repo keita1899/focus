@@ -13,13 +13,10 @@ export default function VisionClient({ initialValue }: VisionClientProps) {
 
   useEffect(() => {
     if (!hasMounted.current) { hasMounted.current = true; return; }
-    const timeoutId = window.setTimeout(() => {
-      saveQueue.current = saveQueue.current.catch(() => undefined).then(async () => {
-        const response = await fetch("/api/vision", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(items) });
-        if (!response.ok) throw new Error("ビジョンの保存に失敗しました。");
-      });
-    }, 500);
-    return () => window.clearTimeout(timeoutId);
+    saveQueue.current = saveQueue.current.catch(() => undefined).then(async () => {
+      const response = await fetch("/api/vision", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(items), keepalive: true });
+      if (!response.ok) throw new Error("ビジョンの保存に失敗しました。");
+    });
   }, [items]);
 
   return <main className="shell visionPage">

@@ -77,12 +77,9 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
     if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
     const value = JSON.stringify(wants);
     pendingSaveRef.current = value;
-    const timeoutId = window.setTimeout(() => {
-      void saveWants(value).then(() => {
-        if (pendingSaveRef.current === value) pendingSaveRef.current = null;
-      });
-    }, 400);
-    return () => window.clearTimeout(timeoutId);
+    void saveWants(value).then(() => {
+      if (pendingSaveRef.current === value) pendingSaveRef.current = null;
+    });
   }, [wants]);
 
   useEffect(() => () => {

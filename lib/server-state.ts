@@ -8,6 +8,7 @@ const roadmap2Key = "roadmap-2-v1";
 const visionKey = "vision-v1";
 const wantsKey = "wants-v1";
 const shoppingListKey = "shopping-list-v1";
+const annualRoadmapKey = "annual-roadmap-v1";
 
 function getScopedKey(userId: string, key: string) {
   return `${userId}:${key}`;
@@ -103,5 +104,12 @@ export async function getShoppingListState() {
   const state = await prisma.appState.findUnique({
     where: { key: getScopedKey(userId, shoppingListKey) },
   });
+  return state ? JSON.parse(state.value) : null;
+}
+
+export async function getAnnualRoadmapState() {
+  const userId = await getUserId();
+  if (!userId) return null;
+  const state = await prisma.appState.findUnique({ where: { key: getScopedKey(userId, annualRoadmapKey) } });
   return state ? JSON.parse(state.value) : null;
 }

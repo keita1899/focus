@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { MarkdownMemoPage, defaultMemoMarkdown, memoStorageKey } from "./MarkdownMemoClient";
+import AnnualRoadmapClient from "./AnnualRoadmapClient";
 import ShoppingListClient from "./ShoppingListClient";
 import VisionClient from "./VisionClient";
 import WantsClient from "./WantsClient";
@@ -131,7 +131,7 @@ type TaskEditTarget =
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialDiaryValue: unknown;
-  initialMemoValue: unknown;
+  initialAnnualRoadmapValue: unknown;
   initialVisionValue: unknown;
   initialWantsValue: unknown;
   initialShoppingListValue: unknown;
@@ -921,7 +921,7 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 export default function HomeClient({
   initialPlannerValue,
   initialDiaryValue,
-  initialMemoValue,
+  initialAnnualRoadmapValue,
   initialVisionValue,
   initialWantsValue,
   initialShoppingListValue,
@@ -3034,7 +3034,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {showRoadmapTab && <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="年間ロードマップ" storageKey={memoStorageKey} birthday={planner.birthday} />}
+          {showRoadmapTab && <AnnualRoadmapClient initialValue={initialAnnualRoadmapValue} birthday={planner.birthday} />}
           {showVisionTab && <VisionClient initialValue={initialVisionValue} />}
           {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
           {showShoppingListTab && <ShoppingListClient initialValue={initialShoppingListValue} />}
