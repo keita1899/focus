@@ -685,6 +685,8 @@ h2 {
   padding: 0;
 }
 
+.homeShell .goalColumn { display: none; }
+
 .achievementGroup {
   display: grid;
   gap: 8px;
@@ -4983,7 +4985,7 @@ select {
 .annualRoadmapMonthBody { display: grid; gap: 16px; border-top: 1px solid var(--line); padding: 16px; }
 .annualRoadmapTaskColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .annualRoadmapTaskGroup { display: grid; gap: 4px; }
-.annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-bottom: 1px solid var(--line); color: var(--accent-strong); font-size: .9rem; padding-bottom: 7px; }
+.annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-bottom: 1px solid var(--accent); color: var(--accent-strong); font-size: .9rem; padding-bottom: 7px; }
 .annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 36px; border-bottom: 1px solid #edf0ed; }
 .annualRoadmapTask > span { width: 14px; height: 14px; border: 1.5px solid #b6c4ba; border-radius: 999px; }
 .annualRoadmapTask input { min-height: 34px; border: 0; border-radius: 0; background: transparent; padding: 0; }
