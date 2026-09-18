@@ -5010,7 +5010,7 @@ select {
 .annualRoadmapMonthToggle { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 5px; background: transparent; color: var(--accent-strong); font-weight: 900; }
 .annualRoadmapMonthToggle:hover { background: rgba(23, 107, 85, .1); }
 .annualRoadmapMonthTheme { display: flex; align-items: center; min-width: 0; min-height: 48px; gap: 12px; cursor: text; }
-.annualRoadmapMonthTheme span { overflow: hidden; color: var(--muted); font-size: .85rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.annualRoadmapMonthTheme span { overflow: hidden; color: var(--accent-strong); font-size: 1rem; font-weight: 900; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
 .annualRoadmapMonthTheme input { width: min(100%, 420px); min-height: 34px; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; background: transparent; padding: 0; color: var(--ink); font-weight: 700; }
 .annualRoadmapMonthTheme input:focus { outline: 0; box-shadow: none; }
 .annualRoadmapMonthBody { display: grid; gap: 16px; border-top: 1px solid var(--line); padding: 16px; }
@@ -5026,6 +5026,11 @@ select {
 .annualRoadmapTask button:hover { background: #fff1ef; }
 .annualRoadmapAddTask { justify-self: start; border: 0; background: transparent; color: var(--muted); padding: 5px 0; font-size: .83rem; font-weight: 800; }
 .annualRoadmapAddTask:hover { color: var(--accent-strong); }
+.annualRoadmapParentTask { display: grid; gap: 2px; }
+.annualRoadmapChildTasks { display: grid; gap: 2px; margin-left: 24px; padding-left: 12px; border-left: 1px solid var(--line); }
+.annualRoadmapChildTasks .annualRoadmapTask > span { width: 10px; height: 10px; }
+.annualRoadmapAddChildTask { justify-self: start; border: 0; background: transparent; color: var(--muted); padding: 4px 0; font-size: .77rem; font-weight: 800; }
+.annualRoadmapAddChildTask:hover { color: var(--accent-strong); }
 
 @media (max-width: 640px) {
   .annualRoadmapTaskColumns { grid-template-columns: 1fr; gap: 16px; }
