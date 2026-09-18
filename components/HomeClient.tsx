@@ -7,8 +7,6 @@ import {
   useState,
 } from "react";
 import AnnualRoadmapClient from "./AnnualRoadmapClient";
-import ShoppingListClient from "./ShoppingListClient";
-import WantsClient from "./WantsClient";
 
 type GoalKey = "year" | "month" | "week";
 type GoalMap = Record<GoalKey, string>;
@@ -18,9 +16,7 @@ type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "today"
   | "tasks"
-  | "roadmap"
-  | "wants"
-  | "shopping-list";
+  | "roadmap";
 type TaskTab = "inbox" | "recurring";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
@@ -120,8 +116,6 @@ type TaskEditTarget =
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
   initialAnnualRoadmapValue: unknown;
-  initialWantsValue: unknown;
-  initialShoppingListValue: unknown;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
@@ -885,8 +879,6 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 export default function HomeClient({
   initialPlannerValue,
   initialAnnualRoadmapValue,
-  initialWantsValue,
-  initialShoppingListValue,
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [planner, setPlanner] = useState<PlannerState>(() =>
@@ -1027,23 +1019,19 @@ export default function HomeClient({
     { key: "today", label: "今日" },
     { key: "tasks", label: "タスク" },
     { key: "roadmap", label: "ロードマップ" },
-    { key: "wants", label: "やりたいこと" },
-    { key: "shopping-list", label: "買い物リスト" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showTasksTab = selectedHomeTab === "tasks";
   const showInboxTab = showTasksTab && selectedTaskTab === "inbox";
   const showRecurringTab = showTasksTab && selectedTaskTab === "recurring";
   const showRoadmapTab = selectedHomeTab === "roadmap";
-  const showWantsTab = selectedHomeTab === "wants";
-  const showShoppingListTab = selectedHomeTab === "shopping-list";
 
   useEffect(() => {
     try {
       const storedTab = window.localStorage.getItem(homeTabStorageKey);
       if (
         storedTab === "today" ||
-        storedTab === "tasks" || storedTab === "roadmap" || storedTab === "wants" || storedTab === "shopping-list"
+        storedTab === "tasks" || storedTab === "roadmap"
       ) {
         setSelectedHomeTab(storedTab);
       } else if (storedTab === "inbox" || storedTab === "recurring") {
@@ -2898,8 +2886,6 @@ export default function HomeClient({
           )}
 
           {showRoadmapTab && <AnnualRoadmapClient initialValue={initialAnnualRoadmapValue} birthday={planner.birthday} />}
-          {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
-          {showShoppingListTab && <ShoppingListClient initialValue={initialShoppingListValue} />}
 
         </section>
       </section>

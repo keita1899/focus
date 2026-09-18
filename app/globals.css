@@ -1090,6 +1090,30 @@ h2 {
 
 .taskSubTabList .tabButton { min-width: 104px; min-height: 34px; font-size: .84rem; }
 
+.listsPage { display: grid; gap: 18px; }
+.listsTabList { justify-content: center; }
+.listsPage > .wantsPage { width: 100%; max-width: none; padding: 0; }
+.fixedCostsPanel { display: grid; gap: 20px; width: min(100%, 920px); margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .9); padding: 20px; }
+.fixedCostsHeader { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.fixedCostsHeader h1, .fixedCostsHeader h2, .fixedCostsPanel h2 { margin: 0; color: var(--accent-strong); }
+.fixedCostsHeader p { margin: 5px 0 0; color: var(--muted); font-size: .86rem; }
+.fixedCostsHeader strong { color: var(--accent-strong); font-size: 1.35rem; }
+.fixedCostsHeader small { color: var(--muted); font-size: .78rem; }
+.fixedCostAddForm { display: grid; grid-template-columns: minmax(0, 1fr) 140px auto auto; gap: 8px; }
+.fixedCostAddForm input:not([type="checkbox"]), .fixedCostName, .fixedCostAmount { min-width: 0; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; padding: 0 10px; }
+.fixedCostAddForm label, .fixedCostSubscription { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .85rem; font-weight: 800; white-space: nowrap; }
+.fixedCostAddForm button { border: 0; border-radius: 7px; background: var(--accent); color: white; padding: 0 13px; font-weight: 900; }
+.fixedCostsPanel section { display: grid; gap: 8px; }
+.fixedCostRows { display: grid; border-top: 1px solid var(--line); }
+.fixedCostRow { display: grid; grid-template-columns: 20px minmax(0, 1fr) 120px auto 110px 28px; align-items: center; gap: 8px; min-height: 48px; border-bottom: 1px solid #edf0ed; }
+.fixedCostActive { width: 16px; height: 16px; accent-color: var(--accent); }
+.fixedCostName, .fixedCostAmount { border-color: transparent; background: transparent; }
+.fixedCostName:focus, .fixedCostAmount:focus { outline: 0; border-color: var(--accent); background: white; }
+.fixedCostRow > button { visibility: hidden; border: 0; border-radius: 5px; background: transparent; color: var(--danger); font-size: 1.1rem; }
+.fixedCostRow:hover > button, .fixedCostRow:focus-within > button { visibility: visible; }
+.inactiveFixedCosts { margin-top: 8px; opacity: .72; }
+@media (max-width: 640px) { .fixedCostsHeader { align-items: start; flex-direction: column; } .fixedCostAddForm { grid-template-columns: 1fr 110px; } .fixedCostAddForm label, .fixedCostAddForm button { min-height: 38px; } .fixedCostRow { grid-template-columns: 20px minmax(0, 1fr) 80px 22px; } .fixedCostRow .fixedCostSubscription { grid-column: 2 / 4; } .fixedCostRow > button { grid-column: 4; grid-row: 1 / 3; } }
+
 .homeTabPanel {
   display: grid;
   width: 100%;
