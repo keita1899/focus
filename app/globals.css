@@ -5005,15 +5005,18 @@ select {
 .annualRoadmapMonths { display: grid; gap: 8px; }
 .annualRoadmapMonth { gap: 0; overflow: hidden; padding: 0; }
 .annualRoadmapMonth.isCompletedMonthsStart { position: relative; margin-top: 18px; }
-.annualRoadmapMonth.isCompletedMonthsStart::before { position: absolute; top: -14px; left: 0; width: 100%; border-top: 2px solid var(--accent); content: ""; }
-.annualRoadmapMonthHeader { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 48px; border: 0; background: var(--surface-strong); color: var(--accent-strong); padding: 0 14px; text-align: left; }
-.annualRoadmapMonthHeader span { overflow: hidden; color: var(--muted); font-size: .85rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.annualRoadmapMonth.isCompletedMonthsStart::before { position: absolute; top: -14px; left: 0; width: 100%; border-top: 1px solid var(--line); content: ""; }
+.annualRoadmapMonthHeader { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 6px; width: 100%; min-height: 48px; background: var(--surface-strong); color: var(--accent-strong); padding: 0 14px; text-align: left; }
+.annualRoadmapMonthToggle { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 5px; background: transparent; color: var(--accent-strong); font-weight: 900; }
+.annualRoadmapMonthToggle:hover { background: rgba(23, 107, 85, .1); }
+.annualRoadmapMonthTheme { display: flex; align-items: center; min-width: 0; min-height: 48px; gap: 12px; cursor: text; }
+.annualRoadmapMonthTheme span { overflow: hidden; color: var(--muted); font-size: .85rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.annualRoadmapMonthTheme input { width: min(100%, 420px); min-height: 34px; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; background: transparent; padding: 0; color: var(--ink); font-weight: 700; }
+.annualRoadmapMonthTheme input:focus { outline: 0; box-shadow: none; }
 .annualRoadmapMonthBody { display: grid; gap: 16px; border-top: 1px solid var(--line); padding: 16px; }
-.annualRoadmapMonthBody > label input { min-height: 36px; border: 0; border-bottom: 1px solid #edf0ed; border-radius: 0; background: transparent; padding: 0; }
-.annualRoadmapMonthBody > label input:focus { outline: 0; border-bottom: 2px solid var(--accent); box-shadow: none; }
 .annualRoadmapTaskColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .annualRoadmapTaskGroup { display: grid; gap: 4px; }
-.annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-bottom: 1px solid var(--accent); color: var(--accent-strong); font-size: .9rem; padding-bottom: 7px; }
+.annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-radius: 5px; background: #e8f3ec; color: var(--accent-strong); font-size: .84rem; padding: 7px 9px; }
 .annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 36px; border-bottom: 1px solid #edf0ed; }
 .annualRoadmapTask > span { width: 14px; height: 14px; border: 1.5px solid #b6c4ba; border-radius: 999px; }
 .annualRoadmapTask input { min-height: 34px; border: 0; border-radius: 0; background: transparent; padding: 0; }
