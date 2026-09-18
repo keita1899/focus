@@ -8,7 +8,6 @@ import {
 } from "react";
 import AnnualRoadmapClient from "./AnnualRoadmapClient";
 import ShoppingListClient from "./ShoppingListClient";
-import VisionClient from "./VisionClient";
 import WantsClient from "./WantsClient";
 
 type GoalKey = "year" | "month" | "week";
@@ -18,13 +17,11 @@ type GoalCompletionMap = Record<GoalKey, Record<string, boolean>>;
 type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "today"
-  | "recurring"
-  | "inbox"
-  | "diary"
+  | "tasks"
   | "roadmap"
-  | "vision"
   | "wants"
   | "shopping-list";
+type TaskTab = "inbox" | "recurring";
 type ScheduledInboxBucket = "today" | "week" | "month";
 
 type PriorityTask = {
@@ -110,14 +107,6 @@ type PlannerState = {
 
 type StoredPlannerState = Partial<PlannerState>;
 
-type DiaryEntry = {
-  id: string;
-  date: string;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 type TaskEditTarget =
   | { kind: "achievement"; id: string }
   | { kind: "today"; id: string }
@@ -130,15 +119,12 @@ type TaskEditTarget =
 
 type HomeClientProps = {
   initialPlannerValue: StoredPlannerState | null;
-  initialDiaryValue: unknown;
   initialAnnualRoadmapValue: unknown;
-  initialVisionValue: unknown;
   initialWantsValue: unknown;
   initialShoppingListValue: unknown;
 };
 
 const plannerStorageKey = "focus-planner-state-v1";
-const diaryStorageKey = "diary-v1";
 const achievementExpandedStorageKey = "focus-achievement-expanded-v1";
 const homeTabStorageKey = "focus-home-tab-v1";
 const dailyPatternStorageKey = "focus-daily-pattern-v1";
@@ -482,28 +468,6 @@ function normalizeTodayThemeTaskGroups(
     }));
 
   return Object.values(fallbackGroups);
-}
-
-function normalizeDiaryEntries(value: unknown): DiaryEntry[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((entry, index) => {
-      const item = entry as Partial<DiaryEntry>;
-      const now = new Date().toISOString();
-      return {
-        id: item.id || `diary-${index + 1}`,
-        date: item.date || formatDateKey(new Date()),
-        body: item.body || "",
-        createdAt: item.createdAt || now,
-        updatedAt: item.updatedAt || now,
-      };
-    })
-    .sort((first, second) => second.date.localeCompare(first.date));
-}
-
-function getTodayDiaryBody(entries: DiaryEntry[]) {
-  return entries.find((entry) => entry.date === formatDateKey(new Date()))?.body || "";
 }
 
 function startOfDay(date: Date) {
@@ -920,18 +884,11 @@ function normalizePlanner(value: StoredPlannerState): PlannerState {
 
 export default function HomeClient({
   initialPlannerValue,
-  initialDiaryValue,
   initialAnnualRoadmapValue,
-  initialVisionValue,
   initialWantsValue,
   initialShoppingListValue,
 }: HomeClientProps) {
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
-  const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
-  const initialDiaryEntries = useMemo(
-    () => normalizeDiaryEntries(initialDiaryValue),
-    [initialDiaryValue],
-  );
   const [planner, setPlanner] = useState<PlannerState>(() =>
     initialPlannerValue ? normalizePlanner(initialPlannerValue) : initialState,
   );
@@ -939,12 +896,6 @@ export default function HomeClient({
   const hasStartedPlannerSavingRef = useRef(false);
   const plannerSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingPlannerSaveRef = useRef<string | null>(null);
-  const [diaryEntries, setDiaryEntries] =
-    useState<DiaryEntry[]>(initialDiaryEntries);
-  const [todayDiaryBody, setTodayDiaryBody] = useState(() =>
-    getTodayDiaryBody(initialDiaryEntries),
-  );
-  const [isDiaryReady, setIsDiaryReady] = useState(initialDiaryValue !== null);
   const [collapsedTodayDailyGroups, setCollapsedTodayDailyGroups] = useState<Record<string, boolean>>({});
   const [editingTaskTarget, setEditingTaskTarget] =
     useState<TaskEditTarget>(null);
@@ -1000,6 +951,7 @@ export default function HomeClient({
   );
   const [selectedHomeTab, setSelectedHomeTab] =
     useState<HomeTab>("today");
+  const [selectedTaskTab, setSelectedTaskTab] = useState<TaskTab>("inbox");
   const [isCurrentTaskPanelOpen, setIsCurrentTaskPanelOpen] = useState(true);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
@@ -1073,20 +1025,16 @@ export default function HomeClient({
   const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
-    { key: "inbox", label: "Inbox" },
-    { key: "recurring", label: "繰り返し" },
-    { key: "diary", label: "日記" },
+    { key: "tasks", label: "タスク" },
     { key: "roadmap", label: "ロードマップ" },
-    { key: "vision", label: "ビジョン" },
     { key: "wants", label: "やりたいこと" },
     { key: "shopping-list", label: "買い物リスト" },
   ];
   const showTodayTab = selectedHomeTab === "today";
-  const showInboxTab = selectedHomeTab === "inbox";
-  const showRecurringTab = selectedHomeTab === "recurring";
-  const showDiaryTab = selectedHomeTab === "diary";
+  const showTasksTab = selectedHomeTab === "tasks";
+  const showInboxTab = showTasksTab && selectedTaskTab === "inbox";
+  const showRecurringTab = showTasksTab && selectedTaskTab === "recurring";
   const showRoadmapTab = selectedHomeTab === "roadmap";
-  const showVisionTab = selectedHomeTab === "vision";
   const showWantsTab = selectedHomeTab === "wants";
   const showShoppingListTab = selectedHomeTab === "shopping-list";
 
@@ -1095,11 +1043,12 @@ export default function HomeClient({
       const storedTab = window.localStorage.getItem(homeTabStorageKey);
       if (
         storedTab === "today" ||
-        storedTab === "recurring" ||
-        storedTab === "inbox" ||
-        storedTab === "diary" || storedTab === "roadmap" || storedTab === "vision" || storedTab === "wants" || storedTab === "shopping-list"
+        storedTab === "tasks" || storedTab === "roadmap" || storedTab === "wants" || storedTab === "shopping-list"
       ) {
         setSelectedHomeTab(storedTab);
+      } else if (storedTab === "inbox" || storedTab === "recurring") {
+        setSelectedHomeTab("tasks");
+        setSelectedTaskTab(storedTab);
       }
     } catch {
       return;
@@ -1141,7 +1090,6 @@ export default function HomeClient({
 
       timeoutId = window.setTimeout(() => {
         setTodayKey(formatDateKey(new Date()));
-        setTodayLabel(getTodayLabel());
         setSelectedMonthlyDay(new Date().getDate());
         scheduleNextTick();
       }, Math.max(0, nextMidnight.getTime() - now.getTime()));
@@ -1210,57 +1158,6 @@ export default function HomeClient({
   useEffect(() => () => {
     if (pendingPlannerSaveRef.current) void savePlanner(pendingPlannerSaveRef.current);
   }, []);
-
-  useEffect(() => {
-    if (initialDiaryValue !== null) return;
-
-    async function loadDiary() {
-      try {
-        const response = await fetch("/api/diary", { cache: "no-store" });
-        const data = (await response.json()) as { value: unknown };
-        const dbEntries = normalizeDiaryEntries(data.value);
-
-        if (dbEntries.length > 0) {
-          setDiaryEntries(dbEntries);
-          setTodayDiaryBody(getTodayDiaryBody(dbEntries));
-          return;
-        }
-
-        const stored = window.localStorage.getItem(diaryStorageKey);
-        if (!stored) return;
-        const migratedEntries = normalizeDiaryEntries(JSON.parse(stored));
-        setDiaryEntries(migratedEntries);
-        setTodayDiaryBody(getTodayDiaryBody(migratedEntries));
-        await fetch("/api/diary", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(migratedEntries),
-        });
-        window.localStorage.removeItem(diaryStorageKey);
-      } catch {
-        const stored = window.localStorage.getItem(diaryStorageKey);
-        if (!stored) return;
-        const localEntries = normalizeDiaryEntries(JSON.parse(stored));
-        setDiaryEntries(localEntries);
-        setTodayDiaryBody(getTodayDiaryBody(localEntries));
-      }
-    }
-
-    loadDiary().finally(() => setIsDiaryReady(true));
-  }, [initialDiaryValue]);
-
-  useEffect(() => {
-    if (!isDiaryReady) return;
-    fetch("/api/diary", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(diaryEntries),
-    }).catch(() => undefined);
-  }, [diaryEntries, isDiaryReady]);
-
-  useEffect(() => {
-    setTodayDiaryBody(getTodayDiaryBody(diaryEntries));
-  }, [diaryEntries, todayKey]);
 
   useEffect(() => {
     document
@@ -2524,32 +2421,6 @@ export default function HomeClient({
     </form>;
   }
 
-  function updateTodayDiary(body: string) {
-    const now = new Date().toISOString();
-    setTodayDiaryBody(body);
-    setDiaryEntries((current) => {
-      const todayEntry = current.find((entry) => entry.date === todayKey);
-      if (todayEntry) {
-        return current
-          .map((entry) =>
-            entry.id === todayEntry.id ? { ...entry, body, updatedAt: now } : entry,
-          )
-          .sort((first, second) => second.date.localeCompare(first.date));
-      }
-
-      return [
-        {
-          id: createId("diary"),
-          date: todayKey,
-          body,
-          createdAt: now,
-          updatedAt: now,
-        },
-        ...current,
-      ].sort((first, second) => second.date.localeCompare(first.date));
-    });
-  }
-
   return (
     <main className="shell homeShell">
       <section className="homeColumns" aria-label="今日の管理">
@@ -2723,6 +2594,13 @@ export default function HomeClient({
               );
             })}
           </div>
+
+          {showTasksTab && (
+            <div className="tabList taskSubTabList" role="tablist" aria-label="タスクの種類">
+              <button className={selectedTaskTab === "inbox" ? "tabButton active" : "tabButton"} type="button" role="tab" aria-selected={selectedTaskTab === "inbox"} onClick={() => setSelectedTaskTab("inbox")}>Inbox</button>
+              <button className={selectedTaskTab === "recurring" ? "tabButton active" : "tabButton"} type="button" role="tab" aria-selected={selectedTaskTab === "recurring"} onClick={() => setSelectedTaskTab("recurring")}>繰り返し</button>
+            </div>
+          )}
 
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
@@ -3019,23 +2897,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {showDiaryTab && (
-            <section className="homeDiaryPanel" aria-label="今日の日記">
-              <div className="homeDiaryHeader">
-                <h2>今日の日記</h2>
-                <time dateTime={todayKey}>{todayLabel}</time>
-              </div>
-              <textarea
-                aria-label="今日の日記本文"
-                placeholder="今日の記録"
-                value={todayDiaryBody}
-                onChange={(event) => updateTodayDiary(event.target.value)}
-              />
-            </section>
-          )}
-
           {showRoadmapTab && <AnnualRoadmapClient initialValue={initialAnnualRoadmapValue} birthday={planner.birthday} />}
-          {showVisionTab && <VisionClient initialValue={initialVisionValue} />}
           {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
           {showShoppingListTab && <ShoppingListClient initialValue={initialShoppingListValue} />}
 

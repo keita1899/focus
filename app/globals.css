@@ -1081,6 +1081,13 @@ h2 {
   margin-bottom: 0;
 }
 
+.taskSubTabList {
+  justify-content: center;
+  margin: 12px 0 2px;
+}
+
+.taskSubTabList .tabButton { min-width: 104px; min-height: 34px; font-size: .84rem; }
+
 .homeTabPanel {
   display: grid;
   width: 100%;
@@ -4920,7 +4927,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 4px 0 2px;
+  margin: 0 0 14px;
 }
 
 .annualRoadmapYearSwitcher {
@@ -4955,12 +4962,18 @@ select {
   padding: 16px;
 }
 
+.annualRoadmapForm { gap: 18px; border: 0; background: transparent; padding: 0; }
+
 .annualRoadmapForm label,
 .annualRoadmapMonthBody > label { display: grid; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 900; }
 .annualRoadmapForm input,
 .annualRoadmapMonthBody input { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--ink); padding: 0 10px; }
 .annualRoadmapForm fieldset { display: grid; gap: 8px; margin: 0; border: 0; padding: 0; }
 .annualRoadmapForm legend { margin-bottom: 8px; color: var(--accent-strong); font-size: .9rem; font-weight: 900; }
+.annualRoadmapTitleField input { min-height: 52px; border: 0; border-bottom: 2px solid var(--line); border-radius: 0; background: transparent; padding: 0; color: var(--ink); font-size: 1.35rem; font-weight: 900; }
+.annualRoadmapTitleField input:focus { outline: 0; border-bottom-color: var(--accent); box-shadow: none; }
+.annualRoadmapForm fieldset input { min-height: 36px; border: 0; border-bottom: 1px solid #edf0ed; border-radius: 0; background: transparent; padding: 0; }
+.annualRoadmapForm fieldset input:focus { outline: 0; border-bottom: 2px solid var(--accent); box-shadow: none; }
 .annualRoadmapMonths { display: grid; gap: 8px; }
 .annualRoadmapMonth { gap: 0; overflow: hidden; padding: 0; }
 .annualRoadmapMonth.isCompletedMonthsStart { position: relative; margin-top: 18px; }

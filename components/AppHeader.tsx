@@ -54,6 +54,9 @@ export default function AppHeader() {
           <a className="navLink" href="/diary">
             日記
           </a>
+          <a className="navLink" href="/vision">
+            ビジョン
+          </a>
         </nav>
         <div className="accountMenu">
           <button className="settingsLink" type="button" aria-label="アカウントメニュー" aria-expanded={isAccountMenuOpen} onClick={() => setIsAccountMenuOpen((current) => !current)}>⚙</button>

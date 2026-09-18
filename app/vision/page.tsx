@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import VisionClient from "../../components/VisionClient";
+import { getVisionState } from "../../lib/server-state";
 
-export default function VisionPage() {
-  redirect("/roadmap?tab=vision");
+export default async function VisionPage() {
+  const vision = await getVisionState();
+  return <VisionClient initialValue={vision} />;
 }
