@@ -4916,13 +4916,11 @@ select {
   gap: 34px;
 }
 
-.annualRoadmapMeta {
+.annualRoadmapToolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-size: .9rem;
-  font-weight: 900;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 
 .annualRoadmapYearSwitcher {
@@ -4945,6 +4943,7 @@ select {
 }
 
 .annualRoadmapYearSwitcher strong { min-width: 4.5em; text-align: center; font-size: 1.05rem; }
+.annualRoadmapYearSwitcher span { color: var(--muted); font-size: .9rem; }
 
 .roadmapBlockWithAdd {
   display: grid;

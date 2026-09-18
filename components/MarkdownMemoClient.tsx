@@ -21,6 +21,7 @@ type RoadmapBlock = {
   markdown: string;
   viewMode: RoadmapViewMode;
   year?: number;
+  displayTitle?: string;
 };
 type MarkdownSection = {
   id: string;
@@ -232,19 +233,40 @@ function createRoadmapBlock(
   };
 }
 
-function getAnnualRoadmapYear(block: RoadmapBlock) {
+function getAnnualRoadmapMetadata(block: RoadmapBlock) {
   if (typeof block.year === "number" && Number.isInteger(block.year)) return block.year;
-  const match = block.title.match(new RegExp(`^${annualRoadmapTitlePrefix}(\\d{4})$`));
-  return match ? Number(match[1]) : undefined;
+  const match = block.title.match(new RegExp(`^${annualRoadmapTitlePrefix}(\\d{4})(?::(.*))?$`));
+  if (!match) return undefined;
+  try {
+    return { year: Number(match[1]), displayTitle: match[2] ? decodeURIComponent(match[2]) : "" };
+  } catch {
+    return { year: Number(match[1]), displayTitle: "" };
+  }
+}
+
+function getAnnualRoadmapYear(block: RoadmapBlock) {
+  const metadata = getAnnualRoadmapMetadata(block);
+  return typeof metadata === "number" ? metadata : metadata?.year;
+}
+
+function getAnnualRoadmapDisplayTitle(block: RoadmapBlock) {
+  if (typeof block.displayTitle === "string") return block.displayTitle;
+  const metadata = getAnnualRoadmapMetadata(block);
+  return typeof metadata === "object" ? metadata.displayTitle : "";
+}
+
+function getAnnualRoadmapStorageTitle(year: number, displayTitle: string) {
+  return `${annualRoadmapTitlePrefix}${year}:${encodeURIComponent(displayTitle)}`;
 }
 
 function createAnnualRoadmapBlock(year: number, markdown: string, idPrefix: string): RoadmapBlock {
   return {
     id: createRoadmapId(idPrefix),
-    title: `${annualRoadmapTitlePrefix}${year}`,
+    title: getAnnualRoadmapStorageTitle(year, ""),
     markdown,
     viewMode: "preview",
     year,
+    displayTitle: "",
   };
 }
 
@@ -258,7 +280,10 @@ function normalizeAnnualRoadmapBlocks(blocks: RoadmapBlock[], currentYear: numbe
       legacyBlocks.push(block);
       return;
     }
-    if (!annualBlocks.has(year)) annualBlocks.set(year, { ...block, title: `${annualRoadmapTitlePrefix}${year}`, year });
+    if (!annualBlocks.has(year)) {
+      const displayTitle = getAnnualRoadmapDisplayTitle(block);
+      annualBlocks.set(year, { ...block, title: getAnnualRoadmapStorageTitle(year, displayTitle), year, displayTitle });
+    }
   });
 
   if (legacyBlocks.length > 0 && !annualBlocks.has(currentYear)) {
@@ -320,6 +345,7 @@ function normalizeRoadmapBlocks(
             ? block.viewMode
             : "preview",
         year: typeof block.year === "number" && Number.isInteger(block.year) ? block.year : undefined,
+        displayTitle: typeof block.displayTitle === "string" ? block.displayTitle : undefined,
       };
     })
     .filter((block): block is RoadmapBlock => Boolean(block));
@@ -710,6 +736,9 @@ export function MarkdownMemoPage({
   const hasStartedSavingRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingSaveRef = useRef<string | null>(null);
+  const lastPersistedValueRef = useRef(JSON.stringify(roadmapBlocks));
+  const roadmapBlocksRef = useRef(roadmapBlocks);
+  roadmapBlocksRef.current = roadmapBlocks;
 
   useEffect(() => {
     if (initialValue !== null) return;
@@ -754,6 +783,7 @@ export function MarkdownMemoPage({
     if (!isReady) return;
     if (!hasStartedSavingRef.current) {
       hasStartedSavingRef.current = true;
+      lastPersistedValueRef.current = JSON.stringify(roadmapBlocks);
       return;
     }
 
@@ -763,12 +793,26 @@ export function MarkdownMemoPage({
       .catch(() => undefined)
       .then(async () => {
         await saveRoadmap(apiPath, value);
-        if (pendingSaveRef.current === value) pendingSaveRef.current = null;
+        if (pendingSaveRef.current === value) {
+          pendingSaveRef.current = null;
+          lastPersistedValueRef.current = value;
+        }
       });
   }, [apiPath, isReady, roadmapBlocks]);
 
   useEffect(() => () => {
-    if (pendingSaveRef.current) void saveRoadmap(apiPath, pendingSaveRef.current);
+    const value = JSON.stringify(roadmapBlocksRef.current);
+    if (value === lastPersistedValueRef.current || pendingSaveRef.current === value) return;
+    pendingSaveRef.current = value;
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        await saveRoadmap(apiPath, value);
+        if (pendingSaveRef.current === value) {
+          pendingSaveRef.current = null;
+          lastPersistedValueRef.current = value;
+        }
+      });
   }, [apiPath]);
 
   function updateRoadmapMarkdown(
@@ -788,6 +832,14 @@ export function MarkdownMemoPage({
           : block,
       ),
     );
+  }
+
+  function updateRoadmapTitle(blockId: string, displayTitle: string) {
+    setRoadmapBlocks((current) => current.map((block) => {
+      if (block.id !== blockId) return block;
+      const year = block.year || selectedYear;
+      return { ...block, year, displayTitle, title: getAnnualRoadmapStorageTitle(year, displayTitle) };
+    }));
   }
 
   function updateRoadmapViewMode(blockId: string, viewMode: RoadmapViewMode) {
@@ -997,20 +1049,21 @@ export function MarkdownMemoPage({
         <div>
           <h1>{pageTitle}</h1>
         </div>
-        <div className="annualRoadmapMeta">
-          <div className="annualRoadmapYearSwitcher" aria-label="年を切り替え">
-            <button type="button" onClick={() => changeYear(-1)} aria-label="前年へ">&lt;</button>
-            <strong>{selectedYear}</strong>
-            <button type="button" onClick={() => changeYear(1)} aria-label="翌年へ">&gt;</button>
-          </div>
-          {age !== null && <span>{age}歳</span>}
-        </div>
       </section>
+
+      <div className="annualRoadmapToolbar">
+        <div className="annualRoadmapYearSwitcher" aria-label="年を切り替え">
+          <button type="button" onClick={() => changeYear(-1)} aria-label="前年へ">&lt;</button>
+          <strong>{selectedYear}年</strong>
+          {age !== null && <span>{age}歳</span>}
+          <button type="button" onClick={() => changeYear(1)} aria-label="翌年へ">&gt;</button>
+        </div>
+      </div>
 
       <div className="roadmapBlockList">
         <section className={activeRoadmap.viewMode === "split" ? "roadmapBlock" : "roadmapBlock single"}>
           <div className="memoBlockHeader">
-            <strong>{selectedYear}年のロードマップ</strong>
+            <input className="memoTitleInput" aria-label={`${selectedYear}年のロードマップタイトル`} placeholder="ロードマップのタイトル" value={getAnnualRoadmapDisplayTitle(activeRoadmap)} onChange={(event) => updateRoadmapTitle(activeRoadmap.id, event.target.value)} />
             <div className="roadmapModeTabs" role="tablist" aria-label="表示モード">
               {viewModes.map((mode) => (
                 <button className={activeRoadmap.viewMode === mode.key ? "miniTab active" : "miniTab"} key={mode.key} type="button" role="tab" aria-selected={activeRoadmap.viewMode === mode.key} aria-label={mode.label} title={mode.label} onClick={() => updateRoadmapViewMode(activeRoadmap.id, mode.key)}>
