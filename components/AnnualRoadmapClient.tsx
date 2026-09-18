@@ -46,7 +46,9 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   const birthYear = Number(birthday.slice(0, 4));
   const age = birthYear ? selectedYear - birthYear : null;
   const currentMonth = new Date().getMonth() + 1;
-  const orderedMonths = Array.from({ length: 12 }, (_, index) => ((currentMonth - 1 + index) % 12) + 1);
+  const orderedMonths = selectedYear === currentYear
+    ? Array.from({ length: 12 }, (_, index) => ((currentMonth - 1 + index) % 12) + 1)
+    : Array.from({ length: 12 }, (_, index) => index + 1);
 
   function enqueue(value: string) {
     if (pendingRef.current === value) return;
@@ -74,6 +76,6 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   return <main className="shell roadmapPage annualRoadmapPage">
     <div className="annualRoadmapToolbar"><div className="annualRoadmapYearSwitcher"><button type="button" onClick={() => changeYear(-1)} aria-label="前年へ">&lt;</button><strong>{selectedYear}年</strong>{age !== null && <span>{age}歳</span>}<button type="button" onClick={() => changeYear(1)} aria-label="翌年へ">&gt;</button></div></div>
     <section className="annualRoadmapForm"><label className="annualRoadmapTitleField">タイトル<input value={yearPlan.title} placeholder="この年のロードマップ" onChange={(event) => updateYear({ title: event.target.value })} /></label><fieldset><legend>年間テーマ</legend>{yearPlan.themes.map((theme, index) => <input key={index} value={theme} placeholder={`テーマ ${index + 1}`} onChange={(event) => { const themes = [...yearPlan.themes]; themes[index] = event.target.value; updateYear({ themes }); }} />)}</fieldset></section>
-    <div className="annualRoadmapMonths">{orderedMonths.map((monthNumber) => { const month = String(monthNumber); const label = `${month}月`; const plan = yearPlan.months[month]; const isOpen = Boolean(openMonths[month]); const isCompletedMonthsStart = monthNumber === 1 && currentMonth !== 1; return <section className={`annualRoadmapMonth${isCompletedMonthsStart ? " isCompletedMonthsStart" : ""}`} key={month}><button className="annualRoadmapMonthHeader" type="button" onClick={() => setOpenMonths((current) => ({ ...current, [month]: !isOpen }))} aria-expanded={isOpen}><strong>{label}</strong>{plan.theme && <span>{plan.theme}</span>}<b>{isOpen ? "⌃" : "⌄"}</b></button>{isOpen && <div className="annualRoadmapMonthBody"><label>月間テーマ<input value={plan.theme} onChange={(event) => updateMonth(month, { theme: event.target.value })} /></label>{taskGroup(month, "mustDo")}<div className="annualRoadmapTaskColumns">{taskGroup(month, "chores")}{taskGroup(month, "other")}</div></div>}</section>; })}</div>
+    <div className="annualRoadmapMonths">{orderedMonths.map((monthNumber) => { const month = String(monthNumber); const label = `${month}月`; const plan = yearPlan.months[month]; const isOpen = Boolean(openMonths[month]); const isCompletedMonthsStart = selectedYear === currentYear && monthNumber === 1 && currentMonth !== 1; return <section className={`annualRoadmapMonth${isCompletedMonthsStart ? " isCompletedMonthsStart" : ""}`} key={month}><button className="annualRoadmapMonthHeader" type="button" onClick={() => setOpenMonths((current) => ({ ...current, [month]: !isOpen }))} aria-expanded={isOpen}><strong>{label}</strong>{plan.theme && <span>{plan.theme}</span>}<b>{isOpen ? "⌃" : "⌄"}</b></button>{isOpen && <div className="annualRoadmapMonthBody"><label>月間テーマ<input value={plan.theme} onChange={(event) => updateMonth(month, { theme: event.target.value })} /></label>{taskGroup(month, "mustDo")}<div className="annualRoadmapTaskColumns">{taskGroup(month, "chores")}{taskGroup(month, "other")}</div></div>}</section>; })}</div>
   </main>;
 }
