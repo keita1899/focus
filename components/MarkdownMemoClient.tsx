@@ -732,11 +732,8 @@ export function MarkdownMemoPage({
       idPrefix,
     ),
   );
-  const [isReady, setIsReady] = useState(initialValue !== null);
-  const hasStartedSavingRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingSaveRef = useRef<string | null>(null);
-  const lastPersistedValueRef = useRef(JSON.stringify(roadmapBlocks));
   const roadmapBlocksRef = useRef(roadmapBlocks);
   roadmapBlocksRef.current = roadmapBlocks;
 
@@ -776,18 +773,11 @@ export function MarkdownMemoPage({
       }
     }
 
-    loadMemos().finally(() => setIsReady(true));
+    void loadMemos();
   }, [apiPath, currentYear, defaultMarkdown, defaultTitle, idPrefix, initialValue, storageKey]);
 
-  useEffect(() => {
-    if (!isReady) return;
-    if (!hasStartedSavingRef.current) {
-      hasStartedSavingRef.current = true;
-      lastPersistedValueRef.current = JSON.stringify(roadmapBlocks);
-      return;
-    }
-
-    const value = JSON.stringify(roadmapBlocks);
+  function enqueueRoadmapSave(value: string) {
+    if (pendingSaveRef.current === value) return;
     pendingSaveRef.current = value;
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
@@ -795,31 +785,27 @@ export function MarkdownMemoPage({
         await saveRoadmap(apiPath, value);
         if (pendingSaveRef.current === value) {
           pendingSaveRef.current = null;
-          lastPersistedValueRef.current = value;
         }
       });
-  }, [apiPath, isReady, roadmapBlocks]);
+  }
+
+  function applyRoadmapBlocks(updater: (current: RoadmapBlock[]) => RoadmapBlock[]) {
+    const nextBlocks = updater(roadmapBlocksRef.current);
+    roadmapBlocksRef.current = nextBlocks;
+    setRoadmapBlocks(nextBlocks);
+    enqueueRoadmapSave(JSON.stringify(nextBlocks));
+  }
 
   useEffect(() => () => {
     const value = JSON.stringify(roadmapBlocksRef.current);
-    if (value === lastPersistedValueRef.current || pendingSaveRef.current === value) return;
-    pendingSaveRef.current = value;
-    saveQueueRef.current = saveQueueRef.current
-      .catch(() => undefined)
-      .then(async () => {
-        await saveRoadmap(apiPath, value);
-        if (pendingSaveRef.current === value) {
-          pendingSaveRef.current = null;
-          lastPersistedValueRef.current = value;
-        }
-      });
+    enqueueRoadmapSave(value);
   }, [apiPath]);
 
   function updateRoadmapMarkdown(
     blockId: string,
     updater: string | ((current: string) => string),
   ) {
-    setRoadmapBlocks((current) =>
+    applyRoadmapBlocks((current) =>
       current.map((block) =>
         block.id === blockId
           ? {
@@ -835,7 +821,7 @@ export function MarkdownMemoPage({
   }
 
   function updateRoadmapTitle(blockId: string, displayTitle: string) {
-    setRoadmapBlocks((current) => current.map((block) => {
+    applyRoadmapBlocks((current) => current.map((block) => {
       if (block.id !== blockId) return block;
       const year = block.year || selectedYear;
       return { ...block, year, displayTitle, title: getAnnualRoadmapStorageTitle(year, displayTitle) };
@@ -843,7 +829,7 @@ export function MarkdownMemoPage({
   }
 
   function updateRoadmapViewMode(blockId: string, viewMode: RoadmapViewMode) {
-    setRoadmapBlocks((current) =>
+    applyRoadmapBlocks((current) =>
       current.map((block) =>
         block.id === blockId ? { ...block, viewMode } : block,
       ),
@@ -853,7 +839,7 @@ export function MarkdownMemoPage({
   function changeYear(direction: -1 | 1) {
     const nextYear = selectedYear + direction;
     setSelectedYear(nextYear);
-    setRoadmapBlocks((current) => {
+    applyRoadmapBlocks((current) => {
       if (current.some((block) => block.year === nextYear)) return current;
       return [...current, createAnnualRoadmapBlock(nextYear, defaultMarkdown, idPrefix)];
     });
