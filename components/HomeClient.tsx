@@ -3034,7 +3034,7 @@ export default function HomeClient({
             </section>
           )}
 
-          {showRoadmapTab && <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="ロードマップ" storageKey={memoStorageKey} />}
+          {showRoadmapTab && <MarkdownMemoPage apiPath="/api/memos" ariaLabel="ロードマップ" defaultMarkdown={defaultMemoMarkdown} defaultTitle="ロードマップ" idPrefix="roadmap" initialValue={initialMemoValue} pageTitle="年間ロードマップ" storageKey={memoStorageKey} birthday={planner.birthday} />}
           {showVisionTab && <VisionClient initialValue={initialVisionValue} />}
           {showWantsTab && <WantsClient initialValue={initialWantsValue} />}
           {showShoppingListTab && <ShoppingListClient initialValue={initialShoppingListValue} />}

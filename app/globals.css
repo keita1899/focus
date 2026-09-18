@@ -4916,6 +4916,36 @@ select {
   gap: 34px;
 }
 
+.annualRoadmapMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 900;
+}
+
+.annualRoadmapYearSwitcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-strong);
+}
+
+.annualRoadmapYearSwitcher button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.annualRoadmapYearSwitcher strong { min-width: 4.5em; text-align: center; font-size: 1.05rem; }
+
 .roadmapBlockWithAdd {
   display: grid;
   gap: 12px;

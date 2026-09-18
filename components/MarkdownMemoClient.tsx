@@ -20,6 +20,7 @@ type RoadmapBlock = {
   title: string;
   markdown: string;
   viewMode: RoadmapViewMode;
+  year?: number;
 };
 type MarkdownSection = {
   id: string;
@@ -42,6 +43,7 @@ type OrderedListLine = {
 };
 
 const memoStorageKey = "roadmap-markdown-v1";
+const annualRoadmapTitlePrefix = "__annual-roadmap__:";
 const defaultMemoMarkdown = `# ロードマップ
 
 - 
@@ -230,6 +232,49 @@ function createRoadmapBlock(
   };
 }
 
+function getAnnualRoadmapYear(block: RoadmapBlock) {
+  if (typeof block.year === "number" && Number.isInteger(block.year)) return block.year;
+  const match = block.title.match(new RegExp(`^${annualRoadmapTitlePrefix}(\\d{4})$`));
+  return match ? Number(match[1]) : undefined;
+}
+
+function createAnnualRoadmapBlock(year: number, markdown: string, idPrefix: string): RoadmapBlock {
+  return {
+    id: createRoadmapId(idPrefix),
+    title: `${annualRoadmapTitlePrefix}${year}`,
+    markdown,
+    viewMode: "preview",
+    year,
+  };
+}
+
+function normalizeAnnualRoadmapBlocks(blocks: RoadmapBlock[], currentYear: number, defaultMarkdown: string, idPrefix: string) {
+  const annualBlocks = new Map<number, RoadmapBlock>();
+  const legacyBlocks: RoadmapBlock[] = [];
+
+  blocks.forEach((block) => {
+    const year = getAnnualRoadmapYear(block);
+    if (year === undefined) {
+      legacyBlocks.push(block);
+      return;
+    }
+    if (!annualBlocks.has(year)) annualBlocks.set(year, { ...block, title: `${annualRoadmapTitlePrefix}${year}`, year });
+  });
+
+  if (legacyBlocks.length > 0 && !annualBlocks.has(currentYear)) {
+    const markdown = legacyBlocks
+      .map((block) => block.title && block.title !== "ロードマップ" ? `# ${block.title}\n\n${block.markdown}` : block.markdown)
+      .join("\n\n");
+    annualBlocks.set(currentYear, {
+      ...createAnnualRoadmapBlock(currentYear, markdown || defaultMarkdown, idPrefix),
+      viewMode: legacyBlocks[0].viewMode,
+    });
+  }
+
+  if (!annualBlocks.has(currentYear)) annualBlocks.set(currentYear, createAnnualRoadmapBlock(currentYear, defaultMarkdown, idPrefix));
+  return [...annualBlocks.values()].sort((left, right) => (left.year || 0) - (right.year || 0));
+}
+
 function normalizeRoadmapBlocks(
   value: unknown,
   defaultMarkdown: string,
@@ -258,7 +303,7 @@ function normalizeRoadmapBlocks(
   }
 
   const blocks = value
-    .map((item, index) => {
+    .map((item, index): RoadmapBlock | null => {
       if (!item || typeof item !== "object") return null;
       const block = item as Partial<RoadmapBlock>;
       return {
@@ -274,6 +319,7 @@ function normalizeRoadmapBlocks(
           block.viewMode === "memo"
             ? block.viewMode
             : "preview",
+        year: typeof block.year === "number" && Number.isInteger(block.year) ? block.year : undefined,
       };
     })
     .filter((block): block is RoadmapBlock => Boolean(block));
@@ -627,6 +673,7 @@ type MarkdownMemoPageProps = {
   initialValue: unknown;
   pageTitle: string;
   storageKey: string;
+  birthday?: string;
 };
 
 function saveRoadmap(apiPath: string, value: string) {
@@ -647,9 +694,17 @@ export function MarkdownMemoPage({
   initialValue,
   pageTitle,
   storageKey,
+  birthday = "",
 }: MarkdownMemoPageProps) {
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [roadmapBlocks, setRoadmapBlocks] = useState<RoadmapBlock[]>(() =>
-    normalizeRoadmapBlocks(initialValue, defaultMarkdown, defaultTitle, idPrefix),
+    normalizeAnnualRoadmapBlocks(
+      normalizeRoadmapBlocks(initialValue, defaultMarkdown, defaultTitle, idPrefix),
+      currentYear,
+      defaultMarkdown,
+      idPrefix,
+    ),
   );
   const [isReady, setIsReady] = useState(initialValue !== null);
   const hasStartedSavingRef = useRef(false);
@@ -663,12 +718,7 @@ export function MarkdownMemoPage({
       try {
         const response = await fetch(apiPath, { cache: "no-store" });
         const data = (await response.json()) as { value: unknown };
-        const dbBlocks = normalizeRoadmapBlocks(
-          data.value,
-          defaultMarkdown,
-          defaultTitle,
-          idPrefix,
-        );
+        const dbBlocks = normalizeAnnualRoadmapBlocks(normalizeRoadmapBlocks(data.value, defaultMarkdown, defaultTitle, idPrefix), currentYear, defaultMarkdown, idPrefix);
         const hasDbBlocks = Array.isArray(data.value) && data.value.length > 0;
 
         if (hasDbBlocks) {
@@ -681,12 +731,7 @@ export function MarkdownMemoPage({
           setRoadmapBlocks(dbBlocks);
           return;
         }
-        const migratedBlocks = normalizeRoadmapBlocks(
-          stored,
-          defaultMarkdown,
-          defaultTitle,
-          idPrefix,
-        );
+        const migratedBlocks = normalizeAnnualRoadmapBlocks(normalizeRoadmapBlocks(stored, defaultMarkdown, defaultTitle, idPrefix), currentYear, defaultMarkdown, idPrefix);
         setRoadmapBlocks(migratedBlocks);
         await fetch(apiPath, {
           method: "PUT",
@@ -697,13 +742,13 @@ export function MarkdownMemoPage({
       } catch {
         const stored = window.localStorage.getItem(storageKey);
         setRoadmapBlocks(
-          normalizeRoadmapBlocks(stored, defaultMarkdown, defaultTitle, idPrefix),
+          normalizeAnnualRoadmapBlocks(normalizeRoadmapBlocks(stored, defaultMarkdown, defaultTitle, idPrefix), currentYear, defaultMarkdown, idPrefix),
         );
       }
     }
 
     loadMemos().finally(() => setIsReady(true));
-  }, [apiPath, defaultMarkdown, defaultTitle, idPrefix, initialValue, storageKey]);
+  }, [apiPath, currentYear, defaultMarkdown, defaultTitle, idPrefix, initialValue, storageKey]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -745,14 +790,6 @@ export function MarkdownMemoPage({
     );
   }
 
-  function updateRoadmapTitle(blockId: string, title: string) {
-    setRoadmapBlocks((current) =>
-      current.map((block) =>
-        block.id === blockId ? { ...block, title } : block,
-      ),
-    );
-  }
-
   function updateRoadmapViewMode(blockId: string, viewMode: RoadmapViewMode) {
     setRoadmapBlocks((current) =>
       current.map((block) =>
@@ -761,26 +798,21 @@ export function MarkdownMemoPage({
     );
   }
 
-  function addRoadmapBlock(afterBlockId: string) {
+  function changeYear(direction: -1 | 1) {
+    const nextYear = selectedYear + direction;
+    setSelectedYear(nextYear);
     setRoadmapBlocks((current) => {
-      const insertAt = current.findIndex((block) => block.id === afterBlockId) + 1;
-      const nextBlock = createRoadmapBlock(defaultMarkdown, defaultTitle, idPrefix);
-      return [
-        ...current.slice(0, insertAt),
-        nextBlock,
-        ...current.slice(insertAt),
-      ];
+      if (current.some((block) => block.year === nextYear)) return current;
+      return [...current, createAnnualRoadmapBlock(nextYear, defaultMarkdown, idPrefix)];
     });
   }
 
-  function removeRoadmapBlock(blockId: string) {
-    setRoadmapBlocks((current) => {
-      const nextBlocks = current.filter((block) => block.id !== blockId);
-      return nextBlocks.length > 0
-        ? nextBlocks
-        : [createRoadmapBlock(defaultMarkdown, defaultTitle, idPrefix)];
-    });
-  }
+  const activeRoadmap = roadmapBlocks.find((block) => block.year === selectedYear) || createAnnualRoadmapBlock(selectedYear, defaultMarkdown, idPrefix);
+  const age = (() => {
+    const [birthYear, birthMonth, birthDay] = birthday.split("-").map(Number);
+    if (!birthYear || !birthMonth || !birthDay) return null;
+    return selectedYear - birthYear;
+  })();
 
   function resizeMemoTextarea(
     textarea: HTMLTextAreaElement | null,
@@ -965,121 +997,38 @@ export function MarkdownMemoPage({
         <div>
           <h1>{pageTitle}</h1>
         </div>
+        <div className="annualRoadmapMeta">
+          <div className="annualRoadmapYearSwitcher" aria-label="年を切り替え">
+            <button type="button" onClick={() => changeYear(-1)} aria-label="前年へ">&lt;</button>
+            <strong>{selectedYear}</strong>
+            <button type="button" onClick={() => changeYear(1)} aria-label="翌年へ">&gt;</button>
+          </div>
+          {age !== null && <span>{age}歳</span>}
+        </div>
       </section>
 
       <div className="roadmapBlockList">
-        {roadmapBlocks.map((block) => (
-          <div className="roadmapBlockWithAdd" key={block.id}>
-            <section
-              className={
-                block.viewMode === "split"
-                  ? "roadmapBlock"
-                  : "roadmapBlock single"
-              }
-            >
-            <div className="memoBlockHeader">
-              <input
-                className="memoTitleInput"
-                aria-label={`${ariaLabel}タイトル`}
-                placeholder={`${ariaLabel}タイトル`}
-                value={block.title}
-                onChange={(event) =>
-                  updateRoadmapTitle(block.id, event.target.value)
-                }
-              />
-              <div className="memoBlockActions">
-                <div
-                  className="roadmapModeTabs"
-                  role="tablist"
-                  aria-label="表示モード"
-                >
-                  {viewModes.map((mode) => (
-                    <button
-                      className={
-                        block.viewMode === mode.key ? "miniTab active" : "miniTab"
-                      }
-                      key={mode.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={block.viewMode === mode.key}
-                      aria-label={mode.label}
-                      title={mode.label}
-                      onClick={() => updateRoadmapViewMode(block.id, mode.key)}
-                    >
-                      <span aria-hidden="true">{mode.icon}</span>
-                    </button>
-                  ))}
-                </div>
-                <button
-                  className="memoDeleteButton"
-                  type="button"
-                  onClick={() => removeRoadmapBlock(block.id)}
-                  aria-label={`${block.title || ariaLabel}を削除`}
-                  title="削除"
-                >
-                  ×
+        <section className={activeRoadmap.viewMode === "split" ? "roadmapBlock" : "roadmapBlock single"}>
+          <div className="memoBlockHeader">
+            <strong>{selectedYear}年のロードマップ</strong>
+            <div className="roadmapModeTabs" role="tablist" aria-label="表示モード">
+              {viewModes.map((mode) => (
+                <button className={activeRoadmap.viewMode === mode.key ? "miniTab active" : "miniTab"} key={mode.key} type="button" role="tab" aria-selected={activeRoadmap.viewMode === mode.key} aria-label={mode.label} title={mode.label} onClick={() => updateRoadmapViewMode(activeRoadmap.id, mode.key)}>
+                  <span aria-hidden="true">{mode.icon}</span>
                 </button>
-              </div>
+              ))}
             </div>
-
-            <div
-              className={
-                block.viewMode === "split"
-                  ? "roadmapWorkspace"
-                  : "roadmapWorkspace single"
-              }
-            >
-              {block.viewMode !== "preview" && (
-                <div className="roadmapEditorPane">
-                  <textarea
-                    aria-label={`${ariaLabel}本文`}
-                    ref={resizeMemoTextarea}
-                    value={block.markdown}
-                    onKeyDown={(event) =>
-                      handleMarkdownKeyDown(event, block.id, block.markdown)
-                    }
-                    onChange={(event) => {
-                      resizeMemoTextarea(event.currentTarget, true);
-                      const normalized = normalizeOrderedListAfterDeletion(
-                        block.markdown,
-                        event.target.value,
-                        event.currentTarget.selectionStart,
-                      );
-                      updateRoadmapMarkdown(
-                        block.id,
-                        normalized.markdown,
-                      );
-                      requestAnimationFrame(() => {
-                        event.currentTarget.setSelectionRange(
-                          normalized.cursorPosition,
-                          normalized.cursorPosition,
-                        );
-                      });
-                    }}
-                  />
-                </div>
-              )}
-              {block.viewMode !== "memo" && (
-                <article className="roadmapPreviewPane" aria-label="プレビュー">
-                  <MarkdownPreview
-                    markdown={block.markdown}
-                    onToggleChecklist={(item) =>
-                      toggleChecklist(block.id, item)
-                    }
-                  />
-                </article>
-              )}
-            </div>
-            </section>
-            <button
-              className="roadmapAppendButton"
-              type="button"
-              onClick={() => addRoadmapBlock(block.id)}
-            >
-              追加
-            </button>
           </div>
-        ))}
+          <div className={activeRoadmap.viewMode === "split" ? "roadmapWorkspace" : "roadmapWorkspace single"}>
+            {activeRoadmap.viewMode !== "preview" && <div className="roadmapEditorPane"><textarea aria-label={`${selectedYear}年の${ariaLabel}本文`} ref={resizeMemoTextarea} value={activeRoadmap.markdown} onKeyDown={(event) => handleMarkdownKeyDown(event, activeRoadmap.id, activeRoadmap.markdown)} onChange={(event) => {
+              resizeMemoTextarea(event.currentTarget, true);
+              const normalized = normalizeOrderedListAfterDeletion(activeRoadmap.markdown, event.target.value, event.currentTarget.selectionStart);
+              updateRoadmapMarkdown(activeRoadmap.id, normalized.markdown);
+              requestAnimationFrame(() => event.currentTarget.setSelectionRange(normalized.cursorPosition, normalized.cursorPosition));
+            }} /></div>}
+            {activeRoadmap.viewMode !== "memo" && <article className="roadmapPreviewPane" aria-label="プレビュー"><MarkdownPreview markdown={activeRoadmap.markdown} onToggleChecklist={(item) => toggleChecklist(activeRoadmap.id, item)} /></article>}
+          </div>
+        </section>
       </div>
     </main>
   );
