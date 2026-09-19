@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 
-type RoadmapTask = { id: string; title: string; children: RoadmapTask[]; scheduledDate?: string; scheduledTime?: string };
+type RoadmapTask = { id: string; title: string; children: RoadmapTask[]; scheduledDate?: string; scheduledTime?: string; done?: boolean };
 type MonthPlan = { theme: string; mustDo: RoadmapTask[]; chores: RoadmapTask[]; other: RoadmapTask[] };
 type YearPlan = { title: string; themes: string[]; months: Record<string, MonthPlan> };
 type RoadmapState = { years: Record<string, YearPlan> };
@@ -92,6 +92,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
   function addTask(month: string, kind: Exclude<TaskKind, "mustDo">, afterId?: string) { const task = createTask(); const current = yearPlan.months[month][kind]; const index = afterId ? current.findIndex((entry) => entry.id === afterId) : -1; const tasks = index < 0 ? [...current, task] : [...current.slice(0, index + 1), task, ...current.slice(index + 1)]; pendingFocusRef.current = task.id; updateMonth(month, { [kind]: tasks }); }
   function removeTask(month: string, kind: Exclude<TaskKind, "mustDo">, id: string) { const tasks = yearPlan.months[month][kind].filter((task) => task.id !== id); updateMonth(month, { [kind]: tasks.length ? tasks : [createTask()] }); }
   function updateMustDo(month: string, id: string, value: Partial<RoadmapTask>, parentId?: string) { const tasks = yearPlan.months[month].mustDo.map((task) => parentId ? task.id === parentId ? { ...task, children: task.children.map((child) => child.id === id ? { ...child, ...value } : child) } : task : task.id === id ? { ...task, ...value } : task); updateMonth(month, { mustDo: tasks }); }
+  function presetDate(value: string) { if (value === "today") return new Date().toISOString().slice(0, 10); if (value === "tomorrow") { const date = new Date(); date.setDate(date.getDate() + 1); return date.toISOString().slice(0, 10); } return undefined; }
   function addMustDo(month: string, parentId?: string) { const nextTask = createTask(); const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: [...task.children, nextTask] } : task) : [...yearPlan.months[month].mustDo, nextTask]; pendingFocusRef.current = nextTask.id; updateMonth(month, { mustDo: tasks }); }
   function removeMustDo(month: string, id: string, parentId?: string) { const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: task.children.filter((child) => child.id !== id) } : task) : yearPlan.months[month].mustDo.filter((task) => task.id !== id); updateMonth(month, { mustDo: tasks.length ? tasks : [createTask()] }); }
   function taskGroup(month: string, kind: TaskKind) {
