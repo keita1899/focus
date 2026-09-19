@@ -99,8 +99,11 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
     inputs.forEach((input) => {
       if (input.parentElement?.querySelector(".roadmapDatePresets")) return;
       const presets = document.createElement("span"); presets.className = "roadmapDatePresets";
-      ([['未定','none'], ['今日','today'], ['明日','tomorrow']] as const).forEach(([label, value]) => { const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.onclick = () => applyPreset(input, value); presets.append(button); });
-      input.parentElement?.insertBefore(presets, input);
+      const trigger = document.createElement("button"); trigger.type = "button"; trigger.textContent = "日付"; presets.append(trigger);
+      const menu = document.createElement("span"); menu.className = "roadmapDateMenu";
+      ([['今日','today'], ['明日','tomorrow'], ['日付なし','none']] as const).forEach(([label, value]) => { const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.onclick = () => { applyPreset(input, value); menu.classList.remove("open"); }; menu.append(button); });
+      const custom = document.createElement("button"); custom.type = "button"; custom.textContent = "日付選択"; custom.onclick = () => { input.showPicker?.(); menu.classList.remove("open"); }; menu.append(custom);
+      trigger.onclick = () => menu.classList.toggle("open"); presets.append(menu); input.parentElement?.insertBefore(presets, input);
     });
   }, [roadmap]);
   function addMustDo(month: string, parentId?: string) { const nextTask = createTask(); const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: [...task.children, nextTask] } : task) : [...yearPlan.months[month].mustDo, nextTask]; pendingFocusRef.current = nextTask.id; updateMonth(month, { mustDo: tasks }); }
