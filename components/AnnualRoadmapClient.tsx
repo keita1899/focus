@@ -93,6 +93,16 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
   function removeTask(month: string, kind: Exclude<TaskKind, "mustDo">, id: string) { const tasks = yearPlan.months[month][kind].filter((task) => task.id !== id); updateMonth(month, { [kind]: tasks.length ? tasks : [createTask()] }); }
   function updateMustDo(month: string, id: string, value: Partial<RoadmapTask>, parentId?: string) { const tasks = yearPlan.months[month].mustDo.map((task) => parentId ? task.id === parentId ? { ...task, children: task.children.map((child) => child.id === id ? { ...child, ...value } : child) } : task : task.id === id ? { ...task, ...value } : task); updateMonth(month, { mustDo: tasks }); }
   function presetDate(value: string) { if (value === "today") return new Date().toISOString().slice(0, 10); if (value === "tomorrow") { const date = new Date(); date.setDate(date.getDate() + 1); return date.toISOString().slice(0, 10); } return undefined; }
+  function applyPreset(target: HTMLInputElement, preset: "none" | "today" | "tomorrow") { const value = preset === "none" ? "" : presetDate(preset) || ""; const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set; setter?.call(target, value); target.dispatchEvent(new Event("input", { bubbles: true })); target.dispatchEvent(new Event("change", { bubbles: true })); }
+  useEffect(() => {
+    const inputs = document.querySelectorAll<HTMLInputElement>(".annualRoadmapScheduledTask input[type=date]");
+    inputs.forEach((input) => {
+      if (input.parentElement?.querySelector(".roadmapDatePresets")) return;
+      const presets = document.createElement("span"); presets.className = "roadmapDatePresets";
+      ([['未定','none'], ['今日','today'], ['明日','tomorrow']] as const).forEach(([label, value]) => { const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.onclick = () => applyPreset(input, value); presets.append(button); });
+      input.parentElement?.insertBefore(presets, input);
+    });
+  }, [roadmap]);
   function addMustDo(month: string, parentId?: string) { const nextTask = createTask(); const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: [...task.children, nextTask] } : task) : [...yearPlan.months[month].mustDo, nextTask]; pendingFocusRef.current = nextTask.id; updateMonth(month, { mustDo: tasks }); }
   function removeMustDo(month: string, id: string, parentId?: string) { const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: task.children.filter((child) => child.id !== id) } : task) : yearPlan.months[month].mustDo.filter((task) => task.id !== id); updateMonth(month, { mustDo: tasks.length ? tasks : [createTask()] }); }
   function taskGroup(month: string, kind: TaskKind) {

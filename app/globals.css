@@ -5053,6 +5053,10 @@ select {
 .annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 42px; padding-block: 4px; border-bottom: 1px solid #edf0ed; }
 .annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 132px 94px 26px; }
 .annualRoadmapScheduledTask input[type="date"], .annualRoadmapScheduledTask input[type="time"] { min-height: 28px; border: 0; background: transparent; color: var(--muted); font-size: .76rem; padding: 0; }
+.annualRoadmapScheduledTask input[type="date"] { border: 1px solid #dce7e0; border-radius: 999px; background: #f4f8f5; padding: 0 8px; color: var(--accent-strong); font-weight: 800; }
+.annualRoadmapScheduledTask input[type="date"]::-webkit-datetime-edit { color: var(--accent-strong); }
+.roadmapDatePresets { display: inline-flex; gap: 3px; }
+.roadmapDatePresets button { visibility: visible; width: auto; height: 25px; border: 1px solid #dce7e0; border-radius: 999px; background: #f4f8f5; color: var(--accent-strong); padding: 0 6px; font-size: .7rem; }
 .annualRoadmapTask > span { width: 14px; height: 14px; border: 1.5px solid #b6c4ba; border-radius: 999px; }
 .annualRoadmapParentToggle { visibility: visible !important; width: 18px !important; height: 22px !important; border: 0 !important; background: transparent !important; color: var(--accent-strong) !important; }
 .annualRoadmapTask input { min-height: 34px; border: 0; border-radius: 0; background: transparent; padding: 0; }
