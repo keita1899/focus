@@ -58,6 +58,19 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
     setNewCategory("");
   };
 
+  const removeCategory = (name: string) => {
+    setState((current) => {
+      const remaining = current.categories.filter((item) => item !== name);
+      const fallback = remaining[0] || "未分類";
+      return {
+        ...current,
+        categories: remaining.length ? remaining : [fallback],
+        cards: current.cards.map((card) => card.category === name ? { ...card, category: fallback } : card),
+      };
+    });
+    if (category === name) setCategory("すべて");
+  };
+
   const addCard = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -72,8 +85,8 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
     <header><div><p>公認会計士</p><h1>学習モード</h1></div><strong>今日の復習 {due.length}件</strong></header>
     <div className="studyLayout">
       <aside className="studySidebar">
-        <div className="studyCategoryList"><button className={category === "すべて" ? "active" : undefined} onClick={() => setCategory("すべて")}>すべて</button>{state.categories.map((item) => <button key={item} className={category === item ? "active" : undefined} onClick={() => setCategory(item)}>{item}</button>)}</div>
-        <form className="studyCategoryForm" onSubmit={addCategory}><label htmlFor="new-study-category">カテゴリーを追加</label><div><input id="new-study-category" value={newCategory} onChange={(event) => setNewCategory(event.currentTarget.value)} placeholder="カテゴリー名" /><button type="submit" aria-label="カテゴリーを追加">＋</button></div></form>
+        <div className="studyCategoryList"><button className={category === "すべて" ? "active" : undefined} onClick={() => setCategory("すべて")}>すべて</button>{state.categories.map((item) => <div className={`studyCategoryItem${category === item ? " active" : ""}`} key={item}><button type="button" onClick={() => setCategory(item)}>{item}</button><button className="studyCategoryDelete" type="button" onClick={() => removeCategory(item)} aria-label={`${item}を削除`}>×</button></div>)}</div>
+        <form className="studyCategoryForm" onSubmit={addCategory}><div><input id="new-study-category" value={newCategory} onChange={(event) => setNewCategory(event.currentTarget.value)} placeholder="カテゴリー名" aria-label="新しいカテゴリー名" /><button type="submit" aria-label="カテゴリーを追加">＋</button></div></form>
       </aside>
       <div className="studyMain">
         <div className="tabList studyTabs"><button className={tab === "review" ? "tabButton active" : "tabButton"} onClick={() => setTab("review")}>復習</button><button className={tab === "add" ? "tabButton active" : "tabButton"} onClick={() => setTab("add")}>問題を追加</button><button className={tab === "settings" ? "tabButton active" : "tabButton"} onClick={() => setTab("settings")}>設定</button></div>

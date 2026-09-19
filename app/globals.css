@@ -138,14 +138,19 @@ body > .topbar + .shell {
 .studyShell header h1 { display: none; }
 .studyShell header p, .studySource, .studyCard > p { color: var(--muted); }
 .studyShell header strong { color: var(--accent-strong); }
-.studyTabs { justify-content: center; }
+.studyTabs { justify-content: center; margin-bottom: 18px; }
 .studyLayout { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; }
 .studySidebar { display: flex; flex-direction: column; gap: 12px; min-height: 360px; border-right: 1px solid #d8e1fa; padding-right: 12px; }
 .studyCategoryList { display: grid; align-content: start; gap: 4px; }
 .studySidebar button { border: 0; border-radius: 6px; background: transparent; color: var(--muted); padding: 8px; text-align: left; font-weight: 800; }
 .studySidebar button.active, .studySidebar button:hover { background: #e9efff; color: #3159a7; }
+.studyCategoryItem { display: grid; grid-template-columns: minmax(0, 1fr) 30px; align-items: center; border-radius: 6px; }
+.studyCategoryItem.active { background: #e9efff; }
+.studyCategoryItem > button:first-child { min-width: 0; color: var(--muted); }
+.studyCategoryItem.active > button:first-child { color: #3159a7; }
+.studyCategoryItem .studyCategoryDelete { visibility: hidden; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; color: var(--danger); text-align: center; }
+.studyCategoryItem:hover .studyCategoryDelete, .studyCategoryItem:focus-within .studyCategoryDelete { visibility: visible; }
 .studyCategoryForm { display: grid; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid #d8e1fa; }
-.studyCategoryForm label { color: var(--muted); font-size: .72rem; font-weight: 800; }
 .studyCategoryForm > div { display: grid; grid-template-columns: minmax(0, 1fr) 34px; gap: 5px; }
 .studyCategoryForm input { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 7px; }
 .studyCategoryForm button { display: grid; place-items: center; background: #e9efff; color: #3159a7; padding: 0; text-align: center; }
@@ -5059,11 +5064,10 @@ select {
 .annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 42px; padding-block: 4px; border-bottom: 1px solid #edf0ed; }
 .annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 112px 26px; }
 .roadmapSchedulePicker { position: relative; min-width: 0; }
-.roadmapSchedulePicker summary { overflow: hidden; height: 28px; border: 1px solid #dce7e0; border-radius: 999px; background: #f4f8f5; color: var(--accent-strong); padding: 5px 10px; font-size: .72rem; font-weight: 800; text-align: center; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; list-style: none; }
-.roadmapSchedulePicker summary::-webkit-details-marker { display: none; }
-.roadmapSchedulePicker[open] summary { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
+.roadmapSchedulePicker .roadmapScheduleTrigger { visibility: visible; overflow: hidden; width: 100%; height: 28px; border: 1px solid #dce7e0; border-radius: 7px; background: #f4f8f5; color: var(--accent-strong); padding: 5px 8px; font-size: .72rem; font-weight: 800; line-height: 1; text-align: center; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.roadmapSchedulePicker .roadmapScheduleTrigger[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
 .roadmapScheduleMenu { position: absolute; z-index: 20; top: 34px; right: 0; display: grid; gap: 4px; width: 220px; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: white; box-shadow: 0 10px 24px rgba(0, 0, 0, .14); }
-.roadmapScheduleMenu button { visibility: visible; width: 100%; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); padding: 0 8px; font-size: .78rem; text-align: left; }
+.annualRoadmapTask .roadmapScheduleMenu button { visibility: visible; display: block; width: 100%; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); padding: 0 8px; font-size: .78rem; line-height: 32px; text-align: left; white-space: nowrap; writing-mode: horizontal-tb; }
 .roadmapScheduleMenu button:hover { background: #eef6f1; }
 .roadmapScheduleMenu label { display: grid; grid-template-columns: 1fr 126px; align-items: center; gap: 8px; color: var(--muted); padding: 5px 8px; font-size: .75rem; font-weight: 800; }
 .roadmapScheduleMenu input[type="date"], .roadmapScheduleMenu input[type="time"] { width: 100%; min-height: 30px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); padding: 3px 5px; font-size: .75rem; }

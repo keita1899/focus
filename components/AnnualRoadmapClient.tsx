@@ -56,23 +56,39 @@ function formatScheduleLabel(date?: string, time?: string) {
   return `${Number(month)}/${Number(day)}${time ? ` ${time}` : ""}`;
 }
 
-function TaskSchedulePicker({ task, onChange }: { task: RoadmapTask; onChange: (value: Partial<RoadmapTask>) => void }) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+function TaskSchedulePicker({ task, isOpen, onOpenChange, onChange }: { task: RoadmapTask; isOpen: boolean; onOpenChange: (open: boolean) => void; onChange: (value: Partial<RoadmapTask>) => void }) {
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!pickerRef.current?.contains(event.target as Node)) onOpenChange(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen, onOpenChange]);
+
   const chooseDate = (scheduledDate?: string) => {
     onChange(scheduledDate ? { scheduledDate } : { scheduledDate, scheduledTime: undefined });
-    detailsRef.current?.removeAttribute("open");
+    if (!scheduledDate) onOpenChange(false);
   };
 
-  return <details className="roadmapSchedulePicker" ref={detailsRef}>
-    <summary aria-label={`${task.title || "タスク"}の予定を設定`}>{formatScheduleLabel(task.scheduledDate, task.scheduledTime)}</summary>
-    <div className="roadmapScheduleMenu">
+  return <div className="roadmapSchedulePicker" ref={pickerRef}>
+    <button className="roadmapScheduleTrigger" type="button" aria-label={`${task.title || "タスク"}の予定を設定`} aria-expanded={isOpen} onClick={() => onOpenChange(!isOpen)}>{formatScheduleLabel(task.scheduledDate, task.scheduledTime)}</button>
+    {isOpen && <div className="roadmapScheduleMenu">
       <button type="button" onClick={() => chooseDate(localDateValue())}>今日</button>
       <button type="button" onClick={() => chooseDate(localDateValue(1))}>明日</button>
       <label>日付を選択<input type="date" value={task.scheduledDate || ""} onChange={(event) => onChange({ scheduledDate: event.currentTarget.value || undefined })} /></label>
       <label className="roadmapScheduleTime">時間<input type="time" value={task.scheduledTime || ""} disabled={!task.scheduledDate} onChange={(event) => onChange({ scheduledTime: event.currentTarget.value || undefined })} /></label>
       {task.scheduledDate && <button type="button" className="roadmapScheduleClear" onClick={() => chooseDate(undefined)}>日付と時間を削除</button>}
-    </div>
-  </details>;
+    </div>}
+  </div>;
 }
 
 export default function AnnualRoadmapClient({ initialValue, birthday = "", onStateChange }: { initialValue: unknown; birthday?: string; onStateChange?: (value: unknown) => void }) {
@@ -83,6 +99,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
   const [editingThemeMonth, setEditingThemeMonth] = useState<string | null>(null);
   const [showPastMonths, setShowPastMonths] = useState(false);
   const [collapsedParents, setCollapsedParents] = useState<Record<string, boolean>>({});
+  const [openScheduleTaskId, setOpenScheduleTaskId] = useState<string | null>(null);
   const roadmapRef = useRef(roadmap); roadmapRef.current = roadmap;
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const pendingRef = useRef<string | null>(null);
@@ -131,10 +148,10 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
   function taskGroup(month: string, kind: TaskKind) {
     if (kind === "mustDo") {
       const tasks = yearPlan.months[month].mustDo;
-      return <section className="annualRoadmapTaskGroup annualRoadmapMustDoGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => { const collapsed = collapsedParents[task.id]; return <div className="annualRoadmapParentTask" key={task.id}><div className="annualRoadmapTask annualRoadmapScheduledTask">{task.children.length > 0 ? <button className="annualRoadmapParentToggle" type="button" onClick={() => setCollapsedParents((current) => ({ ...current, [task.id]: !collapsed }))} aria-label="子タスクを開閉">{collapsed ? "›" : "⌄"}</button> : <span aria-hidden="true" />}<input data-roadmap-task-id={task.id} value={task.title} placeholder="やるべきこと" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); addMustDo(month); } }} onChange={(event) => updateMustDo(month, task.id, { title: event.target.value })} /><TaskSchedulePicker task={task} onChange={(value) => updateMustDo(month, task.id, value)} /><button type="button" onClick={() => removeMustDo(month, task.id)} aria-label="やるべきことを削除">×</button></div>{!collapsed && <div className="annualRoadmapChildTasks">{task.children.map((child) => <div className="annualRoadmapTask annualRoadmapScheduledTask" key={child.id}><span aria-hidden="true" /><input data-roadmap-task-id={child.id} value={child.title} placeholder="子タスク" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); addMustDo(month, task.id); } }} onChange={(event) => updateMustDo(month, child.id, { title: event.target.value }, task.id)} /><TaskSchedulePicker task={child} onChange={(value) => updateMustDo(month, child.id, value, task.id)} /><button type="button" onClick={() => removeMustDo(month, child.id, task.id)} aria-label="子タスクを削除">×</button></div>)}<button className="annualRoadmapAddChildTask" type="button" onClick={() => addMustDo(month, task.id)}>＋ 子タスクを追加</button></div>}</div>; })}<button className="annualRoadmapAddTask" type="button" onClick={() => addMustDo(month)}>＋ タスクを追加</button></section>;
+      return <section className="annualRoadmapTaskGroup annualRoadmapMustDoGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => { const collapsed = collapsedParents[task.id]; return <div className="annualRoadmapParentTask" key={task.id}><div className="annualRoadmapTask annualRoadmapScheduledTask">{task.children.length > 0 ? <button className="annualRoadmapParentToggle" type="button" onClick={() => setCollapsedParents((current) => ({ ...current, [task.id]: !collapsed }))} aria-label="子タスクを開閉">{collapsed ? "›" : "⌄"}</button> : <span aria-hidden="true" />}<input data-roadmap-task-id={task.id} value={task.title} placeholder="やるべきこと" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); addMustDo(month); } }} onChange={(event) => updateMustDo(month, task.id, { title: event.target.value })} /><TaskSchedulePicker task={task} isOpen={openScheduleTaskId === task.id} onOpenChange={(open) => setOpenScheduleTaskId(open ? task.id : null)} onChange={(value) => updateMustDo(month, task.id, value)} /><button type="button" onClick={() => removeMustDo(month, task.id)} aria-label="やるべきことを削除">×</button></div>{!collapsed && <div className="annualRoadmapChildTasks">{task.children.map((child) => <div className="annualRoadmapTask annualRoadmapScheduledTask" key={child.id}><span aria-hidden="true" /><input data-roadmap-task-id={child.id} value={child.title} placeholder="子タスク" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); addMustDo(month, task.id); } }} onChange={(event) => updateMustDo(month, child.id, { title: event.target.value }, task.id)} /><TaskSchedulePicker task={child} isOpen={openScheduleTaskId === child.id} onOpenChange={(open) => setOpenScheduleTaskId(open ? child.id : null)} onChange={(value) => updateMustDo(month, child.id, value, task.id)} /><button type="button" onClick={() => removeMustDo(month, child.id, task.id)} aria-label="子タスクを削除">×</button></div>)}<button className="annualRoadmapAddChildTask" type="button" onClick={() => addMustDo(month, task.id)}>＋ 子タスクを追加</button></div>}</div>; })}<button className="annualRoadmapAddTask" type="button" onClick={() => addMustDo(month)}>＋ タスクを追加</button></section>;
     }
     const tasks = yearPlan.months[month][kind];
-    return <section className="annualRoadmapTaskGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => <div className="annualRoadmapTask annualRoadmapScheduledTask" key={task.id}><span aria-hidden="true" /><input data-roadmap-task-id={task.id} value={task.title} placeholder={taskLabels[kind]} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTask(month, kind, task.id); } }} onChange={(event) => updateTask(month, kind, task.id, { title: event.target.value })} /><TaskSchedulePicker task={task} onChange={(value) => updateTask(month, kind, task.id, value)} /><button type="button" onClick={() => removeTask(month, kind, task.id)} aria-label={`${taskLabels[kind]}を削除`}>×</button></div>)}<button className="annualRoadmapAddTask" type="button" onClick={() => addTask(month, kind)}>＋ タスクを追加</button></section>;
+    return <section className="annualRoadmapTaskGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => <div className="annualRoadmapTask annualRoadmapScheduledTask" key={task.id}><span aria-hidden="true" /><input data-roadmap-task-id={task.id} value={task.title} placeholder={taskLabels[kind]} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTask(month, kind, task.id); } }} onChange={(event) => updateTask(month, kind, task.id, { title: event.target.value })} /><TaskSchedulePicker task={task} isOpen={openScheduleTaskId === task.id} onOpenChange={(open) => setOpenScheduleTaskId(open ? task.id : null)} onChange={(value) => updateTask(month, kind, task.id, value)} /><button type="button" onClick={() => removeTask(month, kind, task.id)} aria-label={`${taskLabels[kind]}を削除`}>×</button></div>)}<button className="annualRoadmapAddTask" type="button" onClick={() => addTask(month, kind)}>＋ タスクを追加</button></section>;
   }
 
   return <main className="shell roadmapPage annualRoadmapPage">
