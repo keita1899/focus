@@ -4991,6 +4991,9 @@ select {
 .annualRoadmapPastMonthsToggle { justify-self: center; border: 0; background: transparent; color: var(--muted); padding: 8px 12px; font-size: .82rem; font-weight: 800; }
 .annualRoadmapPastMonthsToggle:hover { color: var(--accent-strong); }
 .annualRoadmapMonthHeader { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 6px; width: 100%; min-height: 48px; background: var(--surface-strong); color: var(--accent-strong); padding: 0 14px; text-align: left; }
+.annualRoadmapMonthHeader.isCurrentMonth { background: #dcefe4; box-shadow: inset 4px 0 0 var(--accent-strong); }
+.annualRoadmapMonthHeader.isCurrentMonth .annualRoadmapMonthToggle { background: var(--accent-strong); color: white; }
+.annualRoadmapMonthHeader.isCurrentMonth .annualRoadmapMonthTheme strong::after { display: inline-block; margin-left: 8px; border-radius: 999px; background: var(--accent-strong); color: white; padding: 2px 7px; content: "今月"; font-size: .68rem; vertical-align: 1px; }
 .annualRoadmapMonthToggle { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 5px; background: transparent; color: var(--accent-strong); font-weight: 900; }
 .annualRoadmapMonthToggle:hover { background: rgba(23, 107, 85, .1); }
 .annualRoadmapMonthTheme { display: flex; align-items: center; min-width: 0; min-height: 48px; gap: 12px; cursor: text; }
@@ -5008,6 +5011,7 @@ select {
 .roadmapSchedulePicker .roadmapScheduleTrigger { visibility: visible; overflow: hidden; width: 100%; height: 28px; border: 1px solid #dce7e0; border-radius: 7px; background: #f4f8f5; color: var(--accent-strong); padding: 5px 8px; font-size: .72rem; font-weight: 800; line-height: 1; text-align: center; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .roadmapSchedulePicker .roadmapScheduleTrigger[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
 .roadmapSchedulePicker .roadmapScheduleTrigger.isOverdue { border-color: #e7aaa3; background: #fff0ee; color: var(--danger); }
+.roadmapSchedulePicker .roadmapScheduleTrigger.isToday { border-color: var(--accent-strong); background: var(--accent-strong); color: white; box-shadow: 0 0 0 2px rgba(46, 125, 92, .16); }
 .roadmapScheduleTrigger svg { flex: 0 0 auto; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .roadmapScheduleTrigger span { overflow: hidden; text-overflow: ellipsis; }
 .annualRoadmapTask .roadmapScheduleTrigger { display: flex; align-items: center; justify-content: center; gap: 4px; }
