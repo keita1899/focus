@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 
-type RoadmapTask = { id: string; title: string; children: RoadmapTask[] };
+type RoadmapTask = { id: string; title: string; children: RoadmapTask[]; scheduledDate?: string; scheduledTime?: string };
 type MonthPlan = { theme: string; mustDo: RoadmapTask[]; chores: string[]; other: string[] };
 type YearPlan = { title: string; themes: string[]; months: Record<string, MonthPlan> };
 type RoadmapState = { years: Record<string, YearPlan> };
@@ -29,7 +29,7 @@ function normalizeState(value: unknown, currentYear: number): RoadmapState {
         const mustDo = Array.isArray(rawMonth?.mustDo) ? rawMonth!.mustDo!.map((task, taskIndex) => {
           if (typeof task === "string") return { id: `legacy-${year}-${index}-${taskIndex}`, title: task, children: [] };
           const item = task as Partial<RoadmapTask>;
-          return { id: typeof item.id === "string" ? item.id : `task-${year}-${index}-${taskIndex}`, title: typeof item.title === "string" ? item.title : "", children: Array.isArray(item.children) ? item.children.map((child, childIndex) => { const childItem = child as Partial<RoadmapTask>; return { id: typeof childItem.id === "string" ? childItem.id : `child-${year}-${index}-${taskIndex}-${childIndex}`, title: typeof childItem.title === "string" ? childItem.title : "", children: [] }; }) : [] };
+          return { id: typeof item.id === "string" ? item.id : `task-${year}-${index}-${taskIndex}`, title: typeof item.title === "string" ? item.title : "", scheduledDate: typeof item.scheduledDate === "string" ? item.scheduledDate : undefined, scheduledTime: typeof item.scheduledTime === "string" ? item.scheduledTime : undefined, children: Array.isArray(item.children) ? item.children.map((child, childIndex) => { const childItem = child as Partial<RoadmapTask>; return { id: typeof childItem.id === "string" ? childItem.id : `child-${year}-${index}-${taskIndex}-${childIndex}`, title: typeof childItem.title === "string" ? childItem.title : "", scheduledDate: typeof childItem.scheduledDate === "string" ? childItem.scheduledDate : undefined, scheduledTime: typeof childItem.scheduledTime === "string" ? childItem.scheduledTime : undefined, children: [] }; }) : [] };
         }) : [createTask()];
         return [String(index + 1), { theme: typeof rawMonth?.theme === "string" ? rawMonth.theme : "", mustDo: mustDo.length ? mustDo : [createTask()], chores: tasks("chores"), other: tasks("other") }];
       })),
@@ -41,7 +41,7 @@ function normalizeState(value: unknown, currentYear: number): RoadmapState {
 
 function saveRoadmap(value: string) { return fetch("/api/annual-roadmap", { method: "PUT", headers: { "Content-Type": "application/json" }, body: value, keepalive: true }).catch(() => undefined); }
 
-export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { initialValue: unknown; birthday?: string }) {
+export default function AnnualRoadmapClient({ initialValue, birthday = "", onStateChange }: { initialValue: unknown; birthday?: string; onStateChange?: (value: unknown) => void }) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [roadmap, setRoadmap] = useState(() => normalizeState(initialValue, currentYear));
@@ -68,7 +68,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
     saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => { await saveRoadmap(value); if (pendingRef.current === value) pendingRef.current = null; });
   }
   function update(updater: (current: RoadmapState) => RoadmapState) {
-    const next = updater(roadmapRef.current); roadmapRef.current = next; setRoadmap(next); enqueue(JSON.stringify(next));
+    const next = updater(roadmapRef.current); roadmapRef.current = next; setRoadmap(next); onStateChange?.(next); enqueue(JSON.stringify(next));
   }
   useEffect(() => () => enqueue(JSON.stringify(roadmapRef.current)), []);
   function changeYear(direction: -1 | 1) {
@@ -83,13 +83,13 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "" }: { i
   function updateTask(month: string, kind: Exclude<TaskKind, "mustDo">, index: number, value: string) { const tasks = [...yearPlan.months[month][kind]]; tasks[index] = value; updateMonth(month, { [kind]: tasks }); }
   function addTask(month: string, kind: Exclude<TaskKind, "mustDo">) { updateMonth(month, { [kind]: [...yearPlan.months[month][kind], ""] }); }
   function removeTask(month: string, kind: Exclude<TaskKind, "mustDo">, index: number) { const tasks = yearPlan.months[month][kind].filter((_, taskIndex) => taskIndex !== index); updateMonth(month, { [kind]: tasks.length ? tasks : [""] }); }
-  function updateMustDo(month: string, id: string, title: string, parentId?: string) { const tasks = yearPlan.months[month].mustDo.map((task) => parentId ? task.id === parentId ? { ...task, children: task.children.map((child) => child.id === id ? { ...child, title } : child) } : task : task.id === id ? { ...task, title } : task); updateMonth(month, { mustDo: tasks }); }
+  function updateMustDo(month: string, id: string, value: Partial<RoadmapTask>, parentId?: string) { const tasks = yearPlan.months[month].mustDo.map((task) => parentId ? task.id === parentId ? { ...task, children: task.children.map((child) => child.id === id ? { ...child, ...value } : child) } : task : task.id === id ? { ...task, ...value } : task); updateMonth(month, { mustDo: tasks }); }
   function addMustDo(month: string, parentId?: string) { const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: [...task.children, createTask()] } : task) : [...yearPlan.months[month].mustDo, createTask()]; updateMonth(month, { mustDo: tasks }); }
   function removeMustDo(month: string, id: string, parentId?: string) { const tasks = parentId ? yearPlan.months[month].mustDo.map((task) => task.id === parentId ? { ...task, children: task.children.filter((child) => child.id !== id) } : task) : yearPlan.months[month].mustDo.filter((task) => task.id !== id); updateMonth(month, { mustDo: tasks.length ? tasks : [createTask()] }); }
   function taskGroup(month: string, kind: TaskKind) {
     if (kind === "mustDo") {
       const tasks = yearPlan.months[month].mustDo;
-      return <section className="annualRoadmapTaskGroup annualRoadmapMustDoGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => <div className="annualRoadmapParentTask" key={task.id}><div className="annualRoadmapTask"><span aria-hidden="true" /><input value={task.title} placeholder="やるべきこと" onChange={(event) => updateMustDo(month, task.id, event.target.value)} /><button type="button" onClick={() => removeMustDo(month, task.id)} aria-label="やるべきことを削除">×</button></div><div className="annualRoadmapChildTasks">{task.children.map((child) => <div className="annualRoadmapTask" key={child.id}><span aria-hidden="true" /><input value={child.title} placeholder="子タスク" onChange={(event) => updateMustDo(month, child.id, event.target.value, task.id)} /><button type="button" onClick={() => removeMustDo(month, child.id, task.id)} aria-label="子タスクを削除">×</button></div>)}<button className="annualRoadmapAddChildTask" type="button" onClick={() => addMustDo(month, task.id)}>＋ 子タスクを追加</button></div></div>)}<button className="annualRoadmapAddTask" type="button" onClick={() => addMustDo(month)}>＋ タスクを追加</button></section>;
+      return <section className="annualRoadmapTaskGroup annualRoadmapMustDoGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => <div className="annualRoadmapParentTask" key={task.id}><div className="annualRoadmapTask annualRoadmapScheduledTask"><span aria-hidden="true" /><input value={task.title} placeholder="やるべきこと" onChange={(event) => updateMustDo(month, task.id, { title: event.target.value })} /><input type="date" value={task.scheduledDate || ""} onChange={(event) => updateMustDo(month, task.id, { scheduledDate: event.target.value || undefined })} aria-label="予定日" /><input type="time" value={task.scheduledTime || ""} onChange={(event) => updateMustDo(month, task.id, { scheduledTime: event.target.value || undefined })} aria-label="予定時刻" /><button type="button" onClick={() => removeMustDo(month, task.id)} aria-label="やるべきことを削除">×</button></div><div className="annualRoadmapChildTasks">{task.children.map((child) => <div className="annualRoadmapTask annualRoadmapScheduledTask" key={child.id}><span aria-hidden="true" /><input value={child.title} placeholder="子タスク" onChange={(event) => updateMustDo(month, child.id, { title: event.target.value }, task.id)} /><input type="date" value={child.scheduledDate || ""} onChange={(event) => updateMustDo(month, child.id, { scheduledDate: event.target.value || undefined }, task.id)} aria-label="予定日" /><input type="time" value={child.scheduledTime || ""} onChange={(event) => updateMustDo(month, child.id, { scheduledTime: event.target.value || undefined }, task.id)} aria-label="予定時刻" /><button type="button" onClick={() => removeMustDo(month, child.id, task.id)} aria-label="子タスクを削除">×</button></div>)}<button className="annualRoadmapAddChildTask" type="button" onClick={() => addMustDo(month, task.id)}>＋ 子タスクを追加</button></div></div>)}<button className="annualRoadmapAddTask" type="button" onClick={() => addMustDo(month)}>＋ タスクを追加</button></section>;
     }
     const tasks = yearPlan.months[month][kind];
     return <section className="annualRoadmapTaskGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task, taskIndex) => <div className="annualRoadmapTask" key={taskIndex}><span aria-hidden="true" /><input value={task} placeholder={taskLabels[kind]} onChange={(event) => updateTask(month, kind, taskIndex, event.target.value)} /><button type="button" onClick={() => removeTask(month, kind, taskIndex)} aria-label={`${taskLabels[kind]}を削除`}>×</button></div>)}<button className="annualRoadmapAddTask" type="button" onClick={() => addTask(month, kind)}>＋ タスクを追加</button></section>;
