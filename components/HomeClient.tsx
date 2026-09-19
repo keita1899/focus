@@ -254,7 +254,7 @@ function formatDateKey(date: Date) {
 
 function getRoadmapScheduledTasks(value: unknown): RoadmapScheduledTask[] {
   if (!value || typeof value !== "object") return [];
-  const years = (value as { years?: Record<string, { months?: Record<string, { mustDo?: unknown[] }> }> }).years;
+  const years = (value as { years?: Record<string, { months?: Record<string, { mustDo?: unknown[]; chores?: unknown[]; other?: unknown[] }> }> }).years;
   if (!years) return [];
   const items: RoadmapScheduledTask[] = [];
   Object.values(years).forEach((year) => Object.values(year.months || {}).forEach((month) => {
@@ -264,7 +264,7 @@ function getRoadmapScheduledTasks(value: unknown): RoadmapScheduledTask[] {
       if (typeof task.id === "string" && typeof task.title === "string" && typeof task.scheduledDate === "string" && task.scheduledDate) items.push({ id: task.id, title: task.title, scheduledDate: task.scheduledDate, scheduledTime: typeof task.scheduledTime === "string" ? task.scheduledTime : undefined });
       task.children?.forEach(visit);
     };
-    month.mustDo?.forEach(visit);
+    month.mustDo?.forEach(visit); month.chores?.forEach(visit); month.other?.forEach(visit);
   }));
   return items.sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate) || (left.scheduledTime || "99:99").localeCompare(right.scheduledTime || "99:99"));
 }
@@ -1034,6 +1034,9 @@ export default function HomeClient({
   );
   const overdueInboxTasks = scheduledInboxTasks.filter(isInboxTaskOverdue);
   const roadmapScheduledTasks = getRoadmapScheduledTasks(annualRoadmapValue).filter((task) => task.scheduledDate >= todayKey);
+  const todayRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate === todayKey);
+  const weekRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate > todayKey && task.scheduledDate >= weekStartKey && task.scheduledDate <= weekEndKey);
+  const monthRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate > todayKey && task.scheduledDate.startsWith(todayKey.slice(0, 7)) && (task.scheduledDate < weekStartKey || task.scheduledDate > weekEndKey));
   const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
@@ -2616,7 +2619,7 @@ export default function HomeClient({
                 <div className="todayRecurringColumn">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
                   <div className="sectionHeader">
-                    <h3>今日のスケジュール（繰り返し）</h3>
+                    <h3>今日のスケジュール</h3>
                   </div>
                   <div className="dailyGroupGrid">
                     {dailyTaskGroupsByTime
@@ -2668,21 +2671,17 @@ export default function HomeClient({
                     </section>
                   )}
                   <div className="todayScheduledGroup" aria-label="今日・今週・今月のタスク">
-                    <section className="todayTaskSection roadmapScheduleSection" aria-label="ロードマップの予定">
-                      <div className="sectionHeader"><h3>ロードマップの予定</h3></div>
-                      <div className="taskList">{roadmapScheduledTasks.length ? roadmapScheduledTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>) : <p className="emptyText">日時を設定したロードマップのタスクが表示されます。</p>}</div>
-                    </section>
                     <section className="todayTaskSection todayTaskTodaySection">
-                      <div className="sectionHeader"><h3>単発：今日やること</h3></div>
-                      <div className="taskList">{todayInboxTasks.length ? todayInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("today", "今日")}</div>
+                      <div className="sectionHeader"><h3>今日やること</h3></div>
+                      <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskWeekSection">
-                      <div className="sectionHeader"><h3>単発：今週中</h3></div>
-                      <div className="taskList">{weekInboxTasks.length ? weekInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("week", "今週")}</div>
+                      <div className="sectionHeader"><h3>今週中</h3></div>
+                      <div className="taskList">{weekInboxTasks.map(renderScheduledInboxTask)}{weekRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>)}{!weekInboxTasks.length && !weekRoadmapTasks.length && renderScheduledInboxEmptyState("week", "今週")}</div>
                     </section>
                     <section className="todayTaskSection todayTaskMonthSection">
-                      <div className="sectionHeader"><h3>単発：今月中</h3></div>
-                      <div className="taskList">{monthInboxTasks.length ? monthInboxTasks.map(renderScheduledInboxTask) : renderScheduledInboxEmptyState("month", "今月")}</div>
+                      <div className="sectionHeader"><h3>今月中</h3></div>
+                      <div className="taskList">{monthInboxTasks.map(renderScheduledInboxTask)}{monthRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>)}{!monthInboxTasks.length && !monthRoadmapTasks.length && renderScheduledInboxEmptyState("month", "今月")}</div>
                     </section>
                   </div>
                 </aside>
