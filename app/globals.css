@@ -130,6 +130,28 @@ body > .topbar + .shell {
   flex-wrap: wrap;
 }
 
+.studyModeHeader { display: flex; width: 100%; justify-content: center; }
+.studyShell { display: grid; gap: 18px; width: min(100% - 32px, 760px); margin: 34px auto; }
+.studyShell > header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.studyShell header p, .studyShell h1, .studyShell h2, .studyShell h3 { margin: 0; }
+.studyShell header p, .studySource, .studyCard > p { color: var(--muted); }
+.studyShell header strong { color: var(--accent-strong); }
+.studyTabs { justify-content: center; }
+.studyCard { display: grid; gap: 16px; border: 1px solid var(--line); border-radius: 10px; background: white; padding: 22px; }
+.studyCard > span { color: var(--accent-strong); font-size: .84rem; font-weight: 900; }
+.studyCard h2 { font-size: 1.25rem; line-height: 1.65; }
+.studyAnswer { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 16px; white-space: pre-wrap; }
+.studyReveal, .studyAddForm > button { border: 0; border-radius: 7px; background: var(--accent); color: white; min-height: 42px; font-weight: 900; }
+.studyLevelButtons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.studyLevelButtons button { min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: white; font-weight: 900; }
+.studyLevelButtons button:first-child { color: var(--danger); }.studyLevelButtons button:last-child { color: var(--accent-strong); }
+.studyAddForm label { display: grid; gap: 6px; color: var(--muted); font-size: .85rem; font-weight: 800; }
+.studyAddForm input, .studyAddForm textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 9px; color: var(--ink); }
+.studyAddForm textarea { min-height: 100px; resize: vertical; }
+.studyIntervalList { display: flex; flex-wrap: wrap; gap: 10px; }
+.studyIntervalList label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; font-weight: 800; }
+@media (max-width: 640px) { .studyShell { width: min(100% - 20px, 760px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyCard { padding: 16px; } }
+
 .topbarLinks .userBadge {
   order: -1;
 }

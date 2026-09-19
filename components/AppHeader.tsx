@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { SignOutButton } from "./AuthControls";
@@ -13,6 +14,7 @@ function getTodayLabel() {
 
 export default function AppHeader() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [todayLabel, setTodayLabel] = useState(() => getTodayLabel());
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
@@ -38,6 +40,7 @@ export default function AppHeader() {
 
   return (
     <header className="topbar">
+      {pathname === "/study" ? <div className="studyModeHeader"><a className="navLink" href="/">通常モードへ戻る</a></div> : <>
       <div className="headerDateBlock">
         <time className="todayLabel" dateTime={todayLabel}>
           {todayLabel}
@@ -60,6 +63,9 @@ export default function AppHeader() {
           <a className="navLink" href="/lists">
             リスト
           </a>
+          <a className="navLink" href="/study">
+            学習
+          </a>
         </nav>
         <div className="accountMenu">
           <button className="settingsLink" type="button" aria-label="アカウントメニュー" aria-expanded={isAccountMenuOpen} onClick={() => setIsAccountMenuOpen((current) => !current)}>⚙</button>
@@ -70,6 +76,7 @@ export default function AppHeader() {
           </div>}
         </div>
       </div>
+      </>}
     </header>
   );
 }
