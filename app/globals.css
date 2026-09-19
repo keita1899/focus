@@ -140,9 +140,15 @@ body > .topbar + .shell {
 .studyShell header strong { color: var(--accent-strong); }
 .studyTabs { justify-content: center; }
 .studyLayout { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; }
-.studySidebar { display: grid; align-content: start; gap: 4px; border-right: 1px solid #d8e1fa; padding-right: 12px; }
+.studySidebar { display: flex; flex-direction: column; gap: 12px; min-height: 360px; border-right: 1px solid #d8e1fa; padding-right: 12px; }
+.studyCategoryList { display: grid; align-content: start; gap: 4px; }
 .studySidebar button { border: 0; border-radius: 6px; background: transparent; color: var(--muted); padding: 8px; text-align: left; font-weight: 800; }
 .studySidebar button.active, .studySidebar button:hover { background: #e9efff; color: #3159a7; }
+.studyCategoryForm { display: grid; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid #d8e1fa; }
+.studyCategoryForm label { color: var(--muted); font-size: .72rem; font-weight: 800; }
+.studyCategoryForm > div { display: grid; grid-template-columns: minmax(0, 1fr) 34px; gap: 5px; }
+.studyCategoryForm input { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 7px; }
+.studyCategoryForm button { display: grid; place-items: center; background: #e9efff; color: #3159a7; padding: 0; text-align: center; }
 .studyCard { display: grid; gap: 16px; border: 1px solid #d8e1fa; border-radius: 12px; background: linear-gradient(180deg, #ffffff, #f5f8ff); padding: 22px; box-shadow: 0 10px 28px rgba(39, 73, 142, .08); }
 .studyCard > span { color: var(--accent-strong); font-size: .84rem; font-weight: 900; }
 .studyCard h2 { font-size: 1.25rem; line-height: 1.65; }
@@ -152,13 +158,13 @@ body > .topbar + .shell {
 .studyLevelButtons button { min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: white; font-weight: 900; }
 .studyLevelButtons button:first-child { color: var(--danger); }.studyLevelButtons button:last-child { color: var(--accent-strong); }
 .studyAddForm label { display: grid; gap: 6px; color: var(--muted); font-size: .85rem; font-weight: 800; }
-.studyAddForm input, .studyAddForm textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 9px; color: var(--ink); }
+.studyAddForm input, .studyAddForm textarea, .studyAddForm select { width: 100%; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 9px; color: var(--ink); }
 .studyAddForm textarea { min-height: 100px; resize: vertical; }
 .studyIntervalList { display: flex; flex-wrap: wrap; gap: 10px; }
 .studyIntervalList label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; font-weight: 800; }
 .studyIntervalList input { width: 13px; height: 13px; accent-color: #3159a7; }
 @media (max-width: 640px) { .studyShell { width: min(100% - 20px, 760px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyCard { padding: 16px; } }
-@media (max-width: 640px) { .studyLayout { grid-template-columns: 1fr; } .studySidebar { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; border-right: 0; border-bottom: 1px solid #d8e1fa; padding: 0 0 8px; } }
+@media (max-width: 640px) { .studyLayout { grid-template-columns: 1fr; } .studySidebar { min-height: 0; border-right: 0; border-bottom: 1px solid #d8e1fa; padding: 0 0 8px; } .studyCategoryList { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; } .studyCategoryForm { margin-top: 0; } }
 
 .topbarLinks .userBadge {
   order: -1;
@@ -5051,16 +5057,18 @@ select {
 .annualRoadmapTaskGroup { display: grid; gap: 4px; }
 .annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-radius: 5px; background: #e8f3ec; color: var(--accent-strong); font-size: .84rem; padding: 7px 9px; }
 .annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 42px; padding-block: 4px; border-bottom: 1px solid #edf0ed; }
-.annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 132px 94px 26px; }
-.annualRoadmapScheduledTask input[type="date"], .annualRoadmapScheduledTask input[type="time"] { min-height: 28px; border: 0; background: transparent; color: var(--muted); font-size: .76rem; padding: 0; }
-.annualRoadmapScheduledTask input[type="date"] { border: 1px solid #dce7e0; border-radius: 999px; background: #f4f8f5; padding: 0 8px; color: var(--accent-strong); font-weight: 800; }
-.annualRoadmapScheduledTask input[type="date"]::-webkit-datetime-edit { color: var(--accent-strong); }
-.roadmapDatePresets { position: relative; display: inline-flex; }
-.roadmapDatePresets > button, .roadmapDateMenu button { visibility: visible; width: auto; height: 27px; border: 1px solid #dce7e0; border-radius: 6px; background: #f4f8f5; color: var(--accent-strong); padding: 0 8px; font-size: .72rem; }
-.roadmapDateMenu { display: none; position: absolute; z-index: 5; top: 30px; left: 0; width: 112px; padding: 4px; border: 1px solid var(--line); border-radius: 7px; background: white; box-shadow: 0 8px 18px rgba(0,0,0,.12); }
-.roadmapDateMenu.open { display: grid; gap: 2px; }
-.roadmapDateMenu button { border: 0; background: transparent; text-align: left; }
-.roadmapDateMenu button:hover { background: #eef6f1; }
+.annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 112px 26px; }
+.roadmapSchedulePicker { position: relative; min-width: 0; }
+.roadmapSchedulePicker summary { overflow: hidden; height: 28px; border: 1px solid #dce7e0; border-radius: 999px; background: #f4f8f5; color: var(--accent-strong); padding: 5px 10px; font-size: .72rem; font-weight: 800; text-align: center; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; list-style: none; }
+.roadmapSchedulePicker summary::-webkit-details-marker { display: none; }
+.roadmapSchedulePicker[open] summary { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
+.roadmapScheduleMenu { position: absolute; z-index: 20; top: 34px; right: 0; display: grid; gap: 4px; width: 220px; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: white; box-shadow: 0 10px 24px rgba(0, 0, 0, .14); }
+.roadmapScheduleMenu button { visibility: visible; width: 100%; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); padding: 0 8px; font-size: .78rem; text-align: left; }
+.roadmapScheduleMenu button:hover { background: #eef6f1; }
+.roadmapScheduleMenu label { display: grid; grid-template-columns: 1fr 126px; align-items: center; gap: 8px; color: var(--muted); padding: 5px 8px; font-size: .75rem; font-weight: 800; }
+.roadmapScheduleMenu input[type="date"], .roadmapScheduleMenu input[type="time"] { width: 100%; min-height: 30px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); padding: 3px 5px; font-size: .75rem; }
+.roadmapScheduleTime { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 9px !important; }
+.roadmapScheduleMenu .roadmapScheduleClear { color: var(--danger); }
 .annualRoadmapTask > span { width: 14px; height: 14px; border: 1.5px solid #b6c4ba; border-radius: 999px; }
 .annualRoadmapParentToggle { visibility: visible !important; width: 18px !important; height: 22px !important; border: 0 !important; background: transparent !important; color: var(--accent-strong) !important; }
 .annualRoadmapTask input { min-height: 34px; border: 0; border-radius: 0; background: transparent; padding: 0; }
@@ -5079,8 +5087,8 @@ select {
 @media (max-width: 640px) {
   .annualRoadmapTaskColumns { grid-template-columns: 1fr; gap: 16px; }
   .annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 26px; }
-  .annualRoadmapScheduledTask input[type="date"] { grid-column: 2; }
-  .annualRoadmapScheduledTask input[type="time"] { grid-column: 2; }
+  .roadmapSchedulePicker { grid-column: 2; width: 112px; }
+  .roadmapScheduleMenu { right: auto; left: 0; }
 }
 
 .roadmapBlockWithAdd {
