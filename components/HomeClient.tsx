@@ -972,7 +972,6 @@ export default function HomeClient({
   const [selectedHomeTab, setSelectedHomeTab] =
     useState<HomeTab>("today");
   const [selectedTaskTab, setSelectedTaskTab] = useState<TaskTab>("inbox");
-  const [isCurrentTaskPanelOpen, setIsCurrentTaskPanelOpen] = useState(true);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -991,7 +990,6 @@ export default function HomeClient({
   const currentTime = useCurrentTime();
   const todayDailyPattern = planner.dailyPatternByWeekday[currentTime.getDay()];
   const currentTimeValue = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
-  const currentTimeWithSeconds = `${currentTimeValue}:${String(currentTime.getSeconds()).padStart(2, "0")}`;
   const availableDailyTasks = dailyTaskGroupsByTime
     .filter((group) => group.pattern === todayDailyPattern)
     .flatMap((group) => group.tasks.map((task) => ({ group, task })))
@@ -2921,25 +2919,6 @@ export default function HomeClient({
 
         </section>
       </section>
-
-      <aside className={`currentTaskModal${isCurrentTaskPanelOpen ? "" : " isCollapsed"}`} aria-live="polite" aria-label="現在のタスク">
-        <button className="currentTaskPanelToggle" type="button" onClick={() => setIsCurrentTaskPanelOpen((current) => !current)} aria-label={isCurrentTaskPanelOpen ? "現在のタスクを隠す" : "現在のタスクを表示"} aria-expanded={isCurrentTaskPanelOpen}>
-          {isCurrentTaskPanelOpen ? "×" : "‹"}
-        </button>
-        <div className="currentTaskPanelContent">
-          <time dateTime={currentTimeWithSeconds}>{formatTimeLabel(currentTimeWithSeconds)}</time>
-          <strong>{currentTaskEntry ? `${formatTimeLabel(currentTaskEntry.time)}開始 ${currentTaskEntry.task.title || "無題のタスク"}` : "現在のタスクはありません"}</strong>
-          {currentTaskEntry && (
-            <button
-              className="currentTaskCompleteButton"
-              type="button"
-              onClick={() => currentTaskEntry.source === "daily" ? toggleDailyTask(currentTaskEntry.group.key, currentTaskEntry.task.id) : completeInboxTask(currentTaskEntry.task.id)}
-            >
-              完了
-            </button>
-          )}
-        </div>
-      </aside>
 
       {isDailyGroupModalOpen && (
         <div className="dailyGroupModalBackdrop" role="presentation">
