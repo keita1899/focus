@@ -1181,6 +1181,13 @@ h2 {
   gap: 12px;
   align-items: start;
 }
+.todayTaskLayout.isSingleColumn { grid-template-columns: minmax(0, 1fr); }
+
+.todayTaskTodaySection .scheduledInboxTask { grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-rows: auto; gap: 7px; min-height: 42px; border: 0; border-bottom: 1px solid #edf0ed; border-radius: 0; background: transparent; padding: 4px 0; box-shadow: none; }
+.todayTaskTodaySection .scheduledInboxTask > .checkButton { grid-column: 1; grid-row: 1; width: 14px; height: 14px; min-height: 14px; border: 1.5px solid #b6c4ba; background: transparent; color: transparent; }
+.todayTaskTodaySection .scheduledInboxTask > .checkButton:hover { border-color: var(--accent-strong); background: #e8f3ec; color: var(--accent-strong); }
+.todayTaskTodaySection .scheduledInboxTask > .taskTitleView { grid-column: 2; grid-row: 1; padding: 0; }
+.todayTaskTodaySection .scheduledInboxTask > .scheduledInboxMeta { display: flex; grid-column: 3; grid-row: 1; gap: 5px; }
 
 .todayTaskFullWidth {
   width: 100%;

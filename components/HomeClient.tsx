@@ -17,7 +17,6 @@ type HomeTab =
   | "today"
   | "tasks"
   | "roadmap";
-type TaskTab = "inbox" | "recurring";
 type ScheduledInboxBucket = "today" | "week" | "month";
 type RoadmapScheduledTask = { id: string; title: string; scheduledDate: string; scheduledTime?: string };
 
@@ -939,9 +938,6 @@ export default function HomeClient({
       return {};
     }
   });
-  const [newInboxTaskTitle, setNewInboxTaskTitle] = useState("");
-  const [newInboxTaskDate, setNewInboxTaskDate] = useState("");
-  const [newInboxTaskTime, setNewInboxTaskTime] = useState("");
   const [newDailyTaskTitles, setNewDailyTaskTitles] = useState(() =>
     createEmptyDailyTaskTitleMap(),
   );
@@ -971,7 +967,6 @@ export default function HomeClient({
   );
   const [selectedHomeTab, setSelectedHomeTab] =
     useState<HomeTab>("today");
-  const [selectedTaskTab, setSelectedTaskTab] = useState<TaskTab>("inbox");
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -1037,15 +1032,16 @@ export default function HomeClient({
   const roadmapScheduledTasks = getRoadmapScheduledTasks(annualRoadmapValue).filter((task) => task.scheduledDate >= todayKey);
   const todayRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate === todayKey);
   const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
+  const todayWeeklyTasks = planner.weeklyTasks.filter((task) => task.weekday === currentWeekday);
+  const todayMonthlyTasks = planner.monthlyTasks.filter((task) => task.dayOfMonth === currentDayOfMonth);
+  const hasTodaySideTasks = hasOverdueTasks || todayWeeklyTasks.length > 0 || todayMonthlyTasks.length > 0;
   const homeTabs: Array<{ key: HomeTab; label: string }> = [
     { key: "today", label: "今日" },
-    { key: "tasks", label: "タスク" },
     { key: "roadmap", label: "ロードマップ" },
+    { key: "tasks", label: "タスク" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showTasksTab = selectedHomeTab === "tasks";
-  const showInboxTab = showTasksTab && selectedTaskTab === "inbox";
-  const showRecurringTab = showTasksTab && selectedTaskTab === "recurring";
   const showRoadmapTab = selectedHomeTab === "roadmap";
 
   useEffect(() => {
@@ -1058,7 +1054,6 @@ export default function HomeClient({
         setSelectedHomeTab(storedTab);
       } else if (storedTab === "inbox" || storedTab === "recurring") {
         setSelectedHomeTab("tasks");
-        setSelectedTaskTab(storedTab);
       }
     } catch {
       return;
@@ -1561,19 +1556,6 @@ export default function HomeClient({
     }));
   }
 
-  function addInboxTask() {
-    const title = newInboxTaskTitle.trim();
-    if (!title) return;
-    setPlanner((current) => ({
-      ...current,
-      inboxTasks: [
-        ...current.inboxTasks,
-        { id: createId("inbox-task"), title, done: false, scheduledDate: newInboxTaskDate || undefined, scheduledTime: newInboxTaskTime || undefined },
-      ],
-  }));
-  setNewInboxTaskTitle("");
-  }
-
   function openScheduledInboxTaskForm(bucket: ScheduledInboxBucket) {
     const defaults: Record<ScheduledInboxBucket, string> = {
       today: todayKey,
@@ -1600,33 +1582,6 @@ export default function HomeClient({
     }));
     setScheduledInboxDrafts((current) => ({ ...current, [bucket]: { title: "", date: "", time: current[bucket].time } }));
     setOpenScheduledInboxForm(null);
-  }
-
-  function updateInboxTaskTitle(id: string, title: string) {
-    setPlanner((current) => ({
-      ...current,
-      inboxTasks: current.inboxTasks.map((task) =>
-        task.id === id ? { ...task, title } : task,
-      ),
-    }));
-  }
-
-  function updateInboxTaskScheduledDate(id: string, scheduledDate: string) {
-    setPlanner((current) => ({
-      ...current,
-      inboxTasks: current.inboxTasks.map((task) =>
-        task.id === id ? { ...task, scheduledDate: scheduledDate || undefined } : task,
-      ),
-    }));
-  }
-
-  function updateInboxTaskScheduledTime(id: string, scheduledTime: string) {
-    setPlanner((current) => ({
-      ...current,
-      inboxTasks: current.inboxTasks.map((task) =>
-        task.id === id ? { ...task, scheduledTime: scheduledTime || undefined } : task,
-      ),
-    }));
   }
 
   function completeInboxTask(id: string) {
@@ -2605,22 +2560,15 @@ export default function HomeClient({
             })}
           </div>
 
-          {showTasksTab && (
-            <div className="tabList taskSubTabList" role="tablist" aria-label="タスクの種類">
-              <button className={selectedTaskTab === "inbox" ? "tabButton active" : "tabButton"} type="button" role="tab" aria-selected={selectedTaskTab === "inbox"} onClick={() => setSelectedTaskTab("inbox")}>Inbox</button>
-              <button className={selectedTaskTab === "recurring" ? "tabButton active" : "tabButton"} type="button" role="tab" aria-selected={selectedTaskTab === "recurring"} onClick={() => setSelectedTaskTab("recurring")}>繰り返し</button>
-            </div>
-          )}
-
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
-              <div className="todayTaskLayout" aria-label="今日のタスク">
+              <div className={`todayTaskLayout${hasTodaySideTasks ? "" : " isSingleColumn"}`} aria-label="今日のタスク">
                 <section className="todayTaskSection todayTaskTodaySection" aria-label="今日やること">
                   <div className="sectionHeader"><h3>今日やること</h3></div>
                   <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
                 </section>
 
-                <aside className="todayTaskColumn" aria-label="期限切れと繰り返しタスク">
+                {hasTodaySideTasks && <aside className="todayTaskColumn" aria-label="期限切れと繰り返しタスク">
                   {hasOverdueTasks && (
                     <section className="todayOverdueSection" aria-label="期限切れタスク">
                       <div className="sectionHeader"><h3>期限切れタスク</h3></div>
@@ -2631,20 +2579,20 @@ export default function HomeClient({
                       </div>
                     </section>
                   )}
-                  <section className="weeklySection" aria-label="毎週のタスク">
+                  {todayWeeklyTasks.length > 0 && <section className="weeklySection" aria-label="毎週のタスク">
                     <div className="sectionHeader"><h3>毎週のタスク</h3><span className="sectionMeta">{getWeekdayLabel(new Date().getDay())}</span></div>
-                    <div className="taskList">{planner.weeklyTasks.filter((task) => task.weekday === new Date().getDay()).length === 0 && <p className="emptyText">毎週のタスクはありません。</p>}{planner.weeklyTasks.filter((task) => task.weekday === new Date().getDay()).map((task) => renderWeeklyTask(task, new Date().getDay()))}</div>
-                  </section>
-                  <section className="monthlySection" aria-label="毎月のタスク">
+                    <div className="taskList">{todayWeeklyTasks.map((task) => renderWeeklyTask(task, currentWeekday))}</div>
+                  </section>}
+                  {todayMonthlyTasks.length > 0 && <section className="monthlySection" aria-label="毎月のタスク">
                     <div className="sectionHeader"><h3>毎月のタスク</h3><span className="sectionMeta">{new Date().getDate()}日</span></div>
-                    <div className="taskList">{planner.monthlyTasks.filter((task) => task.dayOfMonth === new Date().getDate()).length === 0 && <p className="emptyText">毎月のタスクはありません。</p>}{planner.monthlyTasks.filter((task) => task.dayOfMonth === new Date().getDate()).map((task) => renderMonthlyTask(task, new Date().getDate()))}</div>
-                  </section>
-                </aside>
+                    <div className="taskList">{todayMonthlyTasks.map((task) => renderMonthlyTask(task, currentDayOfMonth))}</div>
+                  </section>}
+                </aside>}
               </div>
             </section>
           )}
 
-          {showRecurringTab && (
+          {showTasksTab && (
             <section className="homeTabPanel recurringColumn" aria-label="繰り返しタスク">
               <div className="recurringGrid" aria-label="繰り返しタスクの編集">
                 <section className="dailySectionCard recurringDailySection" aria-label="毎日のタスク">
@@ -2754,115 +2702,6 @@ export default function HomeClient({
               </div>
             </section>
           )}
-
-
-          {showInboxTab && (
-            <section className="homeTabPanel todayInboxSection" aria-label="Inboxのタスク">
-              <div className="sectionHeader">
-                <h3>Inbox</h3>
-              </div>
-              <form
-                className="taskForm inboxTaskCreateForm"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  addInboxTask();
-                }}
-              >
-                <input
-                  aria-label="Inboxのタスクを追加"
-                  placeholder="Inboxタスク"
-                  value={newInboxTaskTitle}
-                  onChange={(event) => setNewInboxTaskTitle(event.target.value)}
-                />
-                <input
-                  type="date"
-                  aria-label="Inboxタスクの実行日"
-                  value={newInboxTaskDate}
-                  onChange={(event) => setNewInboxTaskDate(event.target.value)}
-                />
-                <input
-                  type="time"
-                  aria-label="Inboxタスクの実行時刻"
-                  value={newInboxTaskTime}
-                  onChange={(event) => setNewInboxTaskTime(event.target.value)}
-                />
-                <button type="submit" aria-label="Inboxのタスクを追加">
-                  +
-                </button>
-              </form>
-              <div className="taskList">
-                {planner.inboxTasks.length === 0 && (
-                  <p className="emptyText">Inboxタスクはありません。</p>
-                )}
-                {sortedInboxTasks.map((task) => (
-                  <article className={`${task.done ? "taskItem done inboxTaskItem" : "taskItem inboxTaskItem"}${isInboxTaskOverdue(task) ? " taskItemImportant" : ""}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
-                    {(() => {
-                      const editTarget = { kind: "inbox", id: task.id } as const;
-                      const isEditing = isTaskBeingEdited(editTarget);
-                      return (
-                        <>
-                          <button
-                            className="checkButton"
-                            type="button"
-                            onClick={() => completeInboxTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}を完了`}
-                          >
-                            ✓
-                          </button>
-                          {isEditing ? (
-                            <textarea
-                              aria-label="Inboxタスク"
-                              value={task.title}
-                              onChange={(event) =>
-                                updateInboxTaskTitle(task.id, event.target.value)
-                              }
-                              onKeyDown={handleTaskEditKeyDown}
-                              onBlur={() => finishTaskEdit(editTarget)}
-                              rows={1}
-                            />
-                          ) : (
-                            <div
-                              className="taskTitleView"
-                              role="textbox"
-                              aria-label="Inboxタスク"
-                              aria-readonly="true"
-                              tabIndex={0}
-                              onDoubleClick={() => beginTaskEdit(editTarget)}
-                            >
-                              {task.title || " "}
-                            </div>
-                          )}
-                          <input
-                            className="inboxTaskDate"
-                            type="date"
-                            aria-label={`${task.title || "Inboxタスク"}の実行日`}
-                            value={task.scheduledDate || ""}
-                            onChange={(event) => updateInboxTaskScheduledDate(task.id, event.currentTarget.value)}
-                          />
-                          <input
-                            className="inboxTaskTime"
-                            type="time"
-                            aria-label={`${task.title || "Inboxタスク"}の実行時刻`}
-                            value={task.scheduledTime || ""}
-                            onChange={(event) => updateInboxTaskScheduledTime(task.id, event.currentTarget.value)}
-                          />
-                          <button
-                            className="iconButton"
-                            type="button"
-                            onClick={() => completeInboxTask(task.id)}
-                            aria-label={`${task.title || "無題のタスク"}を削除`}
-                          >
-                            ×
-                          </button>
-                        </>
-                      );
-                    })()}
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-
           {showRoadmapTab && <AnnualRoadmapClient initialValue={annualRoadmapValue} birthday={planner.birthday} onStateChange={setAnnualRoadmapValue} />}
 
         </section>
