@@ -2352,6 +2352,13 @@ export default function HomeClient({
     );
   }
 
+  function renderTodaySchedule(scheduledDate: string, scheduledTime?: string) {
+    return <div className="scheduledInboxMeta">
+      <time className="scheduledInboxDate" dateTime={scheduledDate}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span>{scheduledDate.slice(5).replace("-", "/")}</span></time>
+      {scheduledTime && <time className="scheduledInboxTime" dateTime={scheduledTime}>{formatTimeLabel(scheduledTime)}</time>}
+    </div>;
+  }
+
   function renderScheduledInboxTask(task: PriorityTask) {
     return (
       <article className={`taskItem scheduledInboxTask${isInboxTaskOverdue(task) ? " taskItemImportant" : ""}${currentTaskEntry?.source === "inbox" && currentTaskEntry.task.id === task.id ? " isCurrentTask" : ""}`} key={task.id}>
@@ -2364,10 +2371,7 @@ export default function HomeClient({
           ✓
         </button>
         <div className="taskTitleView">{task.title || " "}</div>
-        {task.scheduledDate && <div className="scheduledInboxMeta">
-          <time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time>
-          <time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time>
-        </div>}
+        {task.scheduledDate && renderTodaySchedule(task.scheduledDate, task.scheduledTime)}
       </article>
     );
   }
@@ -2565,7 +2569,7 @@ export default function HomeClient({
               <div className={`todayTaskLayout${hasTodaySideTasks ? "" : " isSingleColumn"}`} aria-label="今日のタスク">
                 <section className="todayTaskSection todayTaskTodaySection" aria-label="今日やること">
                   <div className="sectionHeader"><h3>今日やること</h3></div>
-                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView">{task.title || "無題のタスク"}</div><div className="scheduledInboxMeta"><time className="scheduledInboxDate" dateTime={task.scheduledDate}>{task.scheduledDate.slice(5).replace("-", "/")}</time><time className="scheduledInboxTime" dateTime={task.scheduledTime}>{task.scheduledTime ? formatTimeLabel(task.scheduledTime) : "時刻未設定"}</time></div></article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
+                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView">{task.title || "無題のタスク"}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
                 </section>
 
                 {hasTodaySideTasks && <aside className="todayTaskColumn" aria-label="期限切れと繰り返しタスク">

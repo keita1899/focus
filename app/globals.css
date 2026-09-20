@@ -1692,23 +1692,20 @@ select {
 }
 
 .scheduledInboxMeta {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
+  align-items: center;
   grid-column: 2;
   grid-row: 2;
-  gap: 8px;
+  gap: 5px;
 }
 
-.scheduledInboxDate,
+.scheduledInboxDate { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; border: 1px solid #dce7e0; border-radius: 7px; background: #f4f8f5; color: var(--accent-strong); padding: 4px 8px; font-size: .72rem; font-weight: 800; white-space: nowrap; }
+.scheduledInboxDate svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .scheduledInboxTime {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: .72rem;
   font-weight: 900;
   white-space: nowrap;
-}
-
-.scheduledInboxTime {
-  text-align: right;
 }
 
 .emptyScheduleButton {
