@@ -111,7 +111,7 @@ function TaskSchedulePicker({ task, isOpen, onOpenChange, onChange }: { task: Ro
 
   const chooseDate = (scheduledDate?: string) => {
     onChange(scheduledDate ? { scheduledDate } : { scheduledDate, scheduledTime: undefined });
-    if (!scheduledDate) onOpenChange(false);
+    onOpenChange(false);
   };
 
   return <div className="roadmapSchedulePicker" ref={pickerRef}>
@@ -123,8 +123,8 @@ function TaskSchedulePicker({ task, isOpen, onOpenChange, onChange }: { task: Ro
       <button type="button" onClick={() => chooseDate(localDateValue())}>今日</button>
       <button type="button" onClick={() => chooseDate(localDateValue(1))}>明日</button>
       <button type="button" onClick={() => chooseDate(undefined)}>未定</button>
-      <label>日付を選択<input type="date" value={task.scheduledDate || ""} onChange={(event) => onChange({ scheduledDate: event.currentTarget.value || undefined })} /></label>
-      <label className="roadmapScheduleTime">時間<input type="time" value={task.scheduledTime || ""} disabled={!task.scheduledDate} onChange={(event) => onChange({ scheduledTime: event.currentTarget.value || undefined })} /></label>
+      <label>日付を選択<input type="date" value={task.scheduledDate || ""} onChange={(event) => { onChange({ scheduledDate: event.currentTarget.value || undefined }); onOpenChange(false); }} /></label>
+      <label className="roadmapScheduleTime">時間<input type="time" value={task.scheduledTime || ""} disabled={!task.scheduledDate} onChange={(event) => { onChange({ scheduledTime: event.currentTarget.value || undefined }); onOpenChange(false); }} /></label>
       {task.scheduledDate && <button type="button" className="roadmapScheduleClear" onClick={() => chooseDate(undefined)}>日付と時間を削除</button>}
     </div>}
   </div>;
