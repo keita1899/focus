@@ -185,7 +185,9 @@ body > .topbar + .shell {
 .studyReviewItem:hover > button, .studyReviewItem:focus-within > button { visibility: visible; }
 .studyCard > span { color: var(--accent-strong); font-size: .84rem; font-weight: 900; }
 .studyCard h2 { font-size: 1.25rem; line-height: 1.65; }
-.studyReveal, .studyAddForm > button { border: 0; border-radius: 7px; background: #3159a7; color: white; min-height: 42px; font-weight: 900; }
+.studyReveal { justify-self: start; min-height: 34px; border: 1px solid #c9d5f0; border-radius: 7px; background: #eef2fb; color: #3159a7; padding: 0 12px; font-weight: 900; }
+.studyReveal:hover { border-color: #3159a7; background: #e3eafa; }
+.studyAddForm > button { border: 0; border-radius: 7px; background: #3159a7; color: white; min-height: 42px; font-weight: 900; }
 .studyAnswerModalBackdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(19, 31, 57, .52); backdrop-filter: blur(3px); }
 .studyAnswerModal { display: grid; gap: 20px; width: min(100%, 640px); max-height: min(86vh, 760px); overflow-y: auto; border: 1px solid #d8e1fa; border-radius: 14px; background: white; padding: 24px; box-shadow: 0 24px 70px rgba(18, 34, 66, .28); }
 .studyAnswerModal > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
@@ -194,6 +196,10 @@ body > .topbar + .shell {
 .studyAnswerModal > header h2 { font-size: 1.12rem; line-height: 1.55; }
 .studyAnswerModal > header small { color: var(--muted); }
 .studyAnswerModal > header button { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 7px; background: #eef2fb; color: var(--muted); font-size: 1.2rem; }
+.studyModalHeading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.studyModalHeading button { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 7px; background: #eef2fb; color: var(--muted); font-size: 1.2rem; }
+.studyEditModal .studyAddForm { display: grid; gap: 16px; }
+.studyEditModal textarea { min-height: 42px; overflow-y: hidden; resize: none; }
 .studyAnswerModalBody { display: grid; gap: 18px; }
 .studyAnswerSection { display: grid; gap: 10px; }
 .studyAnswerSection h3 { border-left: 4px solid #3159a7; border-radius: 5px; background: #eef2fb; color: #3159a7; padding: 8px 11px; font-size: .9rem; }
