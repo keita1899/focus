@@ -18,7 +18,7 @@ type HomeTab =
   | "tasks"
   | "roadmap";
 type ScheduledInboxBucket = "today" | "week" | "month";
-type RoadmapScheduledTask = { id: string; title: string; scheduledDate: string; scheduledTime?: string };
+type RoadmapScheduledTask = { id: string; title: string; scheduledDate: string; scheduledTime?: string; parentTitle?: string };
 
 type PriorityTask = {
   id: string;
@@ -257,13 +257,13 @@ function getRoadmapScheduledTasks(value: unknown): RoadmapScheduledTask[] {
   if (!years) return [];
   const items: RoadmapScheduledTask[] = [];
   Object.values(years).forEach((year) => Object.values(year.months || {}).forEach((month) => {
-    const visit = (entry: unknown) => {
+    const visit = (entry: unknown, parentTitle?: string) => {
       if (!entry || typeof entry !== "object") return;
       const task = entry as { id?: unknown; title?: unknown; scheduledDate?: unknown; scheduledTime?: unknown; done?: unknown; children?: unknown[] };
-      if (!task.done && typeof task.id === "string" && typeof task.title === "string" && typeof task.scheduledDate === "string" && task.scheduledDate) items.push({ id: task.id, title: task.title, scheduledDate: task.scheduledDate, scheduledTime: typeof task.scheduledTime === "string" ? task.scheduledTime : undefined });
-      task.children?.forEach(visit);
+      if (!task.done && typeof task.id === "string" && typeof task.title === "string" && typeof task.scheduledDate === "string" && task.scheduledDate) items.push({ id: task.id, title: task.title, scheduledDate: task.scheduledDate, scheduledTime: typeof task.scheduledTime === "string" ? task.scheduledTime : undefined, parentTitle });
+      task.children?.forEach((child) => visit(child, typeof task.title === "string" ? task.title : parentTitle));
     };
-    month.mustDo?.forEach(visit); month.chores?.forEach(visit); month.other?.forEach(visit);
+    month.mustDo?.forEach((task) => visit(task)); month.chores?.forEach((task) => visit(task)); month.other?.forEach((task) => visit(task));
   }));
   return items.sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate) || (left.scheduledTime || "99:99").localeCompare(right.scheduledTime || "99:99"));
 }
@@ -2353,8 +2353,11 @@ export default function HomeClient({
   }
 
   function renderTodaySchedule(scheduledDate: string, scheduledTime?: string) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateLabel = scheduledDate === todayKey ? "今日" : scheduledDate === formatDateKey(tomorrow) ? "明日" : scheduledDate.slice(5).replace("-", "/");
     return <div className="scheduledInboxMeta">
-      <time className="scheduledInboxDate" dateTime={scheduledDate}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span>{scheduledDate.slice(5).replace("-", "/")}</span></time>
+      <time className="scheduledInboxDate" dateTime={scheduledDate}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span>{dateLabel}</span></time>
       {scheduledTime && <time className="scheduledInboxTime" dateTime={scheduledTime}>{formatTimeLabel(scheduledTime)}</time>}
     </div>;
   }
@@ -2569,7 +2572,7 @@ export default function HomeClient({
               <div className={`todayTaskLayout${hasTodaySideTasks ? "" : " isSingleColumn"}`} aria-label="今日のタスク">
                 <section className="todayTaskSection todayTaskTodaySection" aria-label="今日やること">
                   <div className="sectionHeader"><h3>今日やること</h3></div>
-                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView">{task.title || "無題のタスク"}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
+                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">親タスク: {task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
                 </section>
 
                 {hasTodaySideTasks && <aside className="todayTaskColumn" aria-label="期限切れと繰り返しタスク">
