@@ -31,22 +31,26 @@ function save(value: State) { return fetch("/api/study", { method: "PUT", header
 
 export default function StudyClient({ initialValue }: { initialValue: unknown }) {
   const [state, setState] = useState(() => normalize(initialValue));
-  const [tab, setTab] = useState<"review" | "add" | "settings">("review");
+  const [view, setView] = useState<"list" | "add" | "settings">("list");
   const [category, setCategory] = useState("すべて");
   const [newCategory, setNewCategory] = useState("");
-  const [revealed, setRevealed] = useState(false);
+  const [revealedCards, setRevealedCards] = useState<Record<string, boolean>>({});
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const mounted = useRef(false);
   const visible = state.cards.filter((card) => category === "すべて" || card.category === category);
   const due = useMemo(() => visible.filter((card) => card.dueDate <= date() && card.lastReviewed !== date()), [visible]);
-  const card = due[0];
 
   useEffect(() => { if (!mounted.current) { mounted.current = true; return; } void save(state); }, [state]);
+  useEffect(() => {
+    const openSettings = () => setView("settings");
+    window.addEventListener("open-study-settings", openSettings);
+    return () => window.removeEventListener("open-study-settings", openSettings);
+  }, []);
 
-  const review = (level: Level) => {
-    if (!card) return;
+  const review = (id: string, level: Level) => {
     const interval = state.intervals[level === 0 ? 0 : level === 1 ? Math.floor((state.intervals.length - 1) / 2) : state.intervals.length - 1] ?? 1;
-    setState((current) => ({ ...current, cards: current.cards.map((item) => item.id === card.id ? { ...item, level, dueDate: date(interval), lastReviewed: date() } : item) }));
-    setRevealed(false);
+    setState((current) => ({ ...current, cards: current.cards.map((item) => item.id === id ? { ...item, level, dueDate: date(interval), lastReviewed: date() } : item) }));
+    setRevealedCards((current) => ({ ...current, [id]: false }));
   };
 
   const addCategory = (event: FormEvent<HTMLFormElement>) => {
@@ -73,7 +77,16 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
 
   const removeCard = (id: string) => {
     setState((current) => ({ ...current, cards: current.cards.filter((item) => item.id !== id) }));
-    setRevealed(false);
+    setEditingCardId(null);
+  };
+
+  const editCard = (event: FormEvent<HTMLFormElement>, id: string) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const question = String(form.get("question") || "").trim();
+    if (!question) return;
+    setState((current) => ({ ...current, cards: current.cards.map((item) => item.id === id ? { ...item, question, answer: String(form.get("answer") || ""), notes: String(form.get("notes") || ""), source: String(form.get("source") || ""), category: String(form.get("category") || item.category) } : item) }));
+    setEditingCardId(null);
   };
 
   const addCard = (event: FormEvent<HTMLFormElement>) => {
@@ -83,21 +96,20 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
     if (!question) return;
     setState((current) => ({ ...current, cards: [...current.cards, { id: `study-${Date.now()}`, question, answer: String(form.get("answer") || ""), notes: String(form.get("notes") || ""), source: String(form.get("source") || ""), category: String(form.get("category") || current.categories[0] || "未分類"), dueDate: date(), level: 0 }] }));
     event.currentTarget.reset();
-    setTab("review");
+    setView("list");
   };
 
   return <main className="studyShell">
-    <header><div><p>公認会計士</p><h1>学習モード</h1></div><strong>今日の復習 {due.length}件</strong></header>
+    <header><div><p>公認会計士</p><h1>学習モード</h1></div><div className="studyHeaderActions"><strong>今日の復習 {due.length}件</strong><button type="button" onClick={() => setView(view === "add" ? "list" : "add")}>{view === "add" ? "一覧へ戻る" : "＋ 問題を追加"}</button></div></header>
     <div className="studyLayout">
       <aside className="studySidebar">
         <div className="studyCategoryList"><button className={category === "すべて" ? "active" : undefined} onClick={() => setCategory("すべて")}>すべて</button>{state.categories.map((item) => <div className={`studyCategoryItem${category === item ? " active" : ""}`} key={item}><button type="button" onClick={() => setCategory(item)}>{item}</button><button className="studyCategoryDelete" type="button" onClick={() => removeCategory(item)} aria-label={`${item}を削除`}>×</button></div>)}</div>
         <form className="studyCategoryForm" onSubmit={addCategory}><div><input id="new-study-category" value={newCategory} onChange={(event) => setNewCategory(event.currentTarget.value)} placeholder="カテゴリー名" aria-label="新しいカテゴリー名" /><button type="submit" aria-label="カテゴリーを追加">＋</button></div></form>
       </aside>
       <div className="studyMain">
-        <div className="tabList studyTabs"><button className={tab === "review" ? "tabButton active" : "tabButton"} onClick={() => setTab("review")}>復習</button><button className={tab === "add" ? "tabButton active" : "tabButton"} onClick={() => setTab("add")}>問題を追加</button><button className={tab === "settings" ? "tabButton active" : "tabButton"} onClick={() => setTab("settings")}>設定</button></div>
-        {tab === "review" && <section className="studyCard studyReviewCard">{card ? <><button className="studyReviewDelete" type="button" onClick={() => removeCard(card.id)} aria-label={`${card.question}を削除`}>×</button><span>{card.category}</span><h2>{card.question}</h2>{revealed && <div className="studyAnswer"><h3>解答・要点</h3><p>{card.answer || "未入力"}</p><h3>解き方・注意点</h3><p>{card.notes || "未入力"}</p></div>}<button className="studyReveal" onClick={() => setRevealed((current) => !current)} aria-expanded={revealed}>{revealed ? "答えを閉じる" : "答えを確認する"}</button>{revealed && <div className="studyLevelButtons"><button onClick={() => review(0)}>要復習</button><button onClick={() => review(1)}>理解中</button><button onClick={() => review(2)}>定着</button></div>}</> : <p className="emptyText">このカテゴリの復習はありません。</p>}<h3>問題一覧</h3><div className="studyReviewList">{visible.map((item) => <div className="studyReviewItem" key={item.id}><span>{item.question}</span><button type="button" onClick={() => removeCard(item.id)} aria-label={`${item.question}を削除`}>×</button></div>)}</div></section>}
-        {tab === "add" && <form className="studyCard studyAddForm" onSubmit={addCard}><label>カテゴリー<select name="category" defaultValue={category === "すべて" ? state.categories[0] : category}>{state.categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label>問題・論点名<input name="question" required /></label><label>解答・要点<textarea name="answer" /></label><label>解き方・注意点<textarea name="notes" /></label><label>教材・問題番号<input name="source" /></label><button>追加して今日復習する</button></form>}
-        {tab === "settings" && <section className="studyCard"><h2>復習の頻度</h2><div className="studyIntervalList">{choices.map((item) => <label key={item}><input type="checkbox" checked={state.intervals.includes(item)} disabled={state.intervals.length === 1 && state.intervals.includes(item)} onChange={() => setState((current) => ({ ...current, intervals: current.intervals.includes(item) ? current.intervals.filter((value) => value !== item) : [...current.intervals, item].sort((left, right) => left - right) }))} />{intervalLabel(item)}</label>)}</div></section>}
+        {view === "list" && <section className="studyQuestionSection"><div className="studyQuestionHeading"><h2>問題一覧</h2><span>{visible.length}件</span></div>{visible.length === 0 ? <p className="emptyText">このカテゴリーに問題はありません。</p> : <div className="studyQuestionGrid">{visible.map((item) => editingCardId === item.id ? <form className="studyCard studyEditCard studyAddForm" key={item.id} onSubmit={(event) => editCard(event, item.id)}><label>カテゴリー<select name="category" defaultValue={item.category}>{state.categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><label>問題・論点名<input name="question" defaultValue={item.question} required /></label><label>解答・要点<textarea name="answer" defaultValue={item.answer} /></label><label>解き方・注意点<textarea name="notes" defaultValue={item.notes} /></label><label>教材・問題番号<input name="source" defaultValue={item.source} /></label><div className="studyEditActions"><button type="button" onClick={() => setEditingCardId(null)}>キャンセル</button><button type="submit">保存</button></div></form> : <article className="studyCard studyQuestionCard" key={item.id}><div className="studyQuestionCardActions"><button type="button" onClick={() => setEditingCardId(item.id)} aria-label={`${item.question}を編集`}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path d="m14 7 3 3"/></svg></button><button type="button" onClick={() => removeCard(item.id)} aria-label={`${item.question}を削除`}>×</button></div><span>{item.category}</span><h3>{item.question}</h3>{item.source && <small>{item.source}</small>}{revealedCards[item.id] && <div className="studyAnswer"><h4>解答・要点</h4><p>{item.answer || "未入力"}</p><h4>解き方・注意点</h4><p>{item.notes || "未入力"}</p></div>}<button className="studyReveal" type="button" onClick={() => setRevealedCards((current) => ({ ...current, [item.id]: !current[item.id] }))}>{revealedCards[item.id] ? "答えを閉じる" : "答えを確認する"}</button>{revealedCards[item.id] && <div className="studyLevelButtons"><button onClick={() => review(item.id, 0)}>要復習</button><button onClick={() => review(item.id, 1)}>理解中</button><button onClick={() => review(item.id, 2)}>定着</button></div>}</article>)}</div>}</section>}
+        {view === "add" && <form className="studyCard studyAddForm" onSubmit={addCard}><h2>問題を追加</h2><label>カテゴリー<select name="category" defaultValue={category === "すべて" ? state.categories[0] : category}>{state.categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label>問題・論点名<input name="question" required /></label><label>解答・要点<textarea name="answer" /></label><label>解き方・注意点<textarea name="notes" /></label><label>教材・問題番号<input name="source" /></label><button>追加して今日復習する</button></form>}
+        {view === "settings" && <section className="studyCard"><div className="studySettingsHeading"><h2>復習の頻度</h2><button type="button" onClick={() => setView("list")}>閉じる</button></div><div className="studyIntervalList">{choices.map((item) => <label key={item}><input type="checkbox" checked={state.intervals.includes(item)} disabled={state.intervals.length === 1 && state.intervals.includes(item)} onChange={() => setState((current) => ({ ...current, intervals: current.intervals.includes(item) ? current.intervals.filter((value) => value !== item) : [...current.intervals, item].sort((left, right) => left - right) }))} />{intervalLabel(item)}</label>)}</div></section>}
       </div>
     </div>
   </main>;

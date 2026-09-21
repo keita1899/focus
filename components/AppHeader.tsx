@@ -40,7 +40,7 @@ export default function AppHeader() {
 
   return (
     <header className="topbar">
-      {pathname === "/study" ? <div className="studyModeHeader"><a className="navLink" href="/">通常モードへ戻る</a></div> : <>
+      {pathname === "/study" ? <div className="studyModeHeader"><a className="navLink" href="/">通常モードへ戻る</a><button className="navLink studySettingsButton" type="button" onClick={() => window.dispatchEvent(new CustomEvent("open-study-settings"))}>設定</button></div> : <>
       <div className="headerDateBlock">
         <time className="todayLabel" dateTime={todayLabel}>
           {todayLabel}

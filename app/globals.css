@@ -130,14 +130,16 @@ body > .topbar + .shell {
   flex-wrap: wrap;
 }
 
-.studyModeHeader { display: flex; width: 100%; justify-content: center; }
-.studyModeHeader { justify-content: flex-end; }
-.studyShell { display: grid; align-content: start; gap: 18px; width: min(100% - 32px, 760px); min-height: calc(100vh - 96px); margin: 34px auto; padding-bottom: 34px; }
+.studyModeHeader { display: flex; width: 100%; justify-content: flex-end; gap: 8px; }
+.studySettingsButton { font: inherit; cursor: pointer; }
+.studyShell { display: grid; align-content: start; gap: 18px; width: min(100% - 32px, 980px); min-height: calc(100vh - 96px); margin: 34px auto; padding-bottom: 34px; }
 .studyShell > header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .studyShell header p, .studyShell h1, .studyShell h2, .studyShell h3 { margin: 0; }
 .studyShell header h1 { display: none; }
 .studyShell header p, .studySource, .studyCard > p { color: var(--muted); }
 .studyShell header strong { color: var(--accent-strong); }
+.studyHeaderActions { display: flex; align-items: center; gap: 12px; }
+.studyHeaderActions button { min-height: 36px; border: 0; border-radius: 7px; background: #3159a7; color: white; padding: 0 13px; font-weight: 900; }
 .studyTabs { justify-content: center; margin-bottom: 18px; }
 .studyLayout { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; }
 .studySidebar { display: flex; flex-direction: column; gap: 12px; min-height: 360px; border-right: 1px solid #d8e1fa; padding-right: 12px; }
@@ -155,6 +157,24 @@ body > .topbar + .shell {
 .studyCategoryForm input { min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 7px; }
 .studyCategoryForm button { display: grid; place-items: center; background: #e9efff; color: #3159a7; padding: 0; text-align: center; }
 .studyCard { display: grid; gap: 16px; border: 1px solid #d8e1fa; border-radius: 12px; background: linear-gradient(180deg, #ffffff, #f5f8ff); padding: 22px; box-shadow: 0 10px 28px rgba(39, 73, 142, .08); }
+.studyQuestionSection { display: grid; gap: 14px; }
+.studyQuestionHeading, .studySettingsHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.studyQuestionHeading span { color: var(--muted); font-size: .8rem; font-weight: 800; }
+.studyQuestionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.studyQuestionCard { position: relative; align-content: start; min-height: 220px; }
+.studyQuestionCard > span { color: var(--accent-strong); font-size: .76rem; font-weight: 900; }
+.studyQuestionCard > h3 { padding-right: 64px; font-size: 1rem; line-height: 1.55; }
+.studyQuestionCard > small { color: var(--muted); }
+.studyQuestionCardActions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.studyQuestionCard:hover .studyQuestionCardActions, .studyQuestionCard:focus-within .studyQuestionCardActions { opacity: 1; pointer-events: auto; }
+.studyQuestionCardActions button { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 1.05rem; }
+.studyQuestionCardActions button:hover { background: #eef2fb; color: #3159a7; }
+.studyQuestionCardActions button:last-child:hover { background: #fff1ef; color: var(--danger); }
+.studyQuestionCardActions svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.studyEditCard { grid-column: 1 / -1; }
+.studyEditActions { display: flex; justify-content: flex-end; gap: 8px; }
+.studyEditActions button, .studySettingsHeading button { min-height: 34px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 12px; font-weight: 800; }
+.studyEditActions button[type="submit"] { border-color: #3159a7; background: #3159a7; color: white; }
 .studyReviewCard { position: relative; }
 .studyReviewDelete { visibility: hidden; position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: #fff1ef; color: var(--danger); font-size: 1.05rem; }
 .studyReviewCard:hover > .studyReviewDelete, .studyReviewCard:focus-within > .studyReviewDelete { visibility: visible; }
@@ -176,7 +196,7 @@ body > .topbar + .shell {
 .studyIntervalList { display: flex; flex-wrap: wrap; gap: 10px; }
 .studyIntervalList label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; font-weight: 800; }
 .studyIntervalList input { width: 13px; height: 13px; accent-color: #3159a7; }
-@media (max-width: 640px) { .studyShell { width: min(100% - 20px, 760px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyCard { padding: 16px; } }
+@media (max-width: 640px) { .studyShell { width: min(100% - 20px, 980px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyHeaderActions { width: 100%; justify-content: space-between; } .studyQuestionGrid { grid-template-columns: 1fr; } .studyCard { padding: 16px; } }
 @media (max-width: 640px) { .studyLayout { grid-template-columns: 1fr; } .studySidebar { min-height: 0; border-right: 0; border-bottom: 1px solid #d8e1fa; padding: 0 0 8px; } .studyCategoryList { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; } .studyCategoryForm { margin-top: 0; } }
 
 .topbarLinks .userBadge {
