@@ -160,8 +160,8 @@ body > .topbar + .shell {
 .studyQuestionSection { display: grid; gap: 14px; }
 .studyQuestionHeading, .studySettingsHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .studyQuestionHeading span { color: var(--muted); font-size: .8rem; font-weight: 800; }
-.studyQuestionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
-.studyQuestionCard { position: relative; align-content: start; min-height: 220px; }
+.studyQuestionGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.studyQuestionCard { position: relative; align-content: start; }
 .studyQuestionCard > span { color: var(--accent-strong); font-size: .76rem; font-weight: 900; }
 .studyQuestionCard > h3 { padding-right: 64px; font-size: 1rem; line-height: 1.55; }
 .studyQuestionCard > small { color: var(--muted); }
@@ -185,8 +185,19 @@ body > .topbar + .shell {
 .studyReviewItem:hover > button, .studyReviewItem:focus-within > button { visibility: visible; }
 .studyCard > span { color: var(--accent-strong); font-size: .84rem; font-weight: 900; }
 .studyCard h2 { font-size: 1.25rem; line-height: 1.65; }
-.studyAnswer { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 16px; white-space: pre-wrap; }
 .studyReveal, .studyAddForm > button { border: 0; border-radius: 7px; background: #3159a7; color: white; min-height: 42px; font-weight: 900; }
+.studyAnswerModalBackdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(19, 31, 57, .52); backdrop-filter: blur(3px); }
+.studyAnswerModal { display: grid; gap: 20px; width: min(100%, 640px); max-height: min(86vh, 760px); overflow-y: auto; border: 1px solid #d8e1fa; border-radius: 14px; background: white; padding: 24px; box-shadow: 0 24px 70px rgba(18, 34, 66, .28); }
+.studyAnswerModal > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.studyAnswerModal > header > div { display: grid; gap: 6px; }
+.studyAnswerModal > header span { color: var(--accent-strong); font-size: .76rem; font-weight: 900; }
+.studyAnswerModal > header h2 { font-size: 1.12rem; line-height: 1.55; }
+.studyAnswerModal > header small { color: var(--muted); }
+.studyAnswerModal > header button { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 7px; background: #eef2fb; color: var(--muted); font-size: 1.2rem; }
+.studyAnswerModalBody { display: grid; gap: 18px; }
+.studyAnswerSection { display: grid; gap: 10px; }
+.studyAnswerSection h3 { border-left: 4px solid #3159a7; border-radius: 5px; background: #eef2fb; color: #3159a7; padding: 8px 11px; font-size: .9rem; }
+.studyAnswerSection p { margin: 0; white-space: pre-wrap; line-height: 1.75; }
 .studyLevelButtons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .studyLevelButtons button { min-height: 42px; border: 1px solid var(--line); border-radius: 7px; background: white; font-weight: 900; }
 .studyLevelButtons button:first-child { color: var(--danger); }.studyLevelButtons button:last-child { color: var(--accent-strong); }
@@ -196,7 +207,7 @@ body > .topbar + .shell {
 .studyIntervalList { display: flex; flex-wrap: wrap; gap: 10px; }
 .studyIntervalList label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; font-weight: 800; }
 .studyIntervalList input { width: 13px; height: 13px; accent-color: #3159a7; }
-@media (max-width: 640px) { .studyShell { width: min(100% - 20px, 980px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyHeaderActions { width: 100%; justify-content: space-between; } .studyQuestionGrid { grid-template-columns: 1fr; } .studyCard { padding: 16px; } }
+@media (max-width: 640px) { .studyShell { width: min(100% - 20px, 980px); margin-block: 20px; } .studyShell > header { align-items: start; flex-direction: column; } .studyHeaderActions { width: 100%; justify-content: space-between; } .studyCard { padding: 16px; } .studyAnswerModalBackdrop { padding: 10px; } .studyAnswerModal { padding: 18px; } }
 @media (max-width: 640px) { .studyLayout { grid-template-columns: 1fr; } .studySidebar { min-height: 0; border-right: 0; border-bottom: 1px solid #d8e1fa; padding: 0 0 8px; } .studyCategoryList { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; } .studyCategoryForm { margin-top: 0; } }
 
 .topbarLinks .userBadge {
