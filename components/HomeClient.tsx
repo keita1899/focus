@@ -901,8 +901,10 @@ export default function HomeClient({
   const completeRoadmapTask = (id: string) => setAnnualRoadmapValue((current: unknown) => {
     const next = JSON.parse(JSON.stringify(current)) as { years?: Record<string, { months?: Record<string, Record<string, unknown>> }> };
     Object.values(next.years || {}).forEach((year) => Object.values(year.months || {}).forEach((month) => {
-      const visit = (tasks: unknown) => Array.isArray(tasks) && tasks.forEach((task) => { if (!task || typeof task !== "object") return; const entry = task as { id?: string; done?: boolean; children?: unknown[] }; if (entry.id === id) entry.done = true; visit(entry.children); });
-      visit(month.mustDo); visit(month.chores); visit(month.other);
+      const removeCompleted = (tasks: unknown): unknown[] => Array.isArray(tasks) ? tasks.filter((task) => !task || typeof task !== "object" || (task as { id?: string }).id !== id).map((task) => task && typeof task === "object" ? { ...task, children: removeCompleted((task as { children?: unknown[] }).children) } : task) : [];
+      month.mustDo = removeCompleted(month.mustDo);
+      month.chores = removeCompleted(month.chores);
+      month.other = removeCompleted(month.other);
     }));
     void fetch("/api/annual-roadmap", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), keepalive: true });
     return next;
