@@ -1,5 +1,5 @@
 export type TravelEntryType = "transport" | "meal" | "activity";
-export type TravelEntry = { id: string; type: TravelEntryType; title: string; cost: number; transportMode?: string };
+export type TravelEntry = { id: string; type: TravelEntryType; title: string; cost: number; transportMode?: string; startTime?: string; endTime?: string };
 export type TravelDay = { date: string; entries: TravelEntry[] };
 export type Trip = { id: string; title: string; startDate: string; mode: "daytrip" | "stay"; nights: number; days: TravelDay[]; createdAt: string };
 export type TravelState = { trips: Trip[] };

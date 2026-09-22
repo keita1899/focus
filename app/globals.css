@@ -5082,13 +5082,18 @@ select {
 .travelEntry small { color: var(--muted); }
 .travelEntry > b { font-size: .85rem; }
 .travelEntry > button { border: 0; background: transparent; color: var(--danger); font-size: 1.1rem; }
-.travelEntryForm { display: grid; grid-template-columns: 92px 110px minmax(160px, 1fr) 120px auto; gap: 7px; border-radius: 9px; background: #f3f7f4; padding: 10px; }
+.travelEntryForm { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; border-radius: 9px; background: #f3f7f4; padding: 10px; }
 .travelEntryForm input, .travelEntryForm select { min-width: 0; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 8px; }
-.travelEntryForm > label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; border: 1px solid var(--line); border-radius: 7px; background: white; padding-left: 8px; }
+.travelEntryForm > select { flex: 0 0 96px; }
+.travelEntryForm .travelEntryTitleInput { flex: 1 1 180px; }
+.travelTimeRange { display: flex; flex: 0 0 190px; align-items: center; gap: 4px; }
+.travelTimeRange input { width: 84px; padding-inline: 5px; }
+.travelTimeRange span { color: var(--muted); }
+.travelEntryForm > label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; flex: 0 0 90px; border: 1px solid var(--line); border-radius: 7px; background: white; padding-left: 7px; }
 .travelEntryForm > label input { border: 0; }
 .travelEntryForm > button { min-height: 38px; border: 0; border-radius: 7px; background: var(--accent-strong); color: white; padding: 0 13px; font-weight: 900; }
-@media (max-width: 800px) { .travelCardGrid { grid-template-columns: 1fr; } .travelPageHeader, .travelPlanHeader { align-items: flex-start; flex-direction: column; } .travelPlanHeader input { min-width: 0; width: 100%; } .travelTotal { justify-items: start; } .travelEntryForm { grid-template-columns: 1fr 1fr; } .travelEntryForm input[name="title"] { grid-column: 1 / -1; } }
-@media (max-width: 520px) { .travelPage { width: min(100% - 20px, 1120px); } .travelCreateForm, .travelDayCard { padding: 16px; } .travelEntry { grid-template-columns: 52px minmax(0, 1fr) 28px; } .travelEntry > b { grid-column: 2; } .travelEntryForm { grid-template-columns: 1fr; } .travelEntryForm input[name="title"] { grid-column: auto; } }
+@media (max-width: 800px) { .travelCardGrid { grid-template-columns: 1fr; } .travelPageHeader, .travelPlanHeader { align-items: flex-start; flex-direction: column; } .travelPlanHeader input { min-width: 0; width: 100%; } .travelTotal { justify-items: start; } .travelEntryForm .travelEntryTitleInput { flex-basis: 100%; order: 3; } .travelTimeRange { order: 4; } .travelCostInput { order: 5; } .travelEntryForm > button { order: 6; } }
+@media (max-width: 520px) { .travelPage { width: min(100% - 20px, 1120px); } .travelCreateForm, .travelDayCard { padding: 16px; } .travelEntry { grid-template-columns: 52px minmax(0, 1fr) 28px; } .travelEntry > b { grid-column: 2; } .travelEntryForm .travelEntryTitleInput { flex-basis: 100%; } .travelTimeRange { flex-basis: 100%; } }
 .annualRoadmapMonths { display: grid; gap: 8px; }
 .annualRoadmapMonth { gap: 0; overflow: hidden; padding: 0; }
 .annualRoadmapMonth.isCompletedMonthsStart { position: relative; margin-top: 18px; }
