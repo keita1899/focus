@@ -167,11 +167,12 @@ body > .topbar + .shell {
 .studyListControls label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .78rem; font-weight: 800; }
 .studyListControls select { min-height: 34px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--ink); padding: 0 28px 0 9px; font-weight: 800; }
 .studyQuestionGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
-.studyQuestionCard { position: relative; align-content: start; }
+.studyQuestionCard { position: relative; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; align-content: start; column-gap: 12px; }
 .studyQuestionCard > span { color: var(--accent-strong); font-size: .76rem; font-weight: 900; }
-.studyQuestionCard > h3 { padding-right: 64px; font-size: 1rem; line-height: 1.55; }
-.studyQuestionCard > small { color: var(--muted); }
-.studyCardMeta { display: flex; align-items: center; gap: 8px; }
+.studyQuestionCard > h3 { grid-column: 1; grid-row: 2; padding-right: 64px; font-size: 1rem; line-height: 1.55; text-align: left; }
+.studyQuestionCard > small { grid-column: 1; color: var(--muted); }
+.studyQuestionCard > small:last-of-type { grid-column: 2; grid-row: 2; white-space: nowrap; }
+.studyCardMeta { display: flex; grid-column: 1 / -1; align-items: center; gap: 8px; }
 .studyCardMeta > span:first-child { color: var(--accent-strong); font-size: .76rem; font-weight: 900; }
 .studyLevel { border-radius: 999px; padding: 3px 7px; font-size: .68rem; font-weight: 900; }
 .studyLevel.level-0 { background: #fff1ef; color: var(--danger); }
@@ -197,7 +198,7 @@ body > .topbar + .shell {
 .studyReviewItem:hover > button, .studyReviewItem:focus-within > button { visibility: visible; }
 .studyCard > span { color: var(--accent-strong); font-size: .84rem; font-weight: 900; }
 .studyCard h2 { font-size: 1.25rem; line-height: 1.65; }
-.studyReveal { justify-self: start; min-height: 34px; border: 1px solid #c9d5f0; border-radius: 7px; background: #eef2fb; color: #3159a7; padding: 0 12px; font-weight: 900; }
+.studyReveal { grid-column: 3; grid-row: 2; justify-self: end; min-height: 34px; border: 1px solid #c9d5f0; border-radius: 7px; background: #eef2fb; color: #3159a7; padding: 0 12px; font-weight: 900; }
 .studyReveal:hover { border-color: #3159a7; background: #e3eafa; }
 .studyAddForm > button { border: 0; border-radius: 7px; background: #3159a7; color: white; min-height: 42px; font-weight: 900; }
 .studyAnswerModalBackdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(19, 31, 57, .52); backdrop-filter: blur(3px); }
