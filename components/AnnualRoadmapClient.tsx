@@ -28,7 +28,7 @@ function normalizeState(value: unknown, currentYear: number): RoadmapState {
         const tasks = (kind: TaskKind) => Array.isArray(rawMonth?.[kind]) ? rawMonth![kind]!.map((task, taskIndex) => {
           if (typeof task === "string") return { id: `legacy-${year}-${index}-${taskIndex}`, title: task, children: [] };
           const item = task as Partial<RoadmapTask>;
-          return { id: typeof item.id === "string" ? item.id : `task-${year}-${index}-${taskIndex}`, title: typeof item.title === "string" ? item.title : "", scheduledDate: typeof item.scheduledDate === "string" ? item.scheduledDate : undefined, scheduledTime: typeof item.scheduledTime === "string" ? item.scheduledTime : undefined, children: Array.isArray(item.children) ? item.children.map((child, childIndex) => { const childItem = child as Partial<RoadmapTask>; return { id: typeof childItem.id === "string" ? childItem.id : `child-${year}-${index}-${taskIndex}-${childIndex}`, title: typeof childItem.title === "string" ? childItem.title : "", scheduledDate: typeof childItem.scheduledDate === "string" ? childItem.scheduledDate : undefined, scheduledTime: typeof childItem.scheduledTime === "string" ? childItem.scheduledTime : undefined, children: [] }; }) : [] };
+          return { id: typeof item.id === "string" ? item.id : `task-${year}-${index}-${taskIndex}`, title: typeof item.title === "string" ? item.title : "", scheduledDate: typeof item.scheduledDate === "string" ? item.scheduledDate : undefined, scheduledTime: typeof item.scheduledTime === "string" ? item.scheduledTime : undefined, done: Boolean(item.done), children: Array.isArray(item.children) ? item.children.map((child, childIndex) => { const childItem = child as Partial<RoadmapTask>; return { id: typeof childItem.id === "string" ? childItem.id : `child-${year}-${index}-${taskIndex}-${childIndex}`, title: typeof childItem.title === "string" ? childItem.title : "", scheduledDate: typeof childItem.scheduledDate === "string" ? childItem.scheduledDate : undefined, scheduledTime: typeof childItem.scheduledTime === "string" ? childItem.scheduledTime : undefined, done: Boolean(childItem.done), children: [] }; }) : [] };
         }) : [createTask()];
         const mustDo = tasks("mustDo"); const chores = tasks("chores"); const other = tasks("other");
         return [String(index + 1), { theme: typeof rawMonth?.theme === "string" ? rawMonth.theme : "", mustDo: mustDo.length ? mustDo : [createTask()], chores: chores.length ? chores : [createTask()], other: other.length ? other : [createTask()] }];
@@ -79,6 +79,8 @@ function localDateValue(offset = 0) {
 
 function formatScheduleLabel(date?: string, time?: string) {
   if (!date) return "";
+  if (date === localDateValue()) return `今日${time ? ` ${time}` : ""}`;
+  if (date === localDateValue(1)) return `明日${time ? ` ${time}` : ""}`;
   const [, month, day] = date.split("-");
   return `${Number(month)}/${Number(day)}${time ? ` ${time}` : ""}`;
 }
