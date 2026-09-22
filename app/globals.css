@@ -1258,9 +1258,10 @@ h2 {
   align-items: start;
 }
 .todayTaskLayout.isSingleColumn { grid-template-columns: minmax(0, 1fr); }
+.todayTaskLayout.isSingleColumn .todayTaskTodaySection { width: min(100%, 720px); }
 
 .todayTaskTodaySection .scheduledInboxTask { grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-rows: auto; gap: 7px; min-height: 42px; border: 0; border-bottom: 1px solid #edf0ed; border-radius: 0; background: transparent; padding: 4px 0; box-shadow: none; }
-.todayTaskTodaySection .scheduledInboxTask > .checkButton { grid-column: 1; grid-row: 1; width: 14px; height: 14px; min-height: 14px; border: 1.5px solid #b6c4ba; background: transparent; color: transparent; }
+.todayTaskTodaySection .scheduledInboxTask > .checkButton { grid-column: 1; grid-row: 1; width: 20px; height: 20px; min-height: 20px; border: 1.5px solid #9daf9f; background: white; color: transparent; font-size: 0; }
 .todayTaskTodaySection .scheduledInboxTask > .checkButton:hover { border-color: var(--accent-strong); background: #e8f3ec; color: var(--accent-strong); }
 .todayTaskTodaySection .scheduledInboxTask > .taskTitleView { grid-column: 2; grid-row: 1; padding: 0; }
 .todayTaskTodaySection .taskTitleView:has(.todayRoadmapParentTitle) { display: grid; gap: 2px; }
@@ -5051,8 +5052,8 @@ select {
 .annualRoadmapTaskColumns > .annualRoadmapTaskGroup { height: 100%; }
 .annualRoadmapTaskGroup { display: grid; align-content: start; gap: 4px; }
 .annualRoadmapTaskGroup h3 { margin: 0 0 3px; border-radius: 5px; background: #e8f3ec; color: var(--accent-strong); font-size: .84rem; padding: 7px 9px; }
-.annualRoadmapTask { display: grid; grid-template-columns: 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 42px; padding-block: 4px; border-bottom: 1px solid #edf0ed; }
-.annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 112px 26px; }
+.annualRoadmapTask { display: grid; grid-template-columns: 24px 18px minmax(0, 1fr) 26px; align-items: center; gap: 7px; min-height: 42px; padding-block: 4px; border-bottom: 1px solid #edf0ed; }
+.annualRoadmapScheduledTask { grid-template-columns: 24px 18px minmax(0, 1fr) 112px 26px; }
 .roadmapSchedulePicker { position: relative; min-width: 0; }
 .roadmapSchedulePicker .roadmapScheduleTrigger { visibility: visible; overflow: hidden; width: 100%; height: 28px; border: 1px solid #dce7e0; border-radius: 7px; background: #f4f8f5; color: var(--accent-strong); padding: 5px 8px; font-size: .72rem; font-weight: 800; line-height: 1; text-align: center; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .roadmapSchedulePicker .roadmapScheduleTrigger[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
@@ -5069,13 +5070,16 @@ select {
 .roadmapScheduleTime { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 9px !important; }
 .roadmapScheduleMenu .roadmapScheduleClear { color: var(--danger); }
 .annualRoadmapMonth:has(.roadmapScheduleMenu) { position: relative; z-index: 10; overflow: visible; }
-.annualRoadmapTask > span { width: 14px; height: 14px; border: 1.5px solid #b6c4ba; border-radius: 999px; }
+.annualRoadmapTask > span { width: 18px; height: 18px; }
 .annualRoadmapParentToggle { visibility: visible !important; width: 18px !important; height: 22px !important; border: 0 !important; background: transparent !important; color: var(--accent-strong) !important; }
 .annualRoadmapTask input { min-height: 34px; border: 0; border-radius: 0; background: transparent; padding: 0; }
 .annualRoadmapTask input:focus { outline: 0; box-shadow: inset 0 -2px 0 var(--accent); }
 .annualRoadmapTask button { visibility: hidden; width: 26px; height: 26px; border: 0; border-radius: 5px; background: transparent; color: var(--danger); font-size: 1.1rem; font-weight: 700; line-height: 1; }
 .annualRoadmapTask:hover button, .annualRoadmapTask:focus-within button { visibility: visible; }
 .annualRoadmapTask button:hover { background: #fff1ef; }
+.annualRoadmapTask .roadmapTaskCompleteButton { visibility: visible; width: 22px; height: 22px; border: 1.5px solid #9daf9f; border-radius: 999px; background: white; color: transparent; }
+.annualRoadmapTask .roadmapTaskCompleteButton:hover { border-color: var(--accent-strong); background: #e8f3ec; }
+.annualRoadmapTask.done .roadmapTaskCompleteButton { border-color: var(--accent-strong); background: var(--accent-strong); }
 .annualRoadmapAddTask { justify-self: start; border: 0; background: transparent; color: var(--muted); padding: 5px 0; font-size: .83rem; font-weight: 800; }
 .annualRoadmapAddTask:hover { color: var(--accent-strong); }
 .annualRoadmapAddForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; width: 100%; padding-top: 4px; }
@@ -5092,8 +5096,8 @@ select {
   .annualRoadmapTitleRow { grid-template-columns: 1fr; gap: 8px; }
   .annualRoadmapToolbar { justify-content: flex-start; }
   .annualRoadmapTaskColumns { grid-template-columns: 1fr; gap: 16px; }
-  .annualRoadmapScheduledTask { grid-template-columns: 18px minmax(0, 1fr) 26px; }
-  .roadmapSchedulePicker { grid-column: 2; width: 112px; }
+  .annualRoadmapScheduledTask { grid-template-columns: 24px 18px minmax(0, 1fr) 26px; }
+  .roadmapSchedulePicker { grid-column: 3; width: 112px; }
   .roadmapScheduleMenu { right: auto; left: 0; }
 }
 

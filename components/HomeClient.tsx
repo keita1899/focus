@@ -2370,9 +2370,7 @@ export default function HomeClient({
           type="button"
           onClick={() => completeInboxTask(task.id)}
           aria-label={`${task.title || "無題のタスク"}を完了`}
-        >
-          ✓
-        </button>
+        />
         <div className="taskTitleView">{task.title || " "}</div>
         {task.scheduledDate && renderTodaySchedule(task.scheduledDate, task.scheduledTime)}
       </article>
@@ -2572,7 +2570,7 @@ export default function HomeClient({
               <div className={`todayTaskLayout${hasTodaySideTasks ? "" : " isSingleColumn"}`} aria-label="今日のタスク">
                 <section className="todayTaskSection todayTaskTodaySection" aria-label="今日やること">
                   <div className="sectionHeader"><h3>今日やること</h3></div>
-                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)}>✓</button><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">親タスク: {task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
+                  <div className="taskList">{todayInboxTasks.map(renderScheduledInboxTask)}{todayRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask todayRoadmapTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)} aria-label={`${task.title || "無題のタスク"}を完了`} /><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">{task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}{!todayInboxTasks.length && !todayRoadmapTasks.length && renderScheduledInboxEmptyState("today", "今日")}</div>
                 </section>
 
                 {hasTodaySideTasks && <aside className="todayTaskColumn" aria-label="期限切れと繰り返しタスク">
