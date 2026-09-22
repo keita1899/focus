@@ -1,10 +1,11 @@
 export type TravelEntryType = "transport" | "meal" | "activity";
-export type TravelEntry = { id: string; type: TravelEntryType; title: string; cost: number; transportMode?: string; startTime?: string; endTime?: string };
+export type TravelEntry = { id: string; type: TravelEntryType; title: string; cost: number; transportMode?: string; origin?: string; destination?: string; startTime?: string; endTime?: string };
 export type TravelDay = { date: string; entries: TravelEntry[] };
 export type Trip = { id: string; title: string; startDate: string; mode: "daytrip" | "stay"; nights: number; days: TravelDay[]; createdAt: string };
 export type TravelState = { trips: Trip[] };
 
 export const transportModes = ["徒歩", "電車", "新幹線", "バス", "飛行機", "車", "タクシー", "自転車", "船", "その他"];
+export const transportModeIcons: Record<string, string> = { "徒歩": "🚶", "電車": "🚃", "新幹線": "🚄", "バス": "🚌", "飛行機": "✈️", "車": "🚗", "タクシー": "🚕", "自転車": "🚲", "船": "⛴️", "その他": "📍" };
 export const entryTypeLabels: Record<TravelEntryType, string> = { transport: "移動", meal: "ごはん", activity: "目的" };
 
 export function normalizeTravelState(value: unknown): TravelState {
