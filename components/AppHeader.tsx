@@ -63,6 +63,9 @@ export default function AppHeader() {
           <a className="navLink" href="/lists">
             リスト
           </a>
+          <a className="navLink" href="/travel">
+            旅行
+          </a>
           <a className="navLink" href="/study">
             学習
           </a>
