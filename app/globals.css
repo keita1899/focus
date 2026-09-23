@@ -5072,10 +5072,10 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelTotal { display: grid; justify-items: end; gap: 3px; }
 .travelTotal span { color: var(--muted); font-size: .78rem; font-weight: 800; }
 .travelTotal strong { color: var(--accent-strong); font-size: 1.6rem; }
-.travelChecklist { border: 1px solid #d7e4da; border-radius: 11px; background: white; }
-.travelChecklist summary { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; color: var(--accent-strong); cursor: pointer; font-weight: 900; list-style: none; }
-.travelChecklist summary::-webkit-details-marker { display: none; }
-.travelChecklist summary small { color: var(--muted); }
+.travelChecklist { display: grid; gap: 0; border: 1px solid #d7e4da; border-radius: 11px; background: white; }
+.travelChecklist > header { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; color: var(--accent-strong); }
+.travelChecklist > header h2 { font-size: 1rem; }
+.travelChecklist > header span { color: var(--muted); font-size: .8rem; font-weight: 900; }
 .travelChecklistBody { display: grid; gap: 10px; border-top: 1px solid var(--line); padding: 12px 15px 15px; }
 .travelChecklistBody > form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
 .travelChecklistBody input { min-height: 38px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; }
@@ -5091,6 +5091,7 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelDayTabs button { display: grid; gap: 2px; min-width: 92px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--muted); padding: 8px 12px; text-align: left; }
 .travelDayTabs button.active { border-color: var(--accent-strong); background: #e8f3ec; color: var(--accent-strong); }
 .travelDayTabs small { font-size: .68rem; }
+.travelDayTabs .travelChecklistTab { flex: 0 0 auto; margin-left: auto; }
 .travelDayCard { display: grid; gap: 14px; border: 1px solid #d7e4da; border-radius: 14px; background: white; padding: 20px; }
 .travelDayCard > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .travelDayCard > header > div { display: flex; align-items: center; gap: 10px; }
