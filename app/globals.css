@@ -214,7 +214,18 @@ body > .topbar + .shell {
 .studyEditModal .studyAddForm { display: grid; gap: 16px; }
 .studyEditModal textarea { min-height: 42px; overflow-y: hidden; resize: none; }
 .studyReviewAnswer { display: grid; gap: 7px; color: var(--muted); font-size: .85rem; font-weight: 900; }
+.studyReviewAnswerHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.studyReviewAnswerHeading > div { display: flex; gap: 4px; }
+.studyReviewAnswerHeading button { min-height: 30px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--muted); padding: 0 10px; font-size: .78rem; font-weight: 900; }
+.studyReviewAnswerHeading button.active { border-color: #3159a7; background: #eef2fb; color: #3159a7; }
 .studyReviewAnswer textarea { width: 100%; min-height: 90px; overflow-y: hidden; border: 1px solid var(--line); border-radius: 8px; padding: 10px; color: var(--ink); resize: none; }
+.studyJournalForm { display: grid; gap: 8px; }
+.studyJournalRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px; align-items: center; gap: 8px; border-radius: 8px; background: #f5f7fb; padding: 9px; }
+.studyJournalRow > div { display: grid; grid-template-columns: 36px minmax(0, 1fr) 90px; align-items: center; gap: 6px; }
+.studyJournalRow span { color: var(--muted); font-size: .75rem; font-weight: 900; }
+.studyJournalRow input { min-width: 0; min-height: 36px; border: 1px solid var(--line); border-radius: 6px; background: white; padding: 0 8px; color: var(--ink); }
+.studyJournalRow > button { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: #fff1ef; color: var(--danger); font-size: 1rem; }
+.studyJournalForm > button { justify-self: start; min-height: 34px; border: 1px dashed #9babca; border-radius: 7px; background: white; color: #3159a7; padding: 0 11px; font-weight: 900; }
 .studyCheckAnswer { min-height: 42px; border: 0; border-radius: 7px; background: #3159a7; color: white; font-weight: 900; }
 .studyCheckAnswer:disabled { opacity: .45; cursor: not-allowed; }
 .studyAnswerModalBody { display: grid; gap: 18px; }
@@ -5076,10 +5087,12 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelChecklist > header { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; color: var(--accent-strong); }
 .travelChecklist > header h2 { font-size: 1rem; }
 .travelChecklist > header span { color: var(--muted); font-size: .8rem; font-weight: 900; }
-.travelChecklistBody { display: grid; gap: 10px; border-top: 1px solid var(--line); padding: 12px 15px 15px; }
-.travelChecklistBody > form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
-.travelChecklistBody input { min-height: 38px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; }
-.travelChecklistBody form button { border: 0; border-radius: 7px; background: var(--accent-strong); color: white; padding: 0 13px; font-weight: 900; }
+.travelChecklistGroups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border-top: 1px solid var(--line); padding: 14px; }
+.travelChecklistGroup { display: grid; align-content: start; gap: 9px; border: 1px solid #e3ebe5; border-radius: 9px; padding: 12px; }
+.travelChecklistGroup h3 { color: var(--accent-strong); font-size: .9rem; }
+.travelChecklistGroup > form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.travelChecklistGroup input { min-width: 0; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; }
+.travelChecklistGroup form button { border: 0; border-radius: 7px; background: var(--accent-strong); color: white; padding: 0 11px; font-weight: 900; }
 .travelChecklistItems { display: grid; gap: 3px; }
 .travelChecklistItems > div { display: grid; grid-template-columns: 22px minmax(0, 1fr) 28px; align-items: center; gap: 8px; min-height: 36px; border-bottom: 1px solid #edf0ed; }
 .travelChecklistItems > div.done span { color: var(--muted); text-decoration: line-through; }
@@ -5149,6 +5162,7 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelEditActions button { min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 14px; font-weight: 900; }
 .travelEditActions button[type="submit"] { border-color: var(--accent-strong); background: var(--accent-strong); color: white; }
 @media (max-width: 800px) { .travelCardGrid { grid-template-columns: 1fr; } .travelPageHeader, .travelPlanHeader { align-items: flex-start; flex-direction: column; } .travelPlanHeader input { min-width: 0; width: 100%; } .travelTotal { justify-items: start; } .travelEntry { grid-template-columns: 58px 108px minmax(0, 1fr) auto; } .travelEntryActions { grid-column: 3 / -1; } .travelEntryFormMain, .travelEntryFormMeta { flex-wrap: wrap; } .travelEntryForm .travelEntryTitleInput, .travelEntryForm .travelRouteInputs { flex-basis: calc(100% - 103px); } }
+@media (max-width: 800px) { .travelChecklistGroups { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .travelPage { width: min(100% - 20px, 1120px); } .travelCreateForm, .travelDayCard { padding: 16px; } .travelEntry { grid-template-columns: 52px 100px minmax(0, 1fr); } .travelEntry > b { grid-column: 3; } .travelEntryActions { grid-column: 2 / -1; } .travelEntryForm .travelEntryTitleInput, .travelEntryForm .travelRouteInputs { flex-basis: 100%; } .travelTimeRange { flex-basis: 100%; } }
 .annualRoadmapMonths { display: grid; gap: 8px; }
 .annualRoadmapMonth { gap: 0; overflow: hidden; padding: 0; }
