@@ -17,7 +17,7 @@ export default function TravelNewClient({ initialValue }: { initialValue: unknow
     const nights = mode === "stay" ? Math.max(1, Number(form.get("nights")) || 1) : 0;
     if (!title || !startDate) return;
     setSaving(true);
-    const trip: Trip = { id: `trip-${Date.now()}`, title, startDate, mode, nights, days: createTravelDays(startDate, mode === "daytrip" ? 1 : nights + 1), createdAt: new Date().toISOString() };
+    const trip: Trip = { id: `trip-${Date.now()}`, title, startDate, mode, nights, days: createTravelDays(startDate, mode === "daytrip" ? 1 : nights + 1), checklist: [], createdAt: new Date().toISOString() };
     const current = normalizeTravelState(initialValue);
     await fetch("/api/travel", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trips: [...current.trips, trip] }) });
     router.push(`/travel/${trip.id}`);
