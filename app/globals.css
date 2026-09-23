@@ -244,6 +244,8 @@ body > .topbar + .shell {
 .studyAddForm label { display: grid; gap: 6px; color: var(--muted); font-size: .85rem; font-weight: 800; }
 .studyAddForm input, .studyAddForm textarea, .studyAddForm select { width: 100%; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 9px; color: var(--ink); }
 .studyAddForm textarea { min-height: 100px; resize: vertical; }
+.studyAnswerInput { display: grid; gap: 7px; }
+.studyAnswerInput > textarea { min-height: 100px; resize: vertical; }
 .studyIntervalList { display: flex; flex-wrap: wrap; gap: 10px; }
 .studyIntervalList label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; font-weight: 800; }
 .studyIntervalList input { width: 13px; height: 13px; accent-color: #3159a7; }
