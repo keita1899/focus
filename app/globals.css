@@ -5086,6 +5086,8 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelChecklistToggle { width: 20px; height: 20px; border: 1.5px solid #9daf9f; border-radius: 6px; background: white; }
 .travelChecklistItems > div.done .travelChecklistToggle { border-color: var(--accent-strong); background: var(--accent-strong); box-shadow: inset 0 0 0 4px white; }
 .travelChecklistDelete { border: 0; background: transparent; color: var(--danger); font-size: 1.05rem; }
+.travelChecklistDelete { opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.travelChecklistItems > div:hover .travelChecklistDelete, .travelChecklistItems > div:focus-within .travelChecklistDelete { opacity: 1; pointer-events: auto; }
 .travelDays { display: grid; gap: 18px; }
 .travelDayTabs { display: flex; gap: 7px; overflow-x: auto; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 .travelDayTabs button { display: grid; gap: 2px; min-width: 92px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--muted); padding: 8px 12px; text-align: left; }
@@ -5114,6 +5116,8 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelEntryActions { display: flex !important; justify-content: flex-end; gap: 2px !important; }
 .travelEntryActions button { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: .8rem; }
 .travelEntryActions button:last-child { color: var(--danger); font-size: 1.05rem; }
+.travelEntryActions button:last-child { opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.travelEntry:hover .travelEntryActions button:last-child, .travelEntry:focus-within .travelEntryActions button:last-child { opacity: 1; pointer-events: auto; }
 .travelEntryActions button:hover:not(:disabled) { background: #eef3ef; }
 .travelEntryActions button:disabled { opacity: .25; }
 .travelEntryForm { display: grid; gap: 7px; border-radius: 9px; background: #f3f7f4; padding: 10px; }
