@@ -27,3 +27,4 @@ export function createTravelDays(startDate: string, count: number): TravelDay[] 
 
 export function travelTotal(trip: Trip) { return trip.days.flatMap((day) => day.entries).reduce((sum, entry) => sum + (Number(entry.cost) || 0), 0); }
 export function formatTravelDate(value: string) { return value ? new Intl.DateTimeFormat("ja-JP", { month: "short", day: "numeric", weekday: "short" }).format(new Date(`${value}T00:00:00`)) : "日付未定"; }
+export function formatTravelDateWithYear(value: string) { return value ? new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "short", day: "numeric", weekday: "short" }).format(new Date(`${value}T00:00:00`)) : "日付未定"; }

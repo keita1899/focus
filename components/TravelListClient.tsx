@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatTravelDate, normalizeTravelState } from "../lib/travel";
+import { formatTravelDateWithYear, normalizeTravelState } from "../lib/travel";
 
 export default function TravelListClient({ initialValue }: { initialValue: unknown }) {
   const [state, setState] = useState(() => normalizeTravelState(initialValue));
@@ -21,6 +21,6 @@ export default function TravelListClient({ initialValue }: { initialValue: unkno
 
   return <main className="shell travelPage travelListPage">
     <header className="travelPageHeader"><h1>旅行一覧</h1><a className="travelPrimaryButton" href="/travel/new">＋ 旅行を作成</a></header>
-    {trips.length === 0 ? <section className="travelEmpty"><h2>旅行の計画はまだありません</h2><p>最初の旅行を作って、移動やごはん、観光を日ごとに整理しましょう。</p><a className="travelPrimaryButton" href="/travel/new">旅行を作成</a></section> : <div className="travelCardGrid">{trips.map((trip) => { const endDate = trip.days.at(-1)?.date || trip.startDate; return <article className="travelCardWrap" key={trip.id}><a className="travelCard" href={`/travel/${trip.id}`}><span className="travelCardType">{trip.mode === "daytrip" ? "日帰り" : `${trip.nights}泊${trip.nights + 1}日`}</span><time>{trip.startDate === endDate ? formatTravelDate(trip.startDate) : `${formatTravelDate(trip.startDate)}〜${formatTravelDate(endDate)}`}</time><h2>{trip.title}</h2></a><button className="travelCardDelete" type="button" onClick={() => void removeTrip(trip.id)} aria-label={`${trip.title}を削除`}>×</button></article>; })}</div>}
+    {trips.length === 0 ? <section className="travelEmpty"><h2>旅行の計画はまだありません</h2><p>最初の旅行を作って、移動やごはん、観光を日ごとに整理しましょう。</p><a className="travelPrimaryButton" href="/travel/new">旅行を作成</a></section> : <div className="travelCardGrid">{trips.map((trip) => { const endDate = trip.days.at(-1)?.date || trip.startDate; return <article className="travelCardWrap" key={trip.id}><a className="travelCard" href={`/travel/${trip.id}`}><span className="travelCardType">{trip.mode === "daytrip" ? "日帰り" : `${trip.nights}泊${trip.nights + 1}日`}</span><time>{trip.startDate === endDate ? formatTravelDateWithYear(trip.startDate) : `${formatTravelDateWithYear(trip.startDate)}〜${formatTravelDateWithYear(endDate)}`}</time><h2>{trip.title}</h2></a><button className="travelCardDelete" type="button" onClick={() => void removeTrip(trip.id)} aria-label={`${trip.title}を削除`}>×</button></article>; })}</div>}
   </main>;
 }
