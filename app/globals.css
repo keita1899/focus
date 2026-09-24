@@ -5114,10 +5114,10 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelEmpty p { color: var(--muted); }
 .travelCardGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .travelCardWrap { position: relative; }
-.travelCard { display: grid; gap: 7px; border: 1px solid #d7e4da; border-radius: 12px; background: linear-gradient(155deg, white, #f1f7f3); padding: 17px 52px 17px 18px; color: var(--ink); box-shadow: 0 7px 20px rgba(35, 91, 67, .06); text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.travelCard { display: grid; gap: 3px; border: 1px solid #d7e4da; border-radius: 12px; background: linear-gradient(155deg, white, #f1f7f3); padding: 15px 52px 15px 18px; color: var(--ink); box-shadow: 0 7px 20px rgba(35, 91, 67, .06); text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
 .travelCard:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 10px 25px rgba(35, 91, 67, .1); }
 .travelCardType { justify-self: start; border-radius: 999px; background: #e8f3ec; color: var(--accent-strong); padding: 4px 8px; font-size: .72rem; font-weight: 900; }
-.travelCard time { color: var(--muted); font-size: .82rem; font-weight: 800; }
+.travelCard time { color: var(--muted); font-size: .82rem; font-weight: 800; line-height: 1.35; }
 .travelCard h2 { margin: 0; font-size: 1.15rem; }
 .travelCardDelete { position: absolute; top: 12px; right: 12px; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--danger); font-size: 1.15rem; }
 .travelCardDelete:hover { background: #fff1ef; }
