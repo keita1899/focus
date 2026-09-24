@@ -10,11 +10,65 @@ type DiaryEntry = {
   updatedAt: string;
 };
 
+type TopicResponse = {
+  date: string;
+  topicId: string;
+  body: string;
+  updatedAt: string;
+};
+
+type DiaryState = {
+  entries: DiaryEntry[];
+  topicResponses: TopicResponse[];
+};
+
 type DiaryPageProps = {
   initialValue: unknown;
 };
 
 const storageKey = "diary-v1";
+const dailyTopics = [
+  "最近、買ってよかったものは何ですか？",
+  "理想の休日をどのように過ごしたいですか？",
+  "子どもの頃に夢中になっていたことは何ですか？",
+  "今住んでいる場所の好きなところを紹介してください。",
+  "最近うれしかった出来事は何ですか？",
+  "朝型と夜型のどちらが自分に合っていますか？",
+  "人から言われて印象に残っている言葉はありますか？",
+  "今、一つだけ新しい習慣を作るなら何にしますか？",
+  "好きな食べ物の魅力を、食べたことがない人に説明してください。",
+  "旅行で計画を立てる派ですか、行き当たりばったり派ですか？",
+  "最近、自分が成長したと感じたことは何ですか？",
+  "仕事や勉強に集中するために工夫していることは何ですか？",
+  "一日だけ別の職業を体験できるなら何を選びますか？",
+  "自分にとって居心地のよい場所とはどんな場所ですか？",
+  "現金とキャッシュレス決済のどちらが使いやすいですか？",
+  "誰かにおすすめしたい本・映画・動画はありますか？",
+  "苦手なことに取り組むとき、どうやって気持ちを整えますか？",
+  "一か月の休みがあったら何をしたいですか？",
+  "自分が大切にしている時間について話してください。",
+  "友人を作るうえで大切だと思うことは何ですか？",
+  "最近知って驚いたことは何ですか？",
+  "都会と地方なら、どちらに住みたいですか？",
+  "昔の自分に一つ助言できるなら何を伝えますか？",
+  "毎日続けていること、または続けたいことは何ですか？",
+  "好きな季節と、その理由を教えてください。",
+  "一日の中で最も好きな時間帯はいつですか？",
+  "自分の長所を具体的な経験とともに説明してください。",
+  "最近やめてよかったことはありますか？",
+  "時間とお金なら、今はどちらを大切にしたいですか？",
+  "初対面の人と話すときに意識していることはありますか？",
+  "地元のおすすめスポットを一つ紹介してください。",
+  "失敗から学んだことを一つ挙げてください。",
+  "スマートフォンを使わない一日をどう過ごしますか？",
+  "自分にとって『よい仕事』とはどんな仕事ですか？",
+  "最近、誰かに感謝したことは何ですか？",
+  "家で過ごすのと外出するのは、どちらが好きですか？",
+  "新しく学んでみたいことと、その理由は何ですか？",
+  "予定が急に空いたら何をしますか？",
+  "自分の趣味を知らない人に分かりやすく説明してください。",
+  "十年後、どのような毎日を過ごしていたいですか？",
+];
 
 function createId() {
   return `diary-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -51,14 +105,32 @@ function normalizeEntries(value: unknown): DiaryEntry[] {
     .sort((first, second) => second.date.localeCompare(first.date));
 }
 
+function normalizeState(value: unknown): DiaryState {
+  const entriesValue = Array.isArray(value) ? value : value && typeof value === "object" ? (value as Partial<DiaryState>).entries : [];
+  const responsesValue = value && !Array.isArray(value) && typeof value === "object" ? (value as Partial<DiaryState>).topicResponses : [];
+  const topicResponses = Array.isArray(responsesValue) ? responsesValue.filter((item): item is TopicResponse => Boolean(item) && typeof item.date === "string" && typeof item.topicId === "string" && typeof item.body === "string") : [];
+  return { entries: normalizeEntries(entriesValue), topicResponses };
+}
+
+function getDailyTopic(dateKey: string) {
+  const hash = Array.from(dateKey).reduce((total, character) => (total * 31 + character.charCodeAt(0)) >>> 0, 7);
+  const index = hash % dailyTopics.length;
+  return { id: `topic-${index}`, text: dailyTopics[index] };
+}
+
 export default function DiaryClient({ initialValue }: DiaryPageProps) {
-  const initialEntries = useMemo(() => normalizeEntries(initialValue), [initialValue]);
+  const initialState = useMemo(() => normalizeState(initialValue), [initialValue]);
+  const initialEntries = initialState.entries;
   const firstEntry = initialEntries[0] || null;
   const [entries, setEntries] = useState<DiaryEntry[]>(initialEntries);
+  const [topicResponses, setTopicResponses] = useState<TopicResponse[]>(initialState.topicResponses);
   const [activeId, setActiveId] = useState(firstEntry?.id || "");
   const [entryDate, setEntryDate] = useState(firstEntry?.date || getTodayKey());
   const [entryBody, setEntryBody] = useState(firstEntry?.body || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
+  const todayKey = getTodayKey();
+  const todayTopic = getDailyTopic(todayKey);
+  const todayTopicBody = topicResponses.find((item) => item.date === todayKey)?.body || "";
 
   const activeEntry = useMemo(
     () => entries.find((entry) => entry.id === activeId) || null,
@@ -72,10 +144,12 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
       try {
         const response = await fetch("/api/diary", { cache: "no-store" });
         const data = (await response.json()) as { value: unknown };
-        const dbEntries = normalizeEntries(data.value);
+        const dbState = normalizeState(data.value);
+        const dbEntries = dbState.entries;
 
-        if (dbEntries.length > 0) {
+        if (dbEntries.length > 0 || dbState.topicResponses.length > 0) {
           setEntries(dbEntries);
+          setTopicResponses(dbState.topicResponses);
           setActiveId(dbEntries[0].id);
           setEntryDate(dbEntries[0].date);
           setEntryBody(dbEntries[0].body);
@@ -84,8 +158,10 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
 
         const stored = window.localStorage.getItem(storageKey);
         if (!stored) return;
-        const migratedEntries = normalizeEntries(JSON.parse(stored));
+        const migratedState = normalizeState(JSON.parse(stored));
+        const migratedEntries = migratedState.entries;
         setEntries(migratedEntries);
+        setTopicResponses(migratedState.topicResponses);
         if (migratedEntries[0]) {
           setActiveId(migratedEntries[0].id);
           setEntryDate(migratedEntries[0].date);
@@ -94,14 +170,16 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         await fetch("/api/diary", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(migratedEntries),
+          body: JSON.stringify(migratedState),
         });
         window.localStorage.removeItem(storageKey);
       } catch {
         const stored = window.localStorage.getItem(storageKey);
         if (!stored) return;
-        const localEntries = normalizeEntries(JSON.parse(stored));
+        const localState = normalizeState(JSON.parse(stored));
+        const localEntries = localState.entries;
         setEntries(localEntries);
+        setTopicResponses(localState.topicResponses);
         if (localEntries[0]) {
           setActiveId(localEntries[0].id);
           setEntryDate(localEntries[0].date);
@@ -118,9 +196,16 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
     fetch("/api/diary", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(entries),
+      body: JSON.stringify({ entries, topicResponses }),
     }).catch(() => undefined);
-  }, [entries, isReady]);
+  }, [entries, topicResponses, isReady]);
+
+  function updateTopicResponse(body: string) {
+    setTopicResponses((current) => {
+      const response = { date: todayKey, topicId: todayTopic.id, body, updatedAt: new Date().toISOString() };
+      return current.some((item) => item.date === todayKey) ? current.map((item) => item.date === todayKey ? response : item) : [response, ...current];
+    });
+  }
 
   function selectEntry(entry: DiaryEntry) {
     setActiveId(entry.id);
@@ -209,6 +294,15 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         <button className="roadmapAddButton" type="button" onClick={resetForm}>
           新規
         </button>
+      </section>
+
+      <section className="diaryDailyTopic" aria-labelledby="daily-topic-title">
+        <div>
+          <span>今日の話題</span>
+          <h2 id="daily-topic-title">{todayTopic.text}</h2>
+          <p>結論、理由、具体例、まとめの順で書いてみましょう。</p>
+        </div>
+        <textarea aria-label="今日の話題への回答" placeholder="自分の考えを書いてみる" value={todayTopicBody} onChange={(event) => updateTopicResponse(event.currentTarget.value)} />
       </section>
 
       <section className="diaryLayout" aria-label="日記一覧と入力">

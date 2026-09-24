@@ -4657,6 +4657,55 @@ select {
   gap: 18px;
 }
 
+.diaryDailyTopic {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 22px;
+  border: 1px solid #cbdcd0;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #f4faf6, white);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.diaryDailyTopic > div {
+  display: grid;
+  gap: 6px;
+}
+
+.diaryDailyTopic span {
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.diaryDailyTopic h2 {
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.55;
+}
+
+.diaryDailyTopic p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.diaryDailyTopic textarea {
+  width: 100%;
+  min-height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 14px;
+  resize: vertical;
+  line-height: 1.75;
+  outline: none;
+}
+
+.diaryDailyTopic textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(113, 205, 151, 0.14);
+}
+
 .diaryList,
 .diaryEditor {
   border: 1px solid var(--line);
