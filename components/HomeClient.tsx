@@ -16,7 +16,8 @@ type PeriodOffsets = Record<GoalKey, number>;
 type HomeTab =
   | "today"
   | "tasks"
-  | "roadmap";
+  | "roadmap"
+  | "habits";
 type ScheduledInboxBucket = "today" | "week" | "month";
 type RoadmapScheduledTask = { id: string; title: string; scheduledDate: string; scheduledTime?: string; parentTitle?: string };
 
@@ -1041,17 +1042,19 @@ export default function HomeClient({
     { key: "today", label: "今日" },
     { key: "roadmap", label: "ロードマップ" },
     { key: "tasks", label: "タスク" },
+    { key: "habits", label: "習慣" },
   ];
   const showTodayTab = selectedHomeTab === "today";
   const showTasksTab = selectedHomeTab === "tasks";
   const showRoadmapTab = selectedHomeTab === "roadmap";
+  const showHabitsTab = selectedHomeTab === "habits";
 
   useEffect(() => {
     try {
       const storedTab = window.localStorage.getItem(homeTabStorageKey);
       if (
         storedTab === "today" ||
-        storedTab === "tasks" || storedTab === "roadmap"
+        storedTab === "tasks" || storedTab === "roadmap" || storedTab === "habits"
       ) {
         setSelectedHomeTab(storedTab);
       } else if (storedTab === "inbox" || storedTab === "recurring") {
@@ -2710,6 +2713,7 @@ export default function HomeClient({
             </section>
           )}
           {showRoadmapTab && <AnnualRoadmapClient initialValue={annualRoadmapValue} birthday={planner.birthday} onStateChange={setAnnualRoadmapValue} />}
+          {showHabitsTab && <AnnualRoadmapClient initialValue={annualRoadmapValue} birthday={planner.birthday} onStateChange={setAnnualRoadmapValue} view="habits" />}
 
         </section>
       </section>

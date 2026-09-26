@@ -5249,6 +5249,26 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .annualRoadmapMonthTheme input { width: min(100%, 420px); min-height: 34px; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; background: transparent; padding: 0; color: var(--ink); font-weight: 700; }
 .annualRoadmapMonthTheme input:focus { outline: 0; box-shadow: none; }
 .annualRoadmapMonthBody { display: grid; gap: 16px; border-top: 1px solid var(--line); padding: 16px; }
+.annualHabit { display: grid; gap: 10px; border: 1px solid #d7e4da; border-radius: 9px; background: #fbfdfb; padding: 12px; }
+.annualHabitHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.annualHabitHeader input { min-width: 0; flex: 1; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); padding: 5px 2px; font-weight: 900; }
+.annualHabitHeader input:focus { outline: 0; border-bottom-color: var(--accent-strong); }
+.annualHabitHeader span { color: var(--muted); font-size: .75rem; font-weight: 900; white-space: nowrap; }
+.annualHabitDays { display: grid; grid-template-columns: repeat(7, minmax(30px, 1fr)); gap: 5px; }
+.annualHabitDays button { aspect-ratio: 1; min-width: 0; border: 1px solid #dce7e0; border-radius: 6px; background: white; color: var(--muted); font-size: .72rem; font-weight: 900; }
+.annualHabitDays button:not(:disabled):hover { border-color: var(--accent); background: #eef7f1; color: var(--accent-strong); }
+.annualHabitDays button.completed { border-color: var(--accent-strong); background: var(--accent-strong); color: white; }
+.annualHabitDays button:disabled { border-color: #edf1ee; background: #f7f8f7; color: #c8cfca; cursor: not-allowed; }
+.annualHabitsPage { display: grid; gap: 18px; }
+.annualHabitsOverviewHeader, .annualHabitOverviewSection { display: grid; gap: 14px; border: 1px solid var(--line); border-radius: 10px; background: white; padding: 18px; box-shadow: var(--shadow); }
+.annualHabitsOverviewHeader { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.annualHabitsOverviewHeader h2, .annualHabitOverviewSection > h2 { font-size: 1rem; }
+.annualHabitsOverviewHeader > div:first-child > div { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.annualHabitsOverviewHeader span { border-radius: 999px; background: #eef6f1; color: var(--accent-strong); padding: 5px 9px; font-size: .78rem; font-weight: 900; }
+.annualHabitHistory { display: grid; gap: 14px; }
+.annualHabitHistory > div { display: grid; gap: 7px; }
+.annualHabitHistory h3 { color: var(--accent-strong); font-size: .82rem; }
+.annualHabit.isCompact { box-shadow: none; }
 .annualRoadmapTaskColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 20px; }
 .annualRoadmapTaskColumns > .annualRoadmapTaskGroup { height: 100%; }
 .annualRoadmapTaskGroup { display: grid; align-content: start; gap: 4px; }
