@@ -184,7 +184,7 @@ export default function AnnualRoadmapClient({ initialValue, birthday = "", onSta
     if (kind === "mustDo") {
       const tasks = sortTasksBySchedule(yearPlan.months[month].mustDo);
       return <section className="annualRoadmapTaskGroup annualRoadmapMustDoGroup" key={kind}><h3>{taskLabels[kind]}</h3>{tasks.map((task) => {
-        const collapsed = collapsedParents[task.id];
+        const collapsed = collapsedParents[task.id] ?? true;
         const scheduleKey = `${selectedYear}-${month}-${kind}-root-${task.id}`;
         const completedChildren = task.children.filter((child) => child.done).length;
         const childFormKey = `${selectedYear}-${month}-${kind}-child-${task.id}`;
