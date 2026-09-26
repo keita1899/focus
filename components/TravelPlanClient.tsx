@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useRef, useState } from "react";
-import { entryTypeLabels, formatTravelDate, normalizeTravelState, transportModeIcons, transportModes, TravelChecklistCategory, TravelEntry, TravelEntryType, travelTotal } from "../lib/travel";
+import { createTravelDays, entryTypeLabels, formatTravelDate, normalizeTravelState, transportModeIcons, transportModes, TravelChecklistCategory, TravelEntry, TravelEntryType, travelTotal } from "../lib/travel";
 
 type EditTarget = { dayIndex: number; entry: TravelEntry } | null;
 
@@ -12,6 +12,8 @@ export default function TravelPlanClient({ initialValue, tripId }: { initialValu
   const [showChecklist, setShowChecklist] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget>(null);
   const [editType, setEditType] = useState<TravelEntryType>("activity");
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<"daytrip" | "stay">("daytrip");
   const saveQueue = useRef(Promise.resolve());
   const trip = state.trips.find((item) => item.id === tripId);
   const total = useMemo(() => trip ? travelTotal(trip) : 0, [trip]);
@@ -69,6 +71,21 @@ export default function TravelPlanClient({ initialValue, tripId }: { initialValu
   };
   const toggleChecklistItem = (id: string) => updateTrip((current) => ({ ...current, checklist: current.checklist.map((item) => item.id === id ? { ...item, done: !item.done } : item) }));
   const removeChecklistItem = (id: string) => updateTrip((current) => ({ ...current, checklist: current.checklist.filter((item) => item.id !== id) }));
+  const updateSchedule = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!trip) return;
+    const form = new FormData(event.currentTarget);
+    const startDate = String(form.get("startDate") || "");
+    const mode = String(form.get("mode")) === "stay" ? "stay" : "daytrip";
+    const nights = mode === "stay" ? Math.max(1, Number(form.get("nights")) || 1) : 0;
+    const dayCount = mode === "stay" ? nights + 1 : 1;
+    const removedDays = trip.days.slice(dayCount);
+    if (removedDays.some((day) => day.entries.length > 0) && !window.confirm("短くなる日程に登録済みの予定があります。削除して日程を変更しますか？")) return;
+    const days = createTravelDays(startDate, dayCount).map((day, index) => ({ ...day, entries: trip.days[index]?.entries || [] }));
+    updateTrip((current) => ({ ...current, startDate, mode, nights, days }));
+    setActiveDayIndex((current) => Math.min(current, dayCount - 1));
+    setIsEditingSchedule(false);
+  };
 
   if (!trip) return <main className="shell travelPage"><section className="travelEmpty"><h1>旅行が見つかりません</h1><a className="travelPrimaryButton" href="/travel">旅行一覧へ</a></section></main>;
   const visibleDays = trip.mode === "stay" ? trip.days.map((day, index) => ({ day, index })).filter(({ index }) => index === activeDayIndex) : trip.days.map((day, index) => ({ day, index }));
@@ -77,7 +94,7 @@ export default function TravelPlanClient({ initialValue, tripId }: { initialValu
   const transportSelect = (defaultValue?: string) => <select name="transportMode" aria-label="交通手段" defaultValue={defaultValue || transportModes[0]}>{transportModes.map((mode) => <option key={mode} value={mode}>{transportModeIcons[mode]} {mode}</option>)}</select>;
 
   return <main className="shell travelPage travelPlanPage">
-    <header className="travelPlanHeader"><div><a className="travelBackLink" href="/travel">← 旅行一覧</a><input aria-label="旅行タイトル" value={trip.title} onChange={(event) => updateTrip((current) => ({ ...current, title: event.target.value }))} /><p>{formatTravelDate(trip.startDate)}から・{trip.mode === "daytrip" ? "日帰り" : `${trip.nights}泊${trip.nights + 1}日`}</p></div><div className="travelTotal"><span>合計金額</span><strong>¥{total.toLocaleString()}</strong></div></header>
+    <header className="travelPlanHeader"><div><a className="travelBackLink" href="/travel">← 旅行一覧</a><input className="travelPlanTitle" aria-label="旅行タイトル" value={trip.title} onChange={(event) => updateTrip((current) => ({ ...current, title: event.target.value }))} />{isEditingSchedule ? <form className="travelScheduleForm" onSubmit={updateSchedule}><label>開始日<input name="startDate" type="date" defaultValue={trip.startDate} required /></label><label>旅行タイプ<select name="mode" value={scheduleMode} onChange={(event) => setScheduleMode(event.currentTarget.value as "daytrip" | "stay")}><option value="daytrip">日帰り</option><option value="stay">宿泊</option></select></label>{scheduleMode === "stay" && <label>宿泊数<select name="nights" defaultValue={String(Math.max(1, trip.nights))}>{Array.from({ length: 14 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}泊</option>)}</select></label>}<div><button type="button" onClick={() => setIsEditingSchedule(false)}>キャンセル</button><button type="submit">変更</button></div></form> : <div className="travelScheduleSummary"><p>{formatTravelDate(trip.startDate)}から・{trip.mode === "daytrip" ? "日帰り" : `${trip.nights}泊${trip.nights + 1}日`}</p><button type="button" onClick={() => { setScheduleMode(trip.mode); setIsEditingSchedule(true); }}>日程を変更</button></div>}</div><div className="travelTotal"><span>合計金額</span><strong>¥{total.toLocaleString()}</strong></div></header>
     <nav className="travelDayTabs" aria-label="旅行日程">{trip.days.map((day, index) => <button className={!showChecklist && activeDayIndex === index ? "active" : undefined} type="button" key={day.date} onClick={() => { setActiveDayIndex(index); setShowChecklist(false); }}><strong>{index + 1}日目</strong><small>{formatTravelDate(day.date)}</small></button>)}<button className={`travelChecklistTab${showChecklist ? " active" : ""}`} type="button" onClick={() => setShowChecklist(true)}><strong>チェックリスト</strong><small>{trip.checklist.filter((item) => item.done).length}/{trip.checklist.length}</small></button></nav>
     {showChecklist ? <section className="travelChecklist"><header><h2>チェックリスト</h2><span>{trip.checklist.filter((item) => item.done).length}/{trip.checklist.length}</span></header><div className="travelChecklistGroups">{checklistGroups.map((group) => { const items = trip.checklist.filter((item) => item.category === group.key); return <section className="travelChecklistGroup" key={group.key}><h3>{group.label}</h3><form onSubmit={(event) => addChecklistItem(event, group.key)}><input name="checklistItem" placeholder={`${group.label}のチェック項目`} required /><button type="submit">追加</button></form>{items.length === 0 ? <p className="emptyText">項目はまだありません。</p> : <div className="travelChecklistItems">{items.map((item) => <div className={item.done ? "done" : undefined} key={item.id}><button className="travelChecklistToggle" type="button" onClick={() => toggleChecklistItem(item.id)} aria-label={`${item.text}の完了を切り替え`} /><span>{item.text}</span><button className="travelChecklistDelete" type="button" onClick={() => removeChecklistItem(item.id)} aria-label={`${item.text}を削除`}>×</button></div>)}</div>}</section>; })}</div></section> : <div className="travelDays">{visibleDays.map(({ day, index: dayIndex }) => { const selectedType = entryTypes[dayIndex] || "activity"; const dayTotal = day.entries.reduce((sum, entry) => sum + entry.cost, 0); return <section className="travelDayCard" key={day.date}>
       <header><div><span>DAY {dayIndex + 1}</span><h2>{formatTravelDate(day.date)}</h2></div><strong>¥{dayTotal.toLocaleString()}</strong></header>

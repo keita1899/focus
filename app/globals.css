@@ -5134,8 +5134,16 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelFormActions button { min-height: 42px; border: 0; border-radius: 8px; background: var(--accent-strong); color: white; padding: 0 18px; font-weight: 900; }
 .travelPlanHeader { align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
 .travelPlanHeader > div:first-child { display: grid; gap: 7px; }
-.travelPlanHeader input { min-width: min(560px, 60vw); border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 4px 0; color: var(--ink); font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 900; }
-.travelPlanHeader input:focus { outline: 0; border-bottom-color: var(--accent); }
+.travelPlanHeader .travelPlanTitle { min-width: min(560px, 60vw); border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 4px 0; color: var(--ink); font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 900; }
+.travelPlanHeader .travelPlanTitle:focus { outline: 0; border-bottom-color: var(--accent); }
+.travelScheduleSummary { display: flex; align-items: center; gap: 10px; }
+.travelScheduleSummary button { border: 0; background: transparent; color: var(--accent-strong); padding: 2px 0; font-size: .76rem; font-weight: 900; }
+.travelScheduleForm { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; }
+.travelScheduleForm label { display: grid; gap: 4px; color: var(--muted); font-size: .72rem; font-weight: 900; }
+.travelScheduleForm input, .travelScheduleForm select { min-height: 36px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--ink); padding: 0 8px; font: inherit; font-size: .82rem; }
+.travelScheduleForm > div { display: flex; gap: 5px; }
+.travelScheduleForm button { min-height: 36px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--muted); padding: 0 10px; font-size: .78rem; font-weight: 900; }
+.travelScheduleForm button[type="submit"] { border-color: var(--accent-strong); background: var(--accent-strong); color: white; }
 .travelTotal { display: grid; justify-items: end; gap: 3px; }
 .travelTotal span { color: var(--muted); font-size: .78rem; font-weight: 800; }
 .travelTotal strong { color: var(--accent-strong); font-size: 1.6rem; }
@@ -5217,7 +5225,7 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelEditActions { display: flex; justify-content: flex-end; gap: 8px; }
 .travelEditActions button { min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 14px; font-weight: 900; }
 .travelEditActions button[type="submit"] { border-color: var(--accent-strong); background: var(--accent-strong); color: white; }
-@media (max-width: 800px) { .travelCardGrid { grid-template-columns: 1fr; } .travelPageHeader, .travelPlanHeader { align-items: flex-start; flex-direction: column; } .travelPlanHeader input { min-width: 0; width: 100%; } .travelTotal { justify-items: start; } .travelEntry { grid-template-columns: 58px 108px minmax(0, 1fr) auto; } .travelEntryActions { grid-column: 3 / -1; } .travelEntryFormMain, .travelEntryFormMeta { flex-wrap: wrap; } .travelEntryForm .travelEntryTitleInput, .travelEntryForm .travelRouteInputs { flex-basis: calc(100% - 103px); } }
+@media (max-width: 800px) { .travelCardGrid { grid-template-columns: 1fr; } .travelPageHeader, .travelPlanHeader { align-items: flex-start; flex-direction: column; } .travelPlanHeader .travelPlanTitle { min-width: 0; width: 100%; } .travelTotal { justify-items: start; } .travelEntry { grid-template-columns: 58px 108px minmax(0, 1fr) auto; } .travelEntryActions { grid-column: 3 / -1; } .travelEntryFormMain, .travelEntryFormMeta { flex-wrap: wrap; } .travelEntryForm .travelEntryTitleInput, .travelEntryForm .travelRouteInputs { flex-basis: calc(100% - 103px); } }
 @media (max-width: 800px) { .travelChecklistGroups { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .travelPage { width: min(100% - 20px, 1120px); } .travelCreateForm, .travelDayCard { padding: 16px; } .travelEntry { grid-template-columns: 52px 100px minmax(0, 1fr); } .travelEntry > b { grid-column: 3; } .travelEntryActions { grid-column: 2 / -1; } .travelEntryForm .travelEntryTitleInput, .travelEntryForm .travelRouteInputs { flex-basis: 100%; } .travelTimeRange { flex-basis: 100%; } }
 .annualRoadmapMonths { display: grid; gap: 8px; }
