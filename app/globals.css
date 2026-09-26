@@ -5155,10 +5155,14 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .travelChecklistGroup { display: grid; align-content: start; gap: 9px; border: 1px solid #e3ebe5; border-radius: 9px; padding: 12px; }
 .travelChecklistGroup h3 { color: var(--accent-strong); font-size: .9rem; }
 .travelChecklistGroup > form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.travelChecklistGroup > form.hasCost { grid-template-columns: minmax(0, 1fr) 84px auto; }
 .travelChecklistGroup input { min-width: 0; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; }
+.travelChecklistGroup .travelChecklistCost { text-align: right; }
 .travelChecklistGroup form button { border: 0; border-radius: 7px; background: var(--accent-strong); color: white; padding: 0 11px; font-weight: 900; }
 .travelChecklistItems { display: grid; gap: 3px; }
 .travelChecklistItems > div { display: grid; grid-template-columns: 22px minmax(0, 1fr) 28px; align-items: center; gap: 8px; min-height: 36px; border-bottom: 1px solid #edf0ed; }
+.travelChecklistItems > div.hasCost { grid-template-columns: 22px minmax(0, 1fr) auto 28px; }
+.travelChecklistItems > div.hasCost b { color: var(--accent-strong); font-size: .78rem; white-space: nowrap; }
 .travelChecklistItems > div.done span { color: var(--muted); text-decoration: line-through; }
 .travelChecklistToggle { width: 20px; height: 20px; border: 1.5px solid #9daf9f; border-radius: 6px; background: white; }
 .travelChecklistItems > div.done .travelChecklistToggle { border-color: var(--accent-strong); background: var(--accent-strong); box-shadow: inset 0 0 0 4px white; }
