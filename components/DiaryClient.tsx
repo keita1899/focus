@@ -136,12 +136,13 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
   const [activeId, setActiveId] = useState(firstEntry?.id || "");
   const [entryDate, setEntryDate] = useState(firstEntry?.date || getTodayKey());
   const [entryBody, setEntryBody] = useState(firstEntry?.body || "");
+  const [activeTopicDate, setActiveTopicDate] = useState(getTodayKey());
   const [isReady, setIsReady] = useState(initialValue !== null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const todayKey = getTodayKey();
-  const todayTopic = getDailyTopic(todayKey);
-  const todayTopicBody = topicResponses.find((item) => item.date === todayKey)?.body || "";
-  const pastTopicResponses = [...topicResponses].filter((item) => item.date < todayKey && item.body.trim()).sort((first, second) => second.date.localeCompare(first.date));
+  const topicDates = Array.from(new Set([todayKey, ...topicResponses.filter((item) => item.body.trim()).map((item) => item.date)])).sort((first, second) => second.localeCompare(first));
+  const activeTopic = getDailyTopic(activeTopicDate);
+  const activeTopicBody = topicResponses.find((item) => item.date === activeTopicDate)?.body || "";
 
   const activeEntry = useMemo(
     () => entries.find((entry) => entry.id === activeId) || null,
@@ -210,10 +211,10 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
     saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(() => saveDiary(value));
   }, [entries, topicResponses, isReady]);
 
-  function updateTopicResponse(body: string) {
+  function updateTopicResponse(date: string, body: string) {
     setTopicResponses((current) => {
-      const response = { date: todayKey, topicId: todayTopic.id, body, updatedAt: new Date().toISOString() };
-      return current.some((item) => item.date === todayKey) ? current.map((item) => item.date === todayKey ? response : item) : [response, ...current];
+      const response = { date, topicId: getDailyTopic(date).id, body, updatedAt: new Date().toISOString() };
+      return current.some((item) => item.date === date) ? current.map((item) => item.date === date ? response : item) : [response, ...current];
     });
   }
 
@@ -306,16 +307,7 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         </button>
       </section>
 
-      <section className="diaryDailyTopic" aria-labelledby="daily-topic-title">
-        <div>
-          <span>今日の話題</span>
-          <h2 id="daily-topic-title">{todayTopic.text}</h2>
-          <p>結論、理由、具体例、まとめの順で書いてみましょう。</p>
-        </div>
-        <textarea aria-label="今日の話題への回答" placeholder="自分の考えを書いてみる" value={todayTopicBody} onChange={(event) => updateTopicResponse(event.currentTarget.value)} />
-      </section>
-
-      {pastTopicResponses.length > 0 && <section className="diaryTopicHistory" aria-labelledby="topic-history-title"><div className="diaryTopicHistoryHeading"><h2 id="topic-history-title">過去の話題</h2><span>{pastTopicResponses.length}件</span></div><div>{pastTopicResponses.map((response) => <article key={response.date}><time dateTime={response.date}>{formatDiaryDate(response.date)}</time><h3>{getTopicText(response)}</h3><p>{response.body}</p></article>)}</div></section>}
+      <section className="diaryTopicSection" aria-labelledby="daily-topic-title"><div className="diaryTopicSectionHeading"><h2 id="daily-topic-title">今日の話題</h2><p>結論、理由、具体例、まとめの順で書いてみましょう。</p></div><div className="diaryLayout diaryTopicLayout"><aside className="diaryList" aria-label="話題一覧">{topicDates.map((date) => { const response = topicResponses.find((item) => item.date === date); return <button className={date === activeTopicDate ? "diaryListItem active" : "diaryListItem"} key={date} type="button" onClick={() => setActiveTopicDate(date)}><time dateTime={date}>{date === todayKey ? "今日" : formatDiaryDate(date)}</time><span>{response ? getTopicText(response) : getDailyTopic(date).text}</span></button>; })}</aside><section className="diaryEditor diaryTopicEditor" aria-label="話題への回答"><div className="diaryTopicEditorHeader"><span>{activeTopicDate === todayKey ? "今日の話題" : formatDiaryDate(activeTopicDate)}</span><h3>{activeTopic.text}</h3></div><textarea aria-label="話題への回答" placeholder="自分の考えを書いてみる" value={activeTopicBody} onChange={(event) => updateTopicResponse(activeTopicDate, event.currentTarget.value)} /></section></div></section>
 
       <section className="diaryLayout" aria-label="日記一覧と入力">
         <aside className="diaryList" aria-label="日記一覧">
