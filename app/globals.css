@@ -3353,6 +3353,12 @@ select {
   transition: opacity 140ms ease;
 }
 
+.wantsTable .wantsDeleteButton,
+.wantsCategoryEditorList .wantsDeleteButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .taskItem:hover .iconButton,
 .taskItem:focus-within .iconButton {
   opacity: 1;
@@ -4705,6 +4711,16 @@ select {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(113, 205, 151, 0.14);
 }
+
+.diaryTopicHistory { display: grid; gap: 12px; margin-bottom: 22px; }
+.diaryTopicHistoryHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.diaryTopicHistoryHeading h2 { font-size: 1rem; }
+.diaryTopicHistoryHeading span { color: var(--muted); font-size: .78rem; font-weight: 900; }
+.diaryTopicHistory > div { display: grid; gap: 8px; }
+.diaryTopicHistory article { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, .88); padding: 14px; }
+.diaryTopicHistory time { color: var(--accent-strong); font-size: .75rem; font-weight: 900; }
+.diaryTopicHistory h3 { font-size: .92rem; line-height: 1.5; }
+.diaryTopicHistory p { margin: 0; color: var(--muted); white-space: pre-wrap; line-height: 1.7; }
 
 .diaryList,
 .diaryEditor {

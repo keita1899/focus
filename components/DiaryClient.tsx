@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type DiaryEntry = {
   id: string;
@@ -118,6 +118,15 @@ function getDailyTopic(dateKey: string) {
   return { id: `topic-${index}`, text: dailyTopics[index] };
 }
 
+function getTopicText(response: TopicResponse) {
+  const index = Number(response.topicId.replace("topic-", ""));
+  return dailyTopics[index] || getDailyTopic(response.date).text;
+}
+
+function saveDiary(value: DiaryState) {
+  return fetch("/api/diary", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(value), keepalive: true }).then(() => undefined);
+}
+
 export default function DiaryClient({ initialValue }: DiaryPageProps) {
   const initialState = useMemo(() => normalizeState(initialValue), [initialValue]);
   const initialEntries = initialState.entries;
@@ -128,9 +137,11 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
   const [entryDate, setEntryDate] = useState(firstEntry?.date || getTodayKey());
   const [entryBody, setEntryBody] = useState(firstEntry?.body || "");
   const [isReady, setIsReady] = useState(initialValue !== null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const todayKey = getTodayKey();
   const todayTopic = getDailyTopic(todayKey);
   const todayTopicBody = topicResponses.find((item) => item.date === todayKey)?.body || "";
+  const pastTopicResponses = [...topicResponses].filter((item) => item.date < todayKey && item.body.trim()).sort((first, second) => second.date.localeCompare(first.date));
 
   const activeEntry = useMemo(
     () => entries.find((entry) => entry.id === activeId) || null,
@@ -150,9 +161,11 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         if (dbEntries.length > 0 || dbState.topicResponses.length > 0) {
           setEntries(dbEntries);
           setTopicResponses(dbState.topicResponses);
-          setActiveId(dbEntries[0].id);
-          setEntryDate(dbEntries[0].date);
-          setEntryBody(dbEntries[0].body);
+          if (dbEntries[0]) {
+            setActiveId(dbEntries[0].id);
+            setEntryDate(dbEntries[0].date);
+            setEntryBody(dbEntries[0].body);
+          }
           return;
         }
 
@@ -193,11 +206,8 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
 
   useEffect(() => {
     if (!isReady) return;
-    fetch("/api/diary", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entries, topicResponses }),
-    }).catch(() => undefined);
+    const value = { entries, topicResponses };
+    saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(() => saveDiary(value));
   }, [entries, topicResponses, isReady]);
 
   function updateTopicResponse(body: string) {
@@ -304,6 +314,8 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         </div>
         <textarea aria-label="今日の話題への回答" placeholder="自分の考えを書いてみる" value={todayTopicBody} onChange={(event) => updateTopicResponse(event.currentTarget.value)} />
       </section>
+
+      {pastTopicResponses.length > 0 && <section className="diaryTopicHistory" aria-labelledby="topic-history-title"><div className="diaryTopicHistoryHeading"><h2 id="topic-history-title">過去の話題</h2><span>{pastTopicResponses.length}件</span></div><div>{pastTopicResponses.map((response) => <article key={response.date}><time dateTime={response.date}>{formatDiaryDate(response.date)}</time><h3>{getTopicText(response)}</h3><p>{response.body}</p></article>)}</div></section>}
 
       <section className="diaryLayout" aria-label="日記一覧と入力">
         <aside className="diaryList" aria-label="日記一覧">
