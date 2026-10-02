@@ -5231,11 +5231,9 @@ body > .topbar + .travelListPage { padding-top: 4px; }
 .annualHabitDays button.isToday { border-color: var(--accent-strong); background: #e8f3ec; color: var(--accent-strong); box-shadow: 0 0 0 2px rgba(46, 125, 92, .12); }
 .annualHabitDays button.completed.isToday { background: var(--accent-strong); color: white; }
 .annualHabitsPage { display: grid; gap: 18px; }
-.annualHabitsOverviewHeader, .annualHabitOverviewSection { display: grid; gap: 14px; border: 1px solid var(--line); border-radius: 10px; background: white; padding: 18px; box-shadow: var(--shadow); }
-.annualHabitsOverviewHeader { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
-.annualHabitsOverviewHeader h2, .annualHabitOverviewSection > h2 { font-size: 1rem; }
-.annualHabitsOverviewHeader > div:first-child > div { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.annualHabitsOverviewHeader span { border-radius: 999px; background: #eef6f1; color: var(--accent-strong); padding: 5px 9px; font-size: .78rem; font-weight: 900; }
+.annualHabitsToolbar { display: flex; justify-content: center; }
+.annualHabitOverviewSection { display: grid; gap: 14px; border: 1px solid var(--line); border-radius: 10px; background: white; padding: 18px; box-shadow: var(--shadow); }
+.annualHabitOverviewSection > h2 { font-size: 1rem; }
 .annualHabitHistory { display: grid; gap: 14px; }
 .annualHabitHistory > div { display: grid; gap: 7px; }
 .annualHabitHistory h3 { color: var(--accent-strong); font-size: .82rem; }
