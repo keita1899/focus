@@ -57,9 +57,10 @@ export default function WantsClient({ initialValue }: WantsClientProps) {
   const pendingSaveRef = useRef<string | null>(null);
   const sortedItems = useMemo(() => {
     const filteredItems = selectedCategoryId === "all" ? wants.items : wants.items.filter((item) => item.categoryId === selectedCategoryId);
-    if (categorySortMode === "created") return filteredItems;
+    if (categorySortMode === "created") return [...filteredItems].sort((left, right) => Number(left.done) - Number(right.done));
     const categoryOrder = new Map(wants.categories.map((category, index) => [category.id, index]));
     return [...filteredItems].sort((left, right) => {
+      if (left.done !== right.done) return left.done ? 1 : -1;
       const leftHasSchedule = Boolean(left.scheduledYear && left.scheduledMonth);
       const rightHasSchedule = Boolean(right.scheduledYear && right.scheduledMonth);
       const yearComparison = (left.scheduledYear || 9999) - (right.scheduledYear || 9999);
