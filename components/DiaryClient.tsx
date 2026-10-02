@@ -302,13 +302,11 @@ export default function DiaryClient({ initialValue }: DiaryPageProps) {
         <div>
           <h1>Diary</h1>
         </div>
-        <button className="roadmapAddButton" type="button" onClick={resetForm}>
-          新規
-        </button>
       </section>
 
       <section className="diaryTopicSection" aria-labelledby="daily-topic-title"><div className="diaryTopicSectionHeading"><h2 id="daily-topic-title">今日の話題</h2><p>結論、理由、具体例、まとめの順で書いてみましょう。</p></div><div className="diaryLayout diaryTopicLayout"><aside className="diaryList" aria-label="話題一覧">{topicDates.map((date) => { const response = topicResponses.find((item) => item.date === date); return <button className={date === activeTopicDate ? "diaryListItem active" : "diaryListItem"} key={date} type="button" onClick={() => setActiveTopicDate(date)}><time dateTime={date}>{date === todayKey ? "今日" : formatDiaryDate(date)}</time><span>{response ? getTopicText(response) : getDailyTopic(date).text}</span></button>; })}</aside><section className="diaryEditor diaryTopicEditor" aria-label="話題への回答"><div className="diaryTopicEditorHeader"><span>{activeTopicDate === todayKey ? "今日の話題" : formatDiaryDate(activeTopicDate)}</span><h3>{activeTopic.text}</h3></div><textarea aria-label="話題への回答" placeholder="自分の考えを書いてみる" value={activeTopicBody} onChange={(event) => updateTopicResponse(activeTopicDate, event.currentTarget.value)} /></section></div></section>
 
+      <div className="diaryEntriesHeading"><h2>日記</h2><button className="roadmapAddButton" type="button" onClick={resetForm}>新規</button></div>
       <section className="diaryLayout" aria-label="日記一覧と入力">
         <aside className="diaryList" aria-label="日記一覧">
           {entries.length === 0 ? (

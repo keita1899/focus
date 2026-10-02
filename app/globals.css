@@ -4750,6 +4750,8 @@ select {
 .diaryTopicEditorHeader span { color: var(--accent-strong); font-size: .75rem; font-weight: 900; }
 .diaryTopicEditorHeader h3 { font-size: 1rem; line-height: 1.55; }
 .diaryTopicEditor textarea { min-height: 220px; }
+.diaryEntriesHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.diaryEntriesHeading h2 { font-size: 1rem; }
 
 .roadmapModeTabs {
   display: flex;
