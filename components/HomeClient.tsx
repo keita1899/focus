@@ -292,6 +292,12 @@ function GoalTextField({ ariaLabel, className, placeholder, value, onChange }: {
   return <div className={`${className} goalTextDisplay${value ? "" : " isEmpty"}`} role="button" tabIndex={0} aria-label={`${ariaLabel}を編集`} onClick={() => setIsEditing(true)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setIsEditing(true); }}>{value || placeholder}</div>;
 }
 
+function WeeklyGoalField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) return <input className="todayWeeklyGoalInput" aria-label="週間目標" autoFocus value={value} onChange={(event) => onChange(event.currentTarget.value)} onBlur={() => setIsEditing(false)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />;
+  return <div className="todayWeeklyGoalText" role="textbox" aria-label="週間目標。ダブルクリックで編集" aria-readonly="true" tabIndex={0} onDoubleClick={() => setIsEditing(true)} onKeyDown={(event) => { if (event.key === "Enter") setIsEditing(true); }}>{value || " "}</div>;
+}
+
 function isValidTimeValue(value: unknown): value is string {
   return typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
@@ -970,6 +976,7 @@ export default function HomeClient({
   );
   const [selectedHomeTab, setSelectedHomeTab] =
     useState<HomeTab>("today");
+  const [todayWeekOffset, setTodayWeekOffset] = useState(0);
   const [periodOffsets, setPeriodOffsets] = useState<PeriodOffsets>({
     year: 0,
     month: 0,
@@ -981,6 +988,8 @@ export default function HomeClient({
   const remainingDays = periodInfo.remainingDays;
   const currentWeekKey = getCurrentWeekKey();
   const currentMonthKey = getCurrentMonthKey();
+  const todayWeekKey = formatDateKey(getWeekStartDate(todayWeekOffset));
+  const todayWeekLabel = getWeekRangeLabel(todayWeekOffset);
   const dailyTaskGroupsByTime = useMemo(
     () => [...planner.dailyTaskGroups].sort((first, second) => first.startTime.localeCompare(second.startTime)),
     [planner.dailyTaskGroups],
@@ -1476,6 +1485,16 @@ export default function HomeClient({
           ...current.goalsByPeriod[key],
           [periodKey]: value,
         },
+      },
+    }));
+  }
+
+  function updateTodayWeeklyGoal(value: string) {
+    setPlanner((current) => ({
+      ...current,
+      goalsByPeriod: {
+        ...current.goalsByPeriod,
+        week: { ...current.goalsByPeriod.week, [todayWeekKey]: value },
       },
     }));
   }
@@ -2574,6 +2593,14 @@ export default function HomeClient({
 
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
+              <section className="todayWeeklyGoal" aria-label={`${todayWeekLabel}の週間目標`}>
+                <header className="todayWeeklyGoalHeader">
+                  <button type="button" onClick={() => setTodayWeekOffset((current) => current - 1)} aria-label="前の週の週間目標">&lt;</button>
+                  <div><h2>週間目標</h2><time>{todayWeekLabel}</time></div>
+                  <button type="button" onClick={() => setTodayWeekOffset((current) => current + 1)} aria-label="次の週の週間目標">&gt;</button>
+                </header>
+                <WeeklyGoalField key={todayWeekKey} value={planner.goalsByPeriod.week[todayWeekKey] || ""} onChange={updateTodayWeeklyGoal} />
+              </section>
               <div className={`todayTaskLayout${hasTodaySideTasks ? "" : " isSingleColumn"}`} aria-label="今日のタスク">
                 <section className="todayTaskSection todayTaskTodaySection" aria-label="今日やること">
                   <div className="sectionHeader"><h3>今日やること</h3></div>

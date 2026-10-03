@@ -1272,6 +1272,28 @@ h2 {
   gap: 12px;
 }
 
+.todayWeeklyGoal {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 640px);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .9);
+  padding: 14px 18px 16px;
+  box-shadow: var(--shadow);
+}
+
+.todayWeeklyGoalHeader { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.todayWeeklyGoalHeader > div { display: grid; min-width: 120px; gap: 2px; text-align: center; }
+.todayWeeklyGoalHeader h2 { color: var(--accent-strong); font-size: 1rem; }
+.todayWeeklyGoalHeader time { color: var(--muted); font-size: .72rem; font-weight: 800; }
+.todayWeeklyGoalHeader button { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--accent-strong); font-size: 1rem; font-weight: 900; }
+.todayWeeklyGoalHeader button:hover { background: var(--surface-strong); }
+.todayWeeklyGoalText, .todayWeeklyGoalInput { width: 100%; min-height: 40px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); padding: 8px 2px; font: inherit; font-weight: 800; line-height: 1.5; outline: none; }
+.todayWeeklyGoalText { cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+.todayWeeklyGoalInput:focus { border-bottom-color: var(--accent-strong); }
+
 .todayTaskLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
