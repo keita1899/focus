@@ -55,9 +55,10 @@ export default function ShoppingListClient({ initialValue }: ShoppingListClientP
 
   const sortedItems = useMemo(() => {
     const filteredItems = selectedCategoryId === "all" ? shopping.items : shopping.items.filter((item) => item.categoryId === selectedCategoryId);
-    if (categorySortMode === "created") return filteredItems;
+    if (categorySortMode === "created") return [...filteredItems].sort((left, right) => Number(left.done) - Number(right.done));
     const categoryOrder = new Map(shopping.categories.map((category, index) => [category.id, index]));
     return [...filteredItems].sort((left, right) => {
+      if (left.done !== right.done) return left.done ? 1 : -1;
       const leftHasSchedule = Boolean(left.scheduledYear && left.scheduledMonth);
       const rightHasSchedule = Boolean(right.scheduledYear && right.scheduledMonth);
       const yearComparison = (left.scheduledYear || 9999) - (right.scheduledYear || 9999);
@@ -118,12 +119,12 @@ export default function ShoppingListClient({ initialValue }: ShoppingListClientP
   return <main className="shell wantsPage">
     <section className="roadmapHeader wantsHeader"><h1>買い物リスト</h1></section>
     <section className="wantsTablePanel" aria-label="買い物リスト一覧">
-      <div className="wantsTableActions"><div className="wantsTableFilters"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><label>表示<select value={selectedCategoryId} onChange={(event) => setSelectedCategoryId(event.currentTarget.value)}><option value="all">すべて</option>{shopping.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label></div><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ 買い物を追加</button></div>
-      <div className="wantsTableScroll"><table className="wantsTable shoppingTable"><thead><tr><th>完了</th><th><button className="wantsSortHeader" type="button" onClick={() => toggleSort("year")}>予定年{sortLabel("year")}</button></th><th><button className="wantsSortHeader" type="button" onClick={() => toggleSort("month")}>予定月{sortLabel("month")}</button></th><th><button className="wantsSortHeader" type="button" onClick={toggleCategorySortMode}>{categorySortMode === "grouped" ? "カテゴリーごと" : "追加順"}</button></th><th>買うもの</th><th>値段</th><th>削除</th></tr></thead><tbody>
+      <div className="wantsTableActions"><div className="wantsTableFilters"><button className="wantsCategoryButton" type="button" onClick={() => setIsCategoryModalOpen(true)}>カテゴリーを管理</button><select aria-label="カテゴリーで絞り込む" value={selectedCategoryId} onChange={(event) => setSelectedCategoryId(event.currentTarget.value)}><option value="all">すべて</option>{shopping.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div><button className="wantsAddButton" type="button" onClick={openNewItem}>＋ 買い物を追加</button></div>
+      <div className="wantsTableScroll"><table className="wantsTable shoppingTable"><thead><tr><th>完了</th><th className="wantsCenteredHeader"><button className="wantsSortHeader" type="button" onClick={() => toggleSort("year")}>予定年{sortLabel("year")}</button></th><th className="wantsCenteredHeader"><button className="wantsSortHeader" type="button" onClick={() => toggleSort("month")}>予定月{sortLabel("month")}</button></th><th className="wantsCenteredHeader"><button className="wantsSortHeader" type="button" onClick={toggleCategorySortMode}>{categorySortMode === "grouped" ? "カテゴリー" : "追加順"}</button></th><th>買うもの</th><th className="wantsCenteredHeader">値段</th><th>削除</th></tr></thead><tbody>
         {sortedItems.length === 0 ? <tr><td className="wantsEmpty" colSpan={7}>買い物はありません。追加ボタンから登録してください。</td></tr> : sortedItems.map((item) => {
           const category = shopping.categories.find((entry) => entry.id === item.categoryId) || shopping.categories[0];
           return <tr className={item.done ? "done" : ""} key={item.id} onDoubleClick={() => openEditItem(item)} title="ダブルクリックで編集">
-            <td><button className="checkButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.filter((entry) => entry.id !== item.id) }))} aria-label={`${item.title || "買い物"}を購入済みにして削除`}>✓</button></td>
+            <td><button className="checkButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.map((entry) => entry.id === item.id ? { ...entry, done: !entry.done } : entry) }))} aria-label={`${item.title || "買い物"}の完了を切り替え`}>✓</button></td>
             <td>{item.scheduledYear || "—"}</td><td>{item.scheduledMonth ? `${item.scheduledMonth}月` : "—"}</td><td><span className="wantCategoryTag" style={{ ["--category-color" as string]: category.color }}>{category.name}</span></td><td className="wantTitleCell">{item.title}</td><td>{item.price === undefined ? "—" : `¥${item.price.toLocaleString("ja-JP")}`}</td>
             <td><button className="iconButton wantsDeleteButton" type="button" onClick={() => setShopping((current) => ({ ...current, items: current.items.filter((entry) => entry.id !== item.id) }))} aria-label={`${item.title || "買い物"}を削除`}>×</button></td>
           </tr>;

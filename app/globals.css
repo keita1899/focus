@@ -548,6 +548,8 @@ body > .topbar + .shell {
   font-weight: 900;
 }
 
+.wantsTable th.wantsCenteredHeader { text-align: center; }
+
 .wantsSortHeader { border: 0; background: transparent; color: inherit; padding: 0; font: inherit; font-weight: inherit; cursor: pointer; }
 .wantsSortHeader:hover { text-decoration: underline; }
 
@@ -570,7 +572,7 @@ body > .topbar + .shell {
   padding: 0 8px;
 }
 
-.wantsTable tr.done input { color: var(--muted); text-decoration: line-through; }
+.wantsTable tr.done .wantTitleCell { color: var(--muted); text-decoration: line-through; }
 .wantsTable .checkButton { margin: auto; }
 .wantsDeleteButton { opacity: 1; pointer-events: auto; }
 .wantsEmpty { color: var(--muted); padding: 28px !important; text-align: center !important; }

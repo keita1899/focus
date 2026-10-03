@@ -1017,7 +1017,7 @@ export default function HomeClient({
   };
   const sortedInboxTasks = sortInboxTasksBySchedule(planner.inboxTasks);
   const scheduledInboxTasks = sortedInboxTasks.filter((task) => task.scheduledDate);
-  const todayInboxTasks = scheduledInboxTasks.filter((task) => task.scheduledDate === todayKey);
+  const todayInboxTasks = scheduledInboxTasks.filter((task) => task.scheduledDate === todayKey && !isInboxTaskOverdue(task));
   const currentWeekday = currentTime.getDay();
   const currentWeekdayIndex = (currentWeekday + 6) % 7;
   const currentDayOfMonth = currentTime.getDate();
@@ -1032,9 +1032,11 @@ export default function HomeClient({
       !task.completedMonths.includes(getMonthlySlotKey(currentMonthKey, task.dayOfMonth)),
   );
   const overdueInboxTasks = scheduledInboxTasks.filter(isInboxTaskOverdue);
-  const roadmapScheduledTasks = getRoadmapScheduledTasks(annualRoadmapValue).filter((task) => task.scheduledDate >= todayKey);
-  const todayRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate === todayKey);
-  const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length > 0;
+  const roadmapScheduledTasks = getRoadmapScheduledTasks(annualRoadmapValue);
+  const isRoadmapTaskOverdue = (task: RoadmapScheduledTask) => task.scheduledDate < todayKey || (task.scheduledDate === todayKey && Boolean(task.scheduledTime) && task.scheduledTime! < currentTimeValue);
+  const overdueRoadmapTasks = roadmapScheduledTasks.filter(isRoadmapTaskOverdue);
+  const todayRoadmapTasks = roadmapScheduledTasks.filter((task) => task.scheduledDate === todayKey && !isRoadmapTaskOverdue(task));
+  const hasOverdueTasks = overdueWeeklyTasks.length + overdueMonthlyTasks.length + overdueInboxTasks.length + overdueRoadmapTasks.length > 0;
   const todayWeeklyTasks = planner.weeklyTasks.filter((task) => task.weekday === currentWeekday);
   const todayMonthlyTasks = planner.monthlyTasks.filter((task) => task.dayOfMonth === currentDayOfMonth);
   const hasTodaySideTasks = hasOverdueTasks || todayWeeklyTasks.length > 0 || todayMonthlyTasks.length > 0;
@@ -2586,6 +2588,7 @@ export default function HomeClient({
                         {overdueWeeklyTasks.map((task) => renderWeeklyTask(task, task.weekday))}
                         {overdueMonthlyTasks.map((task) => renderMonthlyTask(task, task.dayOfMonth))}
                         {overdueInboxTasks.map(renderScheduledInboxTask)}
+                        {overdueRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask todayRoadmapTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)} aria-label={`${task.title || "無題のタスク"}を完了`} /><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">{task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}
                       </div>
                     </section>
                   )}
