@@ -2593,7 +2593,7 @@ export default function HomeClient({
 
           {showTodayTab && (
             <section className="homeTabPanel todayLayout" aria-label="今日のタスク">
-              <section className="todayWeeklyGoal" aria-label={`${todayWeekLabel}の週間目標`}>
+              <section className={`todayWeeklyGoal${todayWeekOffset === 0 ? " isCurrentWeek" : ""}`} aria-label={`${todayWeekLabel}の週間目標`}>
                 <header className="todayWeeklyGoalHeader">
                   <button type="button" onClick={() => setTodayWeekOffset((current) => current - 1)} aria-label="前の週の週間目標">&lt;</button>
                   <div><h2>週間目標</h2><time>{todayWeekLabel}</time></div>

@@ -1284,6 +1284,8 @@ h2 {
   box-shadow: var(--shadow);
 }
 
+.todayWeeklyGoal.isCurrentWeek { background: #eef8f1; }
+
 .todayWeeklyGoalHeader { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .todayWeeklyGoalHeader > div { display: grid; min-width: 120px; gap: 2px; text-align: center; }
 .todayWeeklyGoalHeader h2 { color: var(--accent-strong); font-size: 1rem; }
