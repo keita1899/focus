@@ -9,6 +9,7 @@ const visionKey = "vision-v1";
 const wantsKey = "wants-v1";
 const shoppingListKey = "shopping-list-v1";
 const fixedCostsKey = "fixed-costs-v1";
+const prefectureListKey = "prefecture-list-v1";
 const annualRoadmapKey = "annual-roadmap-v1";
 const studyKey = "cpa-study-v1";
 const travelKey = "travel-v1";
@@ -116,6 +117,13 @@ export async function getFixedCostsState() {
   const state = await prisma.appState.findUnique({
     where: { key: getScopedKey(userId, fixedCostsKey) },
   });
+  return state ? JSON.parse(state.value) : null;
+}
+
+export async function getPrefectureListState() {
+  const userId = await getUserId();
+  if (!userId) return null;
+  const state = await prisma.appState.findUnique({ where: { key: getScopedKey(userId, prefectureListKey) } });
   return state ? JSON.parse(state.value) : null;
 }
 

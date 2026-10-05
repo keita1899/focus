@@ -546,9 +546,11 @@ body > .topbar + .shell {
   color: var(--accent-strong);
   font-size: .86rem;
   font-weight: 900;
+  text-align: center;
 }
 
 .wantsTable th.wantsCenteredHeader { text-align: center; }
+.wantsTable td:nth-child(2), .wantsTable td:nth-child(3), .wantsTable td:nth-child(4), .shoppingTable td:nth-child(6) { text-align: center; }
 
 .wantsSortHeader { border: 0; background: transparent; color: inherit; padding: 0; font: inherit; font-weight: inherit; cursor: pointer; }
 .wantsSortHeader:hover { text-decoration: underline; }
@@ -607,6 +609,50 @@ body > .topbar + .shell {
 .wantsCategoryEditorList > div { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px; gap: 8px; align-items: center; }
 .wantsCategoryEditorList input[type="color"] { min-height: 38px; padding: 3px; }
 .wantsCategoryAddForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+
+.prefectureChecklistPanel { display: grid; gap: 16px; width: min(100%, 1040px); margin: 0 auto; }
+.prefectureChecklistHeader { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.prefectureChecklistHeader h1 { margin: 0; color: var(--accent-strong); font-size: 1.35rem; }
+.prefectureChecklistHeader p { margin: 5px 0 0; color: var(--muted); font-size: .82rem; }
+.prefectureChecklistHeader strong { color: var(--accent-strong); font-size: 1.5rem; }
+.prefectureChecklistHeader strong span { color: var(--muted); font-size: .8rem; }
+.prefectureChecklistLayout { display: grid; grid-template-columns: minmax(230px, .34fr) minmax(0, .66fr); min-height: 560px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .9); box-shadow: var(--shadow); overflow: hidden; }
+.prefecturePicker { display: grid; align-content: start; gap: 14px; max-height: 680px; border-right: 1px solid var(--line); background: #f7faf8; padding: 16px; overflow-y: auto; }
+.prefecturePicker section { display: grid; gap: 6px; }
+.prefecturePicker h2 { color: var(--muted); font-size: .72rem; }
+.prefecturePicker section > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.prefecturePicker button { display: flex; align-items: center; gap: 6px; min-height: 32px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ink); padding: 0 7px; font-size: .78rem; font-weight: 800; text-align: left; }
+.prefecturePicker button:hover { background: white; }
+.prefecturePicker button.active { border-color: rgba(23, 107, 85, .28); background: #e7f3eb; color: var(--accent-strong); }
+.prefecturePicker button > span { width: 7px; height: 7px; flex: 0 0 auto; border: 1px solid #a8b3aa; border-radius: 50%; background: white; }
+.prefecturePicker button.visited > span { border-color: var(--accent-strong); background: var(--accent-strong); }
+.prefectureChecklistContent { display: grid; align-content: start; gap: 16px; padding: 20px; }
+.prefectureChecklistContent > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.prefectureChecklistContent > header h2 { color: var(--accent-strong); font-size: 1.15rem; }
+.prefectureChecklistContent > header label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 900; }
+.prefectureChecklistContent > header input { width: 16px; height: 16px; accent-color: var(--accent-strong); }
+.prefectureChecklistForm { display: grid; grid-template-columns: 132px minmax(0, 1fr) auto; gap: 8px; }
+.prefectureChecklistForm select, .prefectureChecklistForm input { min-width: 0; min-height: 40px; border: 1px solid var(--line); border-radius: 7px; background: white; padding: 0 9px; color: var(--ink); font: inherit; }
+.prefectureChecklistForm button { border: 0; border-radius: 7px; background: var(--accent); color: white; padding: 0 14px; font-weight: 900; }
+.prefectureChecklistItems { display: grid; }
+.prefectureChecklistItems > div { display: grid; grid-template-columns: 20px 105px minmax(0, 1fr) 28px; align-items: center; gap: 9px; min-height: 48px; border-bottom: 1px solid #edf0ed; }
+.prefectureChecklistItems > div > input { width: 16px; height: 16px; accent-color: var(--accent-strong); }
+.prefectureChecklistItems > div.done > span:last-of-type { color: var(--muted); text-decoration: line-through; }
+.prefectureChecklistItems > div > button { visibility: hidden; border: 0; background: transparent; color: var(--danger); font-size: 1.1rem; }
+.prefectureChecklistItems > div:hover > button, .prefectureChecklistItems > div:focus-within > button { visibility: visible; }
+.prefectureKindTag { justify-self: start; border-radius: 999px; padding: 4px 7px; font-size: .68rem; font-weight: 900; white-space: nowrap; }
+.prefectureKindTag.is-place { background: #e7f3eb; color: #176b55; }
+.prefectureKindTag.is-food { background: #fff0dc; color: #9a5a16; }
+.prefectureKindTag.is-activity { background: #e9efff; color: #405ca8; }
+.prefectureKindTag.is-other { background: #f0eef3; color: #675c71; }
+
+@media (max-width: 720px) {
+  .prefectureChecklistLayout { grid-template-columns: 1fr; }
+  .prefecturePicker { max-height: 290px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .prefecturePicker section > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .prefectureChecklistForm { grid-template-columns: 1fr auto; }
+  .prefectureChecklistForm select { grid-column: 1 / -1; }
+}
 
 .goalTextDisplay { min-height: 34px; width: 100%; cursor: text; padding: 6px 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
 .goalTextDisplay.isEmpty { color: var(--muted); }
