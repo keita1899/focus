@@ -7,12 +7,13 @@ type ReviewAttempt = { answeredAt: string; answer: string };
 type JournalRow = { id: string; debitAccount: string; debitAmount: string; creditAccount: string; creditAmount: string };
 type Card = { id: string; question: string; answer: string; answerMode: "text" | "journal"; answerJournalRows: JournalRow[]; notes: string; source: string; material: string; page: string; problemNumber: string; category: string; dueDate: string; level: Level; lastReviewed?: string; createdAt: string; reviewAttempts: ReviewAttempt[] };
 type Doubt = { id: string; text: string; createdAt: string };
-type State = { intervals: number[]; categories: string[]; cards: Card[]; doubts: Doubt[] };
+type DailyReport = { date: string; learned: string; minutes: number };
+type State = { intervals: number[]; categories: string[]; cards: Card[]; doubts: Doubt[]; reports: DailyReport[] };
 type SortOrder = "newest" | "oldest";
 type LevelFilter = "all" | "0" | "1" | "2";
 
 const defaultCategories = ["未分類"];
-const defaults: State = { intervals: [0, 1, 3, 7, 30], categories: defaultCategories, cards: [], doubts: [] };
+const defaults: State = { intervals: [0, 1, 3, 7, 30], categories: defaultCategories, cards: [], doubts: [], reports: [] };
 const choices = [0, 1, 3, 7, 30];
 const levelLabels: Record<Level, string> = { 0: "要復習", 1: "理解中", 2: "定着" };
 const intervalLabel = (value: number) => value === 0 ? "当日" : value === 1 ? "翌日" : value === 3 ? "3日後" : value === 7 ? "1週間後" : "1か月後";
@@ -53,11 +54,13 @@ function normalize(value: unknown): State {
   const savedCategories = Array.isArray(source.categories) ? source.categories.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => item.trim()) : [];
   const categories = Array.from(new Set([...savedCategories, ...cards.map((card) => card.category)]));
   const doubts = Array.isArray(source.doubts) ? source.doubts.filter((item): item is Doubt => Boolean(item) && typeof item.id === "string" && typeof item.text === "string").map((item) => ({ ...item, createdAt: item.createdAt || now() })) : [];
+  const reports = Array.isArray(source.reports) ? source.reports.filter((item): item is DailyReport => Boolean(item) && typeof item.date === "string").map((item) => ({ date: item.date.slice(0, 10), learned: typeof item.learned === "string" ? item.learned : "", minutes: typeof item.minutes === "number" && Number.isFinite(item.minutes) ? Math.max(0, item.minutes) : 0 })) : [];
   return {
     intervals: Array.isArray(source.intervals) && source.intervals.length ? source.intervals.filter((item): item is number => typeof item === "number").sort((left, right) => left - right) : defaults.intervals,
     categories: categories.length ? categories : defaultCategories,
     cards,
     doubts,
+    reports,
   };
 }
 
@@ -66,7 +69,8 @@ function save(value: State) { return fetch("/api/study", { method: "PUT", header
 export default function StudyClient({ initialValue }: { initialValue: unknown }) {
   const [state, setState] = useState(() => normalize(initialValue));
   const [view, setView] = useState<"list" | "add" | "settings">("list");
-  const [section, setSection] = useState<"review" | "doubts">("review");
+  const [section, setSection] = useState<"daily" | "review" | "doubts">("daily");
+  const [reportDate, setReportDate] = useState(date());
   const [category, setCategory] = useState("すべて");
   const [newCategory, setNewCategory] = useState("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
@@ -99,6 +103,9 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
   const sortedDoubts = [...state.doubts].sort((left, right) => sortOrder === "newest" ? right.createdAt.localeCompare(left.createdAt) : left.createdAt.localeCompare(right.createdAt));
   const journalAnswer = formatJournal(journalRows);
   const currentReviewAnswer = reviewAnswerMode === "journal" ? journalAnswer : reviewAnswer.trim();
+  const selectedReport = state.reports.find((report) => report.date === reportDate);
+  const reportCards = state.cards.filter((card) => card.createdAt.slice(0, 10) === reportDate);
+  const reportDoubts = state.doubts.filter((doubt) => doubt.createdAt.slice(0, 10) === reportDate);
 
   useEffect(() => { if (!mounted.current) { mounted.current = true; return; } void save(state); }, [state]);
   useEffect(() => {
@@ -180,10 +187,34 @@ export default function StudyClient({ initialValue }: { initialValue: unknown })
     event.currentTarget.reset();
   };
 
+  const saveReport = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const report: DailyReport = { date: reportDate, learned: String(form.get("learned") || "").trim(), minutes: Math.max(0, Number(form.get("minutes")) || 0) };
+    setState((current) => ({ ...current, reports: [...current.reports.filter((item) => item.date !== reportDate), report] }));
+  };
+  const addDailyCard = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const question = String(form.get("question") || "").trim();
+    if (!question) return;
+    const categoryName = String(form.get("category") || state.categories[0] || "未分類");
+    setState((current) => ({ ...current, cards: [...current.cards, { id: `study-${Date.now()}`, question, answer: "", answerMode: "text", answerJournalRows: [], notes: "", source: "", material: "", page: "", problemNumber: "", category: categoryName, dueDate: reportDate <= date() ? date() : reportDate, level: 0, createdAt: `${reportDate}T12:00:00.000Z`, reviewAttempts: [] }] }));
+    event.currentTarget.reset();
+  };
+  const addDailyDoubt = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const text = String(form.get("doubt") || "").trim();
+    if (!text) return;
+    setState((current) => ({ ...current, doubts: [...current.doubts, { id: `doubt-${Date.now()}`, text, createdAt: `${reportDate}T12:00:00.000Z` }] }));
+    event.currentTarget.reset();
+  };
+
   return <main className="studyShell">
     <header><div><p>公認会計士</p><h1>学習モード</h1></div><div className="studyHeaderActions"><strong>今日の復習 {due.length}件</strong>{section === "review" && <button type="button" onClick={() => setView(view === "add" ? "list" : "add")}>{view === "add" ? "一覧へ戻る" : "＋ 問題を追加"}</button>}</div></header>
-    <nav className="studySectionTabs" aria-label="学習メニュー"><button className={section === "review" ? "active" : undefined} onClick={() => { setSection("review"); setView("list"); }}>復習</button><button className={section === "doubts" ? "active" : undefined} onClick={() => { setSection("doubts"); setView("list"); }}>疑問点</button></nav>
-    {section === "review" ? <div className="studyLayout">
+    <nav className="studySectionTabs" aria-label="学習メニュー"><button className={section === "daily" ? "active" : undefined} onClick={() => { setSection("daily"); setView("list"); }}>日報</button><button className={section === "review" ? "active" : undefined} onClick={() => { setSection("review"); setView("list"); }}>復習一覧</button><button className={section === "doubts" ? "active" : undefined} onClick={() => { setSection("doubts"); setView("list"); }}>疑問点一覧</button></nav>
+    {section === "daily" ? <section className="studyDaily"><div className="studyDailyHeading"><div><h2>学習日報</h2><p>学んだことと勉強時間を、日付ごとにまとめます。</p></div><label>日付<input type="date" value={reportDate} onChange={(event) => setReportDate(event.currentTarget.value)} /></label></div><form className="studyCard studyDailyReportForm" key={reportDate} onSubmit={saveReport}><label>今日学んだこと<textarea name="learned" defaultValue={selectedReport?.learned || ""} placeholder="理解できた論点、気づき、次に意識すること" /></label><label>勉強時間（分）<input name="minutes" type="number" min="0" step="5" defaultValue={selectedReport?.minutes || ""} placeholder="例：120" /></label><button type="submit">日報を保存</button></form><div className="studyDailyColumns"><section className="studyCard studyDailyAdd"><div><h3>復習に追加</h3><span>{reportCards.length}件</span></div><form onSubmit={addDailyCard}><select name="category" aria-label="カテゴリー">{state.categories.map((item) => <option key={item}>{item}</option>)}</select><input name="question" placeholder="問題・論点名" required /><button type="submit">追加</button></form>{reportCards.length > 0 && <ul>{reportCards.map((item) => <li key={item.id}>{item.question}</li>)}</ul>}</section><section className="studyCard studyDailyAdd"><div><h3>疑問点に追加</h3><span>{reportDoubts.length}件</span></div><form onSubmit={addDailyDoubt}><input name="doubt" placeholder="わからないこと" required /><button type="submit">追加</button></form>{reportDoubts.length > 0 && <ul>{reportDoubts.map((item) => <li key={item.id}>{item.text}</li>)}</ul>}</section></div></section> : section === "review" ? <div className="studyLayout">
       <aside className="studySidebar">
         <div className="studyCategoryList"><button className={category === "すべて" ? "active" : undefined} onClick={() => setCategory("すべて")}>すべて</button>{state.categories.map((item) => <div className={`studyCategoryItem${category === item ? " active" : ""}`} key={item}><button type="button" onClick={() => setCategory(item)}>{item}</button><button className="studyCategoryDelete" type="button" onClick={() => removeCategory(item)} aria-label={`${item}を削除`}>×</button></div>)}</div>
         <form className="studyCategoryForm" onSubmit={addCategory}><div><input id="new-study-category" value={newCategory} onChange={(event) => setNewCategory(event.currentTarget.value)} placeholder="カテゴリー名" aria-label="新しいカテゴリー名" /><button type="submit" aria-label="カテゴリーを追加">＋</button></div></form>
