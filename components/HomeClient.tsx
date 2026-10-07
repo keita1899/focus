@@ -916,6 +916,21 @@ export default function HomeClient({
     void fetch("/api/annual-roadmap", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), keepalive: true });
     return next;
   });
+  const updateRoadmapTaskSchedule = (id: string, scheduledDate: string) => setAnnualRoadmapValue((current: unknown) => {
+    const next = JSON.parse(JSON.stringify(current)) as { years?: Record<string, { months?: Record<string, Record<string, unknown>> }> };
+    Object.values(next.years || {}).forEach((year) => Object.values(year.months || {}).forEach((month) => {
+      const updateTasks = (tasks: unknown): unknown[] => Array.isArray(tasks) ? tasks.map((task) => {
+        if (!task || typeof task !== "object") return task;
+        const currentTask = task as { id?: string; children?: unknown[] };
+        return { ...currentTask, ...(currentTask.id === id ? { scheduledDate } : {}), children: updateTasks(currentTask.children) };
+      }) : [];
+      month.mustDo = updateTasks(month.mustDo);
+      month.chores = updateTasks(month.chores);
+      month.other = updateTasks(month.other);
+    }));
+    void fetch("/api/annual-roadmap", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), keepalive: true });
+    return next;
+  });
   const [todayKey, setTodayKey] = useState(() => formatDateKey(new Date()));
   const [planner, setPlanner] = useState<PlannerState>(() =>
     initialPlannerValue ? normalizePlanner(initialPlannerValue) : initialState,
@@ -1614,6 +1629,14 @@ export default function HomeClient({
     setPlanner((current) => ({
       ...current,
       inboxTasks: current.inboxTasks.filter((task) => task.id !== id),
+    }));
+  }
+
+  function updateInboxTaskSchedule(id: string, scheduledDate: string) {
+    if (!scheduledDate) return;
+    setPlanner((current) => ({
+      ...current,
+      inboxTasks: current.inboxTasks.map((task) => task.id === id ? { ...task, scheduledDate } : task),
     }));
   }
 
@@ -2378,12 +2401,12 @@ export default function HomeClient({
     );
   }
 
-  function renderTodaySchedule(scheduledDate: string, scheduledTime?: string) {
+  function renderTodaySchedule(scheduledDate: string, scheduledTime?: string, onDateChange?: (value: string) => void) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dateLabel = scheduledDate === todayKey ? "今日" : scheduledDate === formatDateKey(tomorrow) ? "明日" : scheduledDate.slice(5).replace("-", "/");
     return <div className="scheduledInboxMeta">
-      <time className="scheduledInboxDate" dateTime={scheduledDate}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span>{dateLabel}</span></time>
+      {onDateChange ? <label className="scheduledInboxDate scheduledInboxDateEditor"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span className="srOnly">実行日</span><input type="date" value={scheduledDate} onChange={(event) => onDateChange(event.currentTarget.value)} aria-label="実行日を変更" /></label> : <time className="scheduledInboxDate" dateTime={scheduledDate}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg><span>{dateLabel}</span></time>}
       {scheduledTime && <time className="scheduledInboxTime" dateTime={scheduledTime}>{formatTimeLabel(scheduledTime)}</time>}
     </div>;
   }
@@ -2398,7 +2421,7 @@ export default function HomeClient({
           aria-label={`${task.title || "無題のタスク"}を完了`}
         />
         <div className="taskTitleView">{task.title || " "}</div>
-        {task.scheduledDate && renderTodaySchedule(task.scheduledDate, task.scheduledTime)}
+        {task.scheduledDate && renderTodaySchedule(task.scheduledDate, task.scheduledTime, isInboxTaskOverdue(task) ? (value) => updateInboxTaskSchedule(task.id, value) : undefined)}
       </article>
     );
   }
@@ -2615,7 +2638,7 @@ export default function HomeClient({
                         {overdueWeeklyTasks.map((task) => renderWeeklyTask(task, task.weekday))}
                         {overdueMonthlyTasks.map((task) => renderMonthlyTask(task, task.dayOfMonth))}
                         {overdueInboxTasks.map(renderScheduledInboxTask)}
-                        {overdueRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask todayRoadmapTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)} aria-label={`${task.title || "無題のタスク"}を完了`} /><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">{task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime)}</article>)}
+                        {overdueRoadmapTasks.map((task) => <article className="taskItem scheduledInboxTask todayRoadmapTask" key={task.id}><button className="checkButton" type="button" onClick={() => completeRoadmapTask(task.id)} aria-label={`${task.title || "無題のタスク"}を完了`} /><div className="taskTitleView"><span>{task.title || "無題のタスク"}</span>{task.parentTitle && <small className="todayRoadmapParentTitle">{task.parentTitle}</small>}</div>{renderTodaySchedule(task.scheduledDate, task.scheduledTime, (value) => updateRoadmapTaskSchedule(task.id, value))}</article>)}
                       </div>
                     </section>
                   )}

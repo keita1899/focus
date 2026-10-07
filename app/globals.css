@@ -1893,6 +1893,8 @@ select {
 
 .scheduledInboxDate { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; border: 1px solid #dce7e0; border-radius: 7px; background: #f4f8f5; color: var(--accent-strong); padding: 4px 8px; font-size: .72rem; font-weight: 800; white-space: nowrap; }
 .scheduledInboxDate svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.scheduledInboxDateEditor { cursor: pointer; }
+.scheduledInboxDateEditor input { width: 112px; border: 0; background: transparent; color: inherit; padding: 0; font: inherit; font-weight: inherit; cursor: pointer; }
 .scheduledInboxTime {
   color: var(--muted);
   font-size: .72rem;
